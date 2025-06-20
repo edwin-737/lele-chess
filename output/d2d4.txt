@@ -1,0 +1,47 @@
+fen path: ./positions/d2d4.txt
+depth: 5
+side: 1
+Making objects 
+state is ep target square
+parse fen inital ep rights: 3
+r n b q k b n r 
+p p p p p p p p 
+. . . . . . . . 
+. . . . . . . . 
+. . . P . . . . 
+. . . . . . . . 
+P P P . P P P P 
+R N B Q K B N R 
+initial ep rights
+3
+initial castle rights
+3
+Time taken by perft at depth=5:3643708 microseconds
+nodes: 8879569
+captures: 265188
+ep_captures: 354
+checks: 118331
+checkmates: 12
+move_counts: 
+
+actual:         expected:
+a7a5: 398457    a7a5: 398457
+a7a6: 330675    a7a6: 330675
+b7b5: 394269    b7b5: 394269
+b7b6: 393459    b7b6: 393459
+b8a6: 363577    b8a6: 363577
+b8c6: 429268    b8c6: 429268
+c7c5: 483654    c7c5: 483654
+c7c6: 394359    c7c6: 394359
+d7d5: 583476    d7d5: 583476
+d7d6: 602324    d7d6: 602324
+e7e5: 809645    e7e5: 809643
+e7e6: 719509    e7e6: 719508
+f7f5: 359553    f7f5: 359553
+f7f6: 327781    f7f6: 327781
+g7g5: 369888    g7g5: 369888
+g7g6: 393609    g7g6: 393609
+g8f6: 425466    g8f6: 425466
+g8h6: 361416    g8h6: 361416
+h7h5: 402513    h7h5: 402513
+h7h6: 336671    h7h6: 336671

@@ -1,0 +1,14 @@
+# CMake build directories
+build/
+cmake-build-debug/
+out/
+CMakeFiles/
+CMakeCache.txt
+_deps/
+*.cmake
+
+# vs code
+.vscode/
+
+# output
+output.txt

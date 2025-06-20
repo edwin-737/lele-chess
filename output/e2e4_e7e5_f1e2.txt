@@ -1,0 +1,53 @@
+fen path: ./positions/e2e4_e7e5_f1e2.txt
+depth: 4
+side: 1
+Making objects 
+r n b q k b n r 
+p p p p . p p p 
+. . . . . . . . 
+. . . . p . . . 
+. . . . P . . . 
+. . . . . . . . 
+P P P P B P P P 
+R N B Q K . N R 
+Time taken by perft at depth=4:280704 microseconds
+nodes: 633758
+captures: 19559
+ep_captures: 2
+checks: 7648
+checkmates: 0
+castles: 1736
+
+
+move_counts: 
+
+actual:         expected:
+a7a5: 22346
+a7a6: 20913
+b7b5: 20937
+b7b6: 22297
+b8a6: 21512
+b8c6: 23066
+c7c5: 20843
+c7c6: 22289
+d7d5: 29203
+d7d6: 23128
+d8e7: 20799
+d8f6: 27540
+d8g5: 27810     d8g5: 27808     X
+d8h4: 23266     
+e8e7: 17364
+f7f5: 23035
+f7f6: 18053 
+f8a3: 21174
+f8b4: 19480     f8b4: 19478     X
+f8c5: 23920
+f8d6: 20841 
+f8e7: 20043
+g7g5: 20845     
+g7g6: 22372
+g8e7: 16586
+g8f6: 20156
+g8h6: 20800
+h7h5: 22339
+h7h6: 20801

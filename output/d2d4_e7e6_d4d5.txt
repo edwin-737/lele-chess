@@ -1,0 +1,55 @@
+fen path: ./positions/d2d4_e7e6_d4d5.txt
+depth: 3
+side: 1
+Making objects 
+r n b q k b n r 
+p p p p . p p p 
+. . . . p . . . 
+. . . P . . . . 
+. . . . . . . . 
+. . . . . . . . 
+P P P . P P P P 
+R N B Q K B N R 
+initial ep rights
+0
+initial castle rights
+3
+Time taken by perft at depth=3:10382 microseconds
+nodes: 26324
+captures: 1437
+ep_captures: 0
+checks: 881
+checkmates: 0
+move_counts: 
+
+actual:         expected:
+a7a5: 921       a7a5: 921
+a7a6: 861       a7a6: 861
+b7b5: 922       b7b5: 922
+b7b6: 921       b7b6: 921
+b8a6: 891       b8a6: 891
+b8c6: 1010      b8c6: 1010
+c7c5: 898       c7c5: 898
+c7c6: 981       c7c6: 981
+d7d6: 837       d7d6: 837
+d8e7: 834       d8e7: 834
+d8f6: 1125      d8f6: 1125
+d8g5: 1170      d8g5: 1170
+d8h4: 1152      d8h4: 1152
+e6d5: 836       e6d5: 836
+e6e5: 834       e6e5: 834 
+e8e7: 650       e8e7: 649
+f7f5: 889       f7f5: 889
+f7f6: 772       f7f6: 772
+f8a3: 907       f8a3: 907
+f8b4: 168       f8b4: 168
+f8c5: 1010      f8c5: 1010
+f8d6: 976       f8d6: 976
+f8e7: 833       f8e7: 833
+g7g5: 837       g7g5: 837
+g7g6: 920       g7g6: 920
+g8e7: 688       g8e7: 688
+g8f6: 833       g8f6: 833
+g8h6: 860       g8h6: 860
+h7h5: 923       h7h5: 923
+h7h6: 865       h7h6: 865

@@ -1,0 +1,9 @@
+fen path: ./positions/starting_position.txt
+depth: 5
+Making objects 
+Time taken by function: 2590612 microseconds
+nodes: 4865609
+captures: 82719
+ep_captures: 258
+checks: 27351
+checkmates: 8

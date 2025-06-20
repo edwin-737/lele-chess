@@ -1,0 +1,51 @@
+fen path: ./positions/e2e4.txt
+depth: 6
+side: 0
+Making objects 
+r n b q k b n r 
+p p p p p p p p 
+. . . . . . . . 
+. . . . . . . . 
+. . . . P . . . 
+. . . . . . . . 
+P P P P . P P P 
+R N B Q K B N R 
+Time taken by perft at depth=6:109072444 microseconds
+nodes: 303257821
+captures: 0
+ep_captures: 0
+checks: 0
+checkmates: 0
+castles: 0
+move_counts: 
+
+a2a3: 9162577
+a2a4: 10464279
+b1a3: 9676711
+b1c3: 10867131
+b2b3: 10390893
+b2b4: 10362955
+c2c3: 10148533
+c2c4: 9317843
+d1e2: 9734011
+d1f3: 15032907
+d1g4: 15261520
+d1h5: 13370111
+d2d3: 11783296
+d2d4: 15273354
+e1e2: 6780618
+e4e5: 8316625
+f1a6: 9477451
+f1b5: 7866342
+f1c4: 11587843
+f1d3: 9179648
+f1e2: 8502498
+f2f3: 7433759
+f2f4: 9825093
+g1e2: 6440182
+g1f3: 8880135
+g1h3: 9404724
+g2g3: 10183958
+g2g4: 8928560
+h2h3: 9153852
+h2h4: 10450412
