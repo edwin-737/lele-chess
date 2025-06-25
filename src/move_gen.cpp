@@ -12,12 +12,18 @@ using namespace BoardSquares;
 using namespace DirectionMap;
 
 unsigned int MoveGen::get_move(){
+    if(only_captures)
+        cout<<"get move\n";
     if(!initialised){
+        // update_piece();
+        // initialise_piece();
         update_piece();
         initialised = true;
-    } else if(move_type > mQUIET){
+    } 
+    if(move_type > mQUIET && !only_captures){
         return get_special_move();
-    } else if(!update_to()){
+    } 
+    if(!update_to()){
         if(!update_from()){
             if(!update_piece()){
                 if(!only_captures)
@@ -42,31 +48,38 @@ unsigned int MoveGen::get_move(){
 
 unsigned int MoveGen::get_special_move(){
     unsigned int move = 0;
-    if(move_type == mQUIET){
-        move = INCREMENTING_MOVE_TYPE;
-        move_type ++;
-    }
-    else if(move_type == mKING_CASTLE){
-        // cout<<"move_type is mKING_CASTLE\n";
-        if(can_castle_kingside(side)){
-            // cout<<"getting king castle move\n";
-            move = side == WHITE ? MoveUtils::create_move(e1, g1, side, 0, 0, KING_CASTLE) : MoveUtils::create_move(e8, g8, side, 0, 0, KING_CASTLE);
-            num_special_moves[mKING_CASTLE] ++;
-        } else {
+    if(!only_captures){
+        if(move_type == mQUIET){
             move = INCREMENTING_MOVE_TYPE;
+            move_type ++;
         }
-        move_type ++;
-    } else if(move_type == mQUEEN_CASTLE){
-        if(can_castle_queenside(side)){
-            // cout<<"getting queen castle move\n";
-            move = side == WHITE ? MoveUtils::create_move(e1, c1, side, 0, 0, QUEEN_CASTLE) : MoveUtils::create_move(e8, c8, side, 0, 0, QUEEN_CASTLE);
-            num_special_moves[mQUEEN_CASTLE] ++;
-        } else {
-            move = INCREMENTING_MOVE_TYPE;
+        else if(move_type == mKING_CASTLE){
+            // cout<<"move_type is mKING_CASTLE\n";
+            if(can_castle_kingside(side)){
+                // cout<<"getting king castle move\n";
+                move = side == WHITE ? MoveUtils::create_move(e1, g1, side, 0, 0, KING_CASTLE) : MoveUtils::create_move(e8, g8, side, 0, 0, KING_CASTLE);
+                num_special_moves[mKING_CASTLE] ++;
+            } else {
+                move = INCREMENTING_MOVE_TYPE;
+            }
+            move_type ++;
+        } else if(move_type == mQUEEN_CASTLE){
+            if(can_castle_queenside(side)){
+                // cout<<"getting queen castle move\n";
+                move = side == WHITE ? MoveUtils::create_move(e1, c1, side, 0, 0, QUEEN_CASTLE) : MoveUtils::create_move(e8, c8, side, 0, 0, QUEEN_CASTLE);
+                num_special_moves[mQUEEN_CASTLE] ++;
+            } else {
+                move = INCREMENTING_MOVE_TYPE;
+            }
+            move_type ++;
+        } else if(move_type == mEP_CAPTURE){
+            move = get_ep_capture(side);
         }
-        move_type ++;
-    } else if(move_type == mEP_CAPTURE){
-        move = get_ep_capture(side);
+    } else {
+        if(!move_type)
+            move_type = mEP_CAPTURE;
+        if(move_type == mEP_CAPTURE)
+            move = get_ep_capture(side);
     }
     // cout<<"special_move_type: "<<special_move_type<<"\n";
     // cout<<"ep_from: "<<ep_from<<"\n";
@@ -81,26 +94,65 @@ unsigned int MoveGen::get_capture(){
 int MoveGen::get_special_move_type(){
     return move_type;
 }
-bool MoveGen::update_piece(){
+bool MoveGen::initialise_piece(){
+    if(initialised)
+        return true;
 
-    // cout<<"update piece called\n";
-    // when first called, piece = -1, so starting_piece = 0
-    // cout<<"updating piece "<<piece <<endl;
-
-    // cout<<"current piece: "<<piece<<endl;
     bool found_piece = false;
     while(!found_piece && piece < NUM_PIECE_TYPES){
-        if(initialised){
-            piece += 1;
-            // cout<<"next piece: "<<piece<<endl;
-        }
         piece_board = bb->piece_boards[side][piece];
         if(piece_board){
             // cout<<"calling update_from\n";
             found_piece = update_from();
             if(found_piece)
                 return true;
+            // else if(!found_piece && only_captures)
+            //     piece ++;
+            else
+                piece ++;
+        } else {
+            piece ++;
         }
+    }
+    return false;
+}
+bool MoveGen::update_piece(){
+
+    if(only_captures)
+        cout<<"update piece\n";
+    // cout<<"update piece called\n";
+    // when first called, piece = -1, so starting_piece = 0
+    // cout<<"updating piece "<<piece <<endl;
+
+    // cout<<"current piece: "<<piece<<endl;
+    // if(initialised && !only_captures){
+    //     piece += 1;
+    // } 
+
+    bool found_piece = false;
+    while(!found_piece && piece < NUM_PIECE_TYPES){
+        if(initialised && !only_captures){
+            piece += 1;
+            // cout<<"next piece: "<<piece<<endl;
+        } 
+        piece_board = bb->piece_boards[side][piece];
+        if(piece_board){
+            // cout<<"calling update_from\n";
+            found_piece = update_from();
+            if(found_piece && !only_captures)
+                return true;
+            else if(!found_piece && only_captures)
+                piece ++;
+            // else
+            //     piece ++;
+        } 
+        // else {
+        //     piece ++;
+        // }
+        // if(initialised && !only_captures){
+        //     piece += 1;
+        //     // cout<<"next piece: "<<piece<<endl;
+        // } 
         // cout<<"found_piece "<<found_piece<<endl;
     }
     return false;
@@ -108,6 +160,8 @@ bool MoveGen::update_piece(){
 
 bool MoveGen::update_from(){
 
+    if(only_captures)
+        cout<<"update from\n";
     bool found_from = false;
     int counter = 0;
     while(!found_from && counter < 7){
@@ -122,6 +176,7 @@ bool MoveGen::update_from(){
         piece_board ^= get_square_bitboard(next_from);
         from = next_from;
         if(only_captures){
+            // cout<<"only capture\n";
             move_set = MoveSet::get_piece_attack_set(bb, piece, from, side) & bb->collective_piece_boards[side ^ 1];
         } else{
             move_set = MoveSet::get_piece_move_set(bb, piece, from, side);
@@ -138,6 +193,8 @@ bool MoveGen::update_from(){
 }
 
 bool MoveGen::update_to(){
+    if(only_captures)
+        cout<<"update to\n";
     // cout<<"update to called\n";
     int next_to = bit_scan_forward(move_set);
     if(next_to == -1){

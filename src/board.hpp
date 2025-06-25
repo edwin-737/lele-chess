@@ -11,7 +11,7 @@
 #include "move.hpp"
 #include "bitboard.hpp"
 #include "board_info.hpp"
-// #include "evaluation.hpp"
+#include "evaluation.hpp"
 using namespace std;
 using namespace BoardSquares;
 namespace fs = filesystem;
@@ -69,7 +69,7 @@ private:
     void init_piece_locations();
     BoardInfo* bi = BoardInfo::get_instance();
     Bitboard* bb = Bitboard::get_instance();
-    // Evaluation* eval = Evaluation::get_instance();
+    Evaluation* eval = Evaluation::get_instance();
     int side_to_move;
     int initial_ep_rights = 0, initial_castle_rights = 0;
 };

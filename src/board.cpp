@@ -136,7 +136,7 @@ void Board::apply_move(unsigned int move, int update_num_moves){
         }
         // update_piece_locations(side, piece, from, to);
     }
-    // eval->update_material(move, false);
+    eval->update_material(move, false);
     bb->all = bb->collective_piece_boards[WHITE] | bb->collective_piece_boards[BLACK];
     // bb->update();
 }
@@ -215,7 +215,7 @@ void Board::reverse_move(unsigned int move, int update_num_moves){
             update_king_location(side, from);
     }
 
-    // eval->update_material(move, true);
+    eval->update_material(move, true);
     bb->all = bb->collective_piece_boards[WHITE] | bb->collective_piece_boards[BLACK];
     bi->remove_board_info();
     // bb->update();
@@ -361,8 +361,10 @@ void Board::parse_fen(fs::path path){
             
         }
     }
-    init_piece_locations();
+    // init_piece_locations();
     bb->update();
+    eval->init_material();
+    // cout<<"finished init material\n";
 }
 void Board::init_piece_locations(){
     for(int sq = 0 ; sq < NUM_SQUARES ; sq ++){

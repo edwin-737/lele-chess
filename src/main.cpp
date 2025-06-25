@@ -9,10 +9,24 @@
 #include "board_info.hpp"
 #include "move_set.hpp"
 using namespace std::chrono;
-#define NONE 0
-#define FEN 1
-#define DEPTH 2
-#define SIDE 3
+// #define NONE 0
+// #define FEN 1
+// #define DEPTH 2
+// #define SIDE 3
+// #define TASK 4
+
+typedef enum Task{
+    PERFT,
+    ALPHA_BETA
+} Task;
+
+typedef enum ArgState{
+    NONE,
+    FEN,
+    DEPTH,
+    SIDE,
+    TASK
+} ArgState;
 Bitboard* Bitboard::instanceptr=nullptr;
 BoardInfo* BoardInfo::instanceptr=nullptr;
 
@@ -23,6 +37,7 @@ int main(int argc, char** argv)
     int depth = 1;
     bool include_fen = false;
     int side = WHITE;
+    int task = PERFT;
     for(int i = 0 ; i < argc ; i ++){
         char* arg = argv[i];
         if(arg_state == FEN){
@@ -33,20 +48,26 @@ int main(int argc, char** argv)
             depth = argv[i][0] - '0';
             cout<<"depth: "<<depth<<endl;
             arg_state = NONE;
-        }  else if(arg_state == SIDE){
+        } else if(arg_state == SIDE){
             side = BLACK ? argv[i][0] == 'b' : WHITE;
             cout<<"side: "<< side << endl;
+            arg_state = NONE;
+        } else if(arg_state == TASK){
+            task = PERFT ? argv[i][0] == 'p' : ALPHA_BETA;
+            cout<<"task: "<<task<<endl;
             arg_state = NONE;
         } else{
             if(strcmp(argv[i], "-f") == 0){
                 arg_state = FEN;
                 include_fen = true;
-            } 
-            else if(strcmp(argv[i], "-d") == 0){
+            } else if(strcmp(argv[i], "-d") == 0){
                 arg_state = DEPTH;
             } else if(strcmp(argv[i], "-s") == 0){
                 arg_state = SIDE;
             }
+            //  else if(strcmp(argv[i], "-t") == 0){
+            //     arg_state = TASK;
+            // }
         }
     }
     BoardSquares::init_files();
@@ -70,53 +91,24 @@ int main(int argc, char** argv)
     // cout<<"initial castle rights\n";
     // cout<<b->get_board_info()->peek_castle_right()<<endl;
 
-    Search* s = new Search(b);
+    Search* s = new Search(b, depth);
     auto start = high_resolution_clock::now();
-    // s->search(depth, side);
-    unsigned int num_nodes = s->perft(depth, depth, side);
-    auto stop = high_resolution_clock::now();    
-    auto duration = duration_cast<microseconds>(stop - start);
-    cout << "Time taken by perft at depth=" << depth<<":"
-         << duration.count() << " microseconds" << endl;
-    cout<<"nodes: "<<num_nodes<<endl;
-    cout<<"captures: "<<s->num_captures<<endl;
-    cout<<"ep_captures: "<<s->num_ep_captures<<endl;
-    cout<<"checks: "<<s->num_checks<<endl;
-    cout<<"checkmates: "<<s->num_checkmates<<endl;
-    cout<<"castles: "<<s->num_castles<<endl<<endl;
-    cout<<"move_counts: \n";
-    // s->move_breakdown();
-    // MoveSet::set_attack_sets();
-    // MoveSet::init_attack_masks();
-    // GameState gs = GameState();
-    // Evaluation eval = Evaluation();
-    // Searcher searcher = Searcher(gs, eval);
-
-    // // for(int i = 0 ; i < 4 ; i ++)
-    // //     searcher.gs.apply_move_if_legal(castle_test_move_list[i]);
-    // // for(int i = 0 ; i < 9 ; i ++)
-    // //     searcher.gs.apply_move_if_legal(scotch_move_list[i]);
-    // // searcher.gs.bb.display();
-    // if(include_fen){
-    //     fs::path input_fen_path(fen_path);
-    //     searcher.gs.parse_fen(input_fen_path);
-    // }
-    // cout<<"finished applying moves\n";
-    // auto start = high_resolution_clock::now();
-    // Line line;
-    // float alpha = -1e5;
-    // float beta = 1e5;
-    // // searcher.alpha_beta(alpha, beta, 3, WHITE, &line);
-    // searcher.alpha_beta(alpha, beta, depth, BLACK, &line);
-
-    // for(int i = 0 ; i < depth ; i ++)
-    //     line.move_seq[i].print();
-
-    // auto stop = high_resolution_clock::now();    
-    // auto duration = duration_cast<microseconds>(stop - start);
-    // cout << "Nodes searched: " << searcher.nodes << endl;
-    // cout << "Time taken by function: "
-    //      << duration.count() << " microseconds" << endl;
-
-    // free(fen_path);
+    if(task == PERFT){
+        unsigned int num_nodes = s->perft(depth, depth, side);
+        auto stop = high_resolution_clock::now();    
+        auto duration = duration_cast<microseconds>(stop - start);
+        cout << "Time taken by perft at depth=" << depth<<":"
+            << duration.count() << " microseconds" << endl;
+        cout<<"nodes: "<<num_nodes<<endl;
+        cout<<"captures: "<<s->num_captures<<endl;
+        cout<<"ep_captures: "<<s->num_ep_captures<<endl;
+        cout<<"checks: "<<s->num_checks<<endl;
+        cout<<"checkmates: "<<s->num_checkmates<<endl;
+        cout<<"castles: "<<s->num_castles<<endl<<endl;
+        cout<<"move_counts: \n";
+    } else {
+        cout<<"search max depth: "<<s->max_depth<<endl;
+        cout<<"search depth: "<<depth<<endl;
+        int score = s->alpha_beta(-1e5, 1e5, depth, side);
+    }
 }

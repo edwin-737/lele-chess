@@ -1,0 +1,1 @@
+./engine > output.txt -f ./positions/queen_trade.txt -d  5 -s b -t a

@@ -38,6 +38,7 @@ public:
     // void add_capture(unsigned int capture);
 private:
     // vector<unsigned int> moves, captures;
+    bool initialise_piece();
     bool update_piece();
     int get_next_piece();
     bool update_from();

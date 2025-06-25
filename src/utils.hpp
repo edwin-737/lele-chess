@@ -32,10 +32,14 @@ inline void get_set_bit_indices(uint64 n, int* set_bits){
     }
 }
 inline int bit_scan_forward(uint64 bb){
-    if(bb > 0)
+    if(bb > 0){
+        // cout<<"bit scan not empty\n";
         return index64[((bb & -bb) * DE_BRUIJN) >> 58];
-    else 
+    }
+    else{
+        // cout<<"bit scan empty\n";
         return -1;
+    }
 }
 inline uint64 OR_mult(uint64 others[], int len)
 {

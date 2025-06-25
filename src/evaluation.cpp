@@ -1,12 +1,45 @@
 #include "evaluation.hpp"
 #include "move.hpp"
-
+#include "utils.hpp"
+#include "board_squares.hpp"
+using namespace BoardSquares;
 Evaluation* Evaluation::instanceptr=nullptr;
 
 Evaluation* Evaluation::get_instance(){
     if(instanceptr == nullptr)
         instanceptr = new Evaluation();
     return instanceptr;
+}
+void Evaluation::init_material(){
+    for(int side = 0 ; side < NUM_SIDES ; side ++){
+        for(int piece = 0 ; piece < NUM_PIECE_TYPES ; piece ++){
+            uint64 b = bb->piece_boards[side][piece];
+            int count = 0;
+            int set_bit = 0;
+            // cout<<"side: "<<side<<endl;
+            // cout<<"piece: "<<piece<<endl;
+            while(set_bit != -1){ // bit scan the board and invert every set bit until its empty
+                set_bit = bit_scan_forward(b);
+                if (set_bit != -1) {
+                    count++;
+                    b ^= get_square_bitboard(set_bit);  // safe clearing
+                } else {
+                    break;
+                }
+            }
+            //     if(set_bit != -1){
+            //         cout<<"not breaking\n";
+            //         count++;
+            //     } else {
+            //         cout<<"breaking loop\n";
+            //         break;
+            //     }
+            //     b &= ~get_square_bitboard(set_bit);
+            // }
+            // cout<<"finished while loop\n";
+            // material = side == WHITE ? material + (count * piece_values[piece]) : material - (count * piece_values[piece]);
+        }
+    }
 }
 int Evaluation::get_material(){
     return material;
