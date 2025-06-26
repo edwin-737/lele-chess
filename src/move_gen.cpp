@@ -12,15 +12,13 @@ using namespace BoardSquares;
 using namespace DirectionMap;
 
 unsigned int MoveGen::get_move(){
-    if(only_captures)
-        cout<<"get move\n";
+    // if(only_captures)
+    //     cout<<"get move\n";
     if(!initialised){
-        // update_piece();
-        // initialise_piece();
-        update_piece();
-        initialised = true;
-    } 
-    if(move_type > mQUIET && !only_captures){
+        if(!initialise_piece()){
+            return NO_MOVES_LEFT;
+        }
+    } else if(move_type != mQUIET){
         return get_special_move();
     } 
     if(!update_to()){
@@ -29,8 +27,7 @@ unsigned int MoveGen::get_move(){
                 if(!only_captures)
                     return get_special_move();
                 else
-                    return 0;
-                // return 0;
+                    return NO_MOVES_LEFT;
             }
         }
     }
@@ -95,8 +92,24 @@ int MoveGen::get_special_move_type(){
     return move_type;
 }
 bool MoveGen::initialise_piece(){
+
     if(initialised)
         return true;
+    bool found_piece = false;
+    while(!found_piece && piece < NUM_PIECE_TYPES){
+        piece_board = bb->piece_boards[side][piece];
+        if(piece_board){
+            found_piece = update_from();
+            if(found_piece){
+                initialised = true;
+                return true;
+            }
+        }
+        piece ++;
+    }
+    return false;
+}
+bool MoveGen::update_piece(){
 
     bool found_piece = false;
     while(!found_piece && piece < NUM_PIECE_TYPES){
@@ -106,79 +119,71 @@ bool MoveGen::initialise_piece(){
             found_piece = update_from();
             if(found_piece)
                 return true;
-            // else if(!found_piece && only_captures)
-            //     piece ++;
-            else
-                piece ++;
         } else {
             piece ++;
         }
     }
     return false;
 }
-bool MoveGen::update_piece(){
+// bool MoveGen::update_piece(){
 
-    if(only_captures)
-        cout<<"update piece\n";
-    // cout<<"update piece called\n";
-    // when first called, piece = -1, so starting_piece = 0
-    // cout<<"updating piece "<<piece <<endl;
+//     // if(only_captures)
+//     //     cout<<"update piece\n";
+//     // cout<<"update piece called\n";
+//     // when first called, piece = -1, so starting_piece = 0
+//     // cout<<"updating piece "<<piece <<endl;
 
-    // cout<<"current piece: "<<piece<<endl;
-    // if(initialised && !only_captures){
-    //     piece += 1;
-    // } 
+//     // cout<<"current piece: "<<piece<<endl;
+//     // if(initialised && !only_captures){
+//     //     piece += 1;
+//     // } 
 
-    bool found_piece = false;
-    while(!found_piece && piece < NUM_PIECE_TYPES){
-        if(initialised && !only_captures){
-            piece += 1;
-            // cout<<"next piece: "<<piece<<endl;
-        } 
-        piece_board = bb->piece_boards[side][piece];
-        if(piece_board){
-            // cout<<"calling update_from\n";
-            found_piece = update_from();
-            if(found_piece && !only_captures)
-                return true;
-            else if(!found_piece && only_captures)
-                piece ++;
-            // else
-            //     piece ++;
-        } 
-        // else {
-        //     piece ++;
-        // }
-        // if(initialised && !only_captures){
-        //     piece += 1;
-        //     // cout<<"next piece: "<<piece<<endl;
-        // } 
-        // cout<<"found_piece "<<found_piece<<endl;
-    }
-    return false;
-}
+//     bool found_piece = false;
+//     while(!found_piece && piece < NUM_PIECE_TYPES){
+//         if(initialised && !only_captures){
+//             piece += 1;
+//             // cout<<"next piece: "<<piece<<endl;
+//         } 
+//         piece_board = bb->piece_boards[side][piece];
+//         if(piece_board){
+//             // cout<<"calling update_from\n";
+//             found_piece = update_from();
+//             if(found_piece && !only_captures)
+//                 return true;
+//             else if(!found_piece && only_captures)
+//                 piece ++;
+//             // else
+//             //     piece ++;
+//         } 
+//         // else {
+//         //     piece ++;
+//         // }
+//         // if(initialised && !only_captures){
+//         //     piece += 1;
+//         //     // cout<<"next piece: "<<piece<<endl;
+//         // } 
+//         // cout<<"found_piece "<<found_piece<<endl;
+//     }
+//     return false;
+// }
 
 bool MoveGen::update_from(){
 
-    if(only_captures)
-        cout<<"update from\n";
+    // if(only_captures)
+    //     cout<<"update from\n";
     bool found_from = false;
     int counter = 0;
     while(!found_from && counter < 7){
         int next_from = bit_scan_forward(piece_board);
         if(next_from == -1){
-            // cout<<"next from is -1\n";
-            // found_from = false;
             return false;
         }
-        // cout<<"current from: "<<from<<endl;
-        // cout<<"next from: "<<next_from<<endl;
         piece_board ^= get_square_bitboard(next_from);
         from = next_from;
         if(only_captures){
             // cout<<"only capture\n";
             move_set = MoveSet::get_piece_attack_set(bb, piece, from, side) & bb->collective_piece_boards[side ^ 1];
-        } else{
+        } else {
             move_set = MoveSet::get_piece_move_set(bb, piece, from, side);
         }
         found_from = move_set > 0;
@@ -193,8 +198,8 @@ bool MoveGen::update_from(){
 }
 
 bool MoveGen::update_to(){
-    if(only_captures)
-        cout<<"update to\n";
+    // if(only_captures)
+    //     cout<<"update to\n";
     // cout<<"update to called\n";
     int next_to = bit_scan_forward(move_set);
     if(next_to == -1){

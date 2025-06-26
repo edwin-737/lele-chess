@@ -1,8 +1,10 @@
 #include <chrono>
 #include <vector>
+#include <set>
 #include <algorithm>
 #include <stdlib.h>
 #include <assert.h>
+#include <string>
 #include <catch2/catch_test_macros.hpp>
 
 #include "move.hpp"
@@ -44,6 +46,17 @@ bool are_pieces_in_correct_locations(Board* b, vector<vector<int>> expected_piec
     return correct_locations;
 }
 
+bool are_move_vectors_equal(vector<unsigned int> actual_moves, vector<unsigned int> expected_moves){
+    if(actual_moves.size() != expected_moves.size())
+        return false;
+    sort(actual_moves.begin(), actual_moves.end());
+    sort(expected_moves.begin(), expected_moves.end());
+    for(int i = 0 ; i < actual_moves.size() ; i ++){
+        if(actual_moves[i] != expected_moves[i])
+            return false;
+    }
+    return true;
+}
 TEST_CASE("Piece locations for starting position", "[Parsing FEN]"){
 
     BoardSquares::init_files();
@@ -300,7 +313,7 @@ TEST_CASE("En Passant Move Generated", "[En Passant]"){
 
         for(auto move: move_list){
             b->apply_move(move);
-        }        
+        }
 
         unsigned int expected_move = MoveUtils::create_move(b5, a6, WHITE, pPAWN, pPAWN, EP_CAPTURE, File::a);
         unsigned int move = mg2.get_special_move();
@@ -343,8 +356,62 @@ TEST_CASE("En Passant Move Generated", "[En Passant]"){
     BoardInfo::instanceptr = nullptr;
 }
 
+TEST_CASE("Only Captures","[MoveGen]"){
 
-TEST_CASE("Number of nodes during search","[Search]"){
+    BoardSquares::init_files();
+    BoardSquares::init_ranks();
+    BoardSquares::init_squares();
+    MoveSet::set_attack_sets();
+    MoveSet::init_attack_masks();
+
+    Board* b = new Board();
+    const char* fen_path = "./positions/starting_position.txt";
+    b->parse_fen(fen_path);
+    MoveGen mg = MoveGen(WHITE, mQUIET, true);
+    SECTION("No captures generated with starting position"){
+        unsigned int move = 0;
+        int move_count = 0;
+        while((move = mg.get_move()) != NO_MOVES_LEFT){
+            move_count++;
+        }
+        REQUIRE(move_count == 0);
+    }
+    delete b;
+    delete Bitboard::instanceptr;
+    delete BoardInfo::instanceptr;
+    b = nullptr;
+    Bitboard::instanceptr = nullptr;
+    BoardInfo::instanceptr = nullptr;
+
+    b = new Board();
+    const char* queen_trade_path = "./positions/queen_trade.txt";
+    b->parse_fen(queen_trade_path);
+    MoveGen mg1 = MoveGen(BLACK, mQUIET, true);
+    vector<unsigned int> expected_moves = {
+        MoveUtils::create_move(f8, a3, BLACK, pBISHOP, pPAWN, CAPTURE),
+        MoveUtils::create_move(d8, d1, BLACK, pQUEEN, pQUEEN, CAPTURE),
+    };
+    vector<unsigned int> actual_moves;
+    SECTION("One capture generated with queen trade position"){
+        unsigned int move = 0;
+        int move_count = 0;
+        
+        while((move = mg1.get_move()) != NO_MOVES_LEFT){
+            move_count++;
+            actual_moves.push_back(move);
+        }
+        REQUIRE(are_move_vectors_equal(actual_moves, expected_moves));
+        REQUIRE(move_count == 2);
+    }
+    delete b;
+    delete Bitboard::instanceptr;
+    delete BoardInfo::instanceptr;
+    b = nullptr;
+    Bitboard::instanceptr = nullptr;
+    BoardInfo::instanceptr = nullptr;
+
+}
+TEST_CASE("Number of nodes during search","[MoveGen]"){
 
 
     BoardSquares::init_files();
