@@ -65,9 +65,9 @@ int main(int argc, char** argv)
             } else if(strcmp(argv[i], "-s") == 0){
                 arg_state = SIDE;
             }
-            //  else if(strcmp(argv[i], "-t") == 0){
-            //     arg_state = TASK;
-            // }
+             else if(strcmp(argv[i], "-t") == 0){
+                arg_state = TASK;
+            }
         }
     }
     BoardSquares::init_files();

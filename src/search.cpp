@@ -47,8 +47,7 @@ int Search::alpha_beta(int alpha, int beta, int depth_left, unsigned int side){
         // return eval->get_material();
         // return side == WHITE ? eval->get_material() : -eval->get_material();
         // cout<<"calling quiesce\n";
-        int q = quiesce(alpha, beta, side);
-        return q;
+        return quiesce(alpha, beta, side);
         // return quiesce(alpha, beta, side);
 
     }
@@ -104,9 +103,9 @@ int Search::quiesce(int alpha, int beta, unsigned int side, int depth){
     if( best_value > alpha )
         alpha = best_value;
 
-    cout<<"quiesce depth: "<<depth<<endl;
+    // cout<<"quiesce depth: "<<depth<<endl;
     MoveGen mg = MoveGen(side, 0, true);
-    MoveUtils::display(mg.get_move());
+    // MoveUtils::display(mg.get_move());
     unsigned int move = 0;
     while((move = mg.get_move()) != NO_MOVES_LEFT){
         if(move == INCREMENTING_MOVE_TYPE || (!MoveUtils::is_capture(move) && !MoveUtils::is_ep_capture(move))){

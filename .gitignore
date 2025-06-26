@@ -6,6 +6,8 @@ CMakeFiles/
 CMakeCache.txt
 _deps/
 *.cmake
+test_engine
+engine
 
 # vs code
 .vscode/
