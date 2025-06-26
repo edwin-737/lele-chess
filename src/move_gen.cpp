@@ -13,9 +13,10 @@ using namespace DirectionMap;
 
 unsigned int MoveGen::get_move(){
     if(!initialised){
-        update_piece();
-        initialised = true;
-    } else if(move_type > mQUIET){
+        if(!initialise_piece()){
+            return NO_MOVES_LEFT;
+        }
+    } else if(move_type != mQUIET){
         return get_special_move();
     } else if(!update_to()){
         if(!update_from()){
@@ -23,8 +24,7 @@ unsigned int MoveGen::get_move(){
                 if(!only_captures)
                     return get_special_move();
                 else
-                    return 0;
-                // return 0;
+                    return NO_MOVES_LEFT;
             }
         }
     }
@@ -81,6 +81,24 @@ unsigned int MoveGen::get_capture(){
 int MoveGen::get_special_move_type(){
     return move_type;
 }
+bool MoveGen::initialise_piece(){
+
+    if(initialised)
+        return true;
+    bool found_piece = false;
+    while(!found_piece && piece < NUM_PIECE_TYPES){
+        piece_board = bb->piece_boards[side][piece];
+        if(piece_board){
+            found_piece = update_from();
+            if(found_piece){
+                initialised = true;
+                return true;
+            }
+        }
+        piece ++;
+    }
+    return false;
+}
 bool MoveGen::update_piece(){
 
     // cout<<"update piece called\n";
@@ -113,17 +131,13 @@ bool MoveGen::update_from(){
     while(!found_from && counter < 7){
         int next_from = bit_scan_forward(piece_board);
         if(next_from == -1){
-            // cout<<"next from is -1\n";
-            // found_from = false;
             return false;
         }
-        // cout<<"current from: "<<from<<endl;
-        // cout<<"next from: "<<next_from<<endl;
         piece_board ^= get_square_bitboard(next_from);
         from = next_from;
         if(only_captures){
             move_set = MoveSet::get_piece_attack_set(bb, piece, from, side) & bb->collective_piece_boards[side ^ 1];
-        } else{
+        } else {
             move_set = MoveSet::get_piece_move_set(bb, piece, from, side);
         }
         found_from = move_set > 0;

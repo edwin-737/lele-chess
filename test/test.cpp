@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <stdlib.h>
 #include <assert.h>
+#include <string>
 #include <catch2/catch_test_macros.hpp>
 
 #include "move.hpp"
@@ -300,7 +301,7 @@ TEST_CASE("En Passant Move Generated", "[En Passant]"){
 
         for(auto move: move_list){
             b->apply_move(move);
-        }        
+        }
 
         unsigned int expected_move = MoveUtils::create_move(b5, a6, WHITE, pPAWN, pPAWN, EP_CAPTURE, File::a);
         unsigned int move = mg2.get_special_move();
@@ -343,8 +344,39 @@ TEST_CASE("En Passant Move Generated", "[En Passant]"){
     BoardInfo::instanceptr = nullptr;
 }
 
+TEST_CASE("Only Captures","[MoveGen]"){
 
-TEST_CASE("Number of nodes during search","[Search]"){
+    BoardSquares::init_files();
+    BoardSquares::init_ranks();
+    BoardSquares::init_squares();
+    MoveSet::set_attack_sets();
+    MoveSet::init_attack_masks();
+
+    Board* b = new Board();
+    string fen_path = "./positions/starting_position.txt";
+    b->parse_fen(fen_path);
+
+    MoveGen mg = MoveGen(WHITE, mQUIET, true);
+    SECTION("No captures generated with starting position"){
+        unsigned int move = 0;
+        int move_count = 0;
+        while((move = mg.get_move()) != NO_MOVES_LEFT){
+            move_count++;
+        }
+        REQUIRE(move_count == 0);
+    }
+    delete b;
+    delete Bitboard::instanceptr;
+    delete BoardInfo::instanceptr;
+    b = nullptr;
+    Bitboard::instanceptr = nullptr;
+    BoardInfo::instanceptr = nullptr;
+
+    // Board* b = new Board();
+    // fen_path = "./positions/queen_trade.txt";
+
+}
+TEST_CASE("Number of nodes during search","[MoveGen]"){
 
 
     BoardSquares::init_files();
