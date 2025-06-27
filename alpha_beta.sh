@@ -1,1 +1,1 @@
-./engine > output.txt -f ./positions/queen_trade.txt -d  5 -s b -t a
+./engine > output.txt -f ./positions/bk_1.txt -d 6 -s b -t a

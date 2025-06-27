@@ -52,6 +52,8 @@ namespace MoveUtils{
     bool is_king_castle(unsigned int move);
     bool is_queen_castle(unsigned int move);
     void display(unsigned int move);
+    string piece_as_string(unsigned int piece);
+    string side_as_string(unsigned int side);
     string move_as_string(unsigned int move);
     string square_as_string(unsigned int square);
 };

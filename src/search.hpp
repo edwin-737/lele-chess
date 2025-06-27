@@ -20,8 +20,10 @@ public:
 
     unsigned int perft(int original_depth,int depth_left, unsigned int side, unsigned int root_move = 0ULL);
     // int alpha_beta(int alpha, int beta, int depth_left, unsigned int side);
-    int alpha_beta(int alpha, int beta, int depth_left, unsigned int side);
-    int quiesce(int alpha, int beta, unsigned int side, int depth=0);
+    int alpha_beta(int alpha, int beta, int depth_left, unsigned int side, unsigned int starting_side, unsigned int root_move=0);
+    int alpha_beta_1(int alpha, int beta, int depth_left, unsigned int side, unsigned int starting_side);
+    int negamax(int depth_left, unsigned int side, unsigned int starting_side);
+    int quiesce(int alpha, int beta, int depth, unsigned int side, unsigned int starting_side);
     float evaluate();
     int static_exchange_evaluation(unsigned int side, int square);
     int static_exchange_evaluation(int move);

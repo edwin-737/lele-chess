@@ -109,6 +109,9 @@ int main(int argc, char** argv)
     } else {
         cout<<"search max depth: "<<s->max_depth<<endl;
         cout<<"search depth: "<<depth<<endl;
-        int score = s->alpha_beta(-1e5, 1e5, depth, side);
+        cout<<"side: "<<side<<endl;
+        // int score = s->alpha_beta_1(-1e5, 1e5, depth, side, side);
+        int score = s->alpha_beta(-1e5, 1e5, depth, side, side);
+        // int score = s->negamax(depth, side, side);
     }
 }

@@ -43,17 +43,36 @@ namespace MoveUtils{
         return get_additional_info(move) == QUEEN_CASTLE;
     }
     void display(unsigned int move){
-        unsigned int side = get_side(move);
-        unsigned int from = get_from(move);
-        unsigned int to = get_to(move);
-        unsigned int piece = get_piece(move);
-        if(side == WHITE){
-            cout<<"white ";
-        } else {
-            cout<<"black ";
-        }
-        cout<<from<<" "<<to<<" "<<piece<<endl;
+        string side = side_as_string(get_side(move));
+        string from = square_as_string(get_from(move));
+        string to = square_as_string(get_to(move));
+        string piece = piece_as_string(get_piece(move));
+        cout<<side<<" "<<piece<<" "<<from<<" "<<to<<" "<<endl;
+
     }
+    string side_as_string(unsigned int side){
+        if(side == WHITE){
+            return "white";
+        } else {
+            return "black";
+        }
+    }
+    string piece_as_string(unsigned int piece){
+        if(piece == pPAWN)
+            return "pawn";
+        else if(piece == pKNIGHT)
+            return "knight";
+        else if(piece == pBISHOP)
+            return "bishop";
+        else if(piece == pROOK)
+            return "rook";
+        else if(piece == pQUEEN)
+            return "queen";
+        else if(piece == pKING)
+            return "king";
+        return "INVALID_PIECE";
+    }
+
     string move_as_string(unsigned int move){
         string from = square_as_string(get_from(move));
         string to = square_as_string(get_to(move));

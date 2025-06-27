@@ -39,73 +39,132 @@ unsigned int Search::perft(int original_depth, int depth_left, unsigned int side
     }
     return ans;
 }
-
-int Search::alpha_beta(int alpha, int beta, int depth_left, unsigned int side){
-
-    // LINE line;
+int Search::negamax(int depth_left, unsigned int side, unsigned int starting_side){
     if(depth_left == 0){
-        // return eval->get_material();
-        // return side == WHITE ? eval->get_material() : -eval->get_material();
-        // cout<<"calling quiesce\n";
-        return quiesce(alpha, beta, side);
-        // return quiesce(alpha, beta, side);
-
+        if(starting_side == BLACK)
+            return eval->get_material();
+        else 
+            return -eval->get_material();
     }
-    // int best_value = -1e5;
+    int best_val = -100000;
+
     MoveGen mg = MoveGen(side);
     unsigned int move = 0;
+    unsigned int selected_move = 0;
+    bool no_moves_left = true;
     while((move = mg.get_move()) != NO_MOVES_LEFT){
         if(move == INCREMENTING_MOVE_TYPE)
             continue;
+
         if(b->apply_move_if_legal(move)){
+            int new_val;
+            if(depth_left == max_depth)
+                new_val = -negamax(depth_left - 1, side ^ 1, starting_side);
+            else 
+                new_val = negamax(depth_left - 1, side ^ 1, starting_side);
 
-            int score = -alpha_beta(-beta, -alpha, depth_left - 1, side ^ 1);
             b->reverse_move(move);
+            
+            if(new_val > best_val){
+                selected_move = move;
+                if(depth_left == max_depth){
+                    cout<<"selected move: ";
+                    MoveUtils::display(selected_move);
+                    cout<<"new val: "<<new_val<<endl;
+                    cout<<"best val: "<<best_val<< endl;
+                }
+            } 
+            best_val = max(best_val, new_val);
+            no_moves_left = false;
+        }
+    }
+    if(no_moves_left){
+
+        if(b->get_bitboard()->attacked(side, b->get_king_location(side))){
+            return -100000 + (max_depth - depth_left); 
+        } else {
+            return 0;
+        }
+    }
+    // cout<<"depth_left: "<<depth_left<<endl;
+    // MoveUtils::display(selected_move);
+    // cout<<"best_val: "<<best_val<<endl<<endl;
+    return best_val;
+}
+int Search::alpha_beta(int alpha, int beta, int depth_left, unsigned int side, unsigned int starting_side, unsigned int root_move){
 
 
-            // if(depth_left == max_depth){
-            //     cout<<"move\n";
-            //     MoveUtils::display(move);
-            //     cout<<"score\n";
-            //     cout<<score<<endl;
-            // }
+    if(depth_left == 0){
+
+        if(starting_side == BLACK)
+            return eval->get_material();
+        else 
+            return -eval->get_material();
+
+    }
+
+    MoveGen mg = MoveGen(side);
+    unsigned int move = 0;
+    bool no_moves_left = true;
+
+    while((move = mg.get_move()) != NO_MOVES_LEFT){
+        if(move == INCREMENTING_MOVE_TYPE)
+            continue;
+
+        if(b->apply_move_if_legal(move)){
+            int score;
+            if(depth_left > max_depth - 1){
+                score = -alpha_beta(-beta, -alpha, depth_left - 1, side ^ 1, starting_side, move);
+            } else {
+                score = alpha_beta(alpha, beta,  depth_left - 1, side ^ 1, starting_side, move);
+            }
+
+            b->reverse_move(move);
             if(score >= beta){
                 return beta;
             } if(score > alpha){
-                alpha = score;
                 if(depth_left == max_depth){
                     selected_move = move;
-                    cout<<"selected move\n";
+                    cout<<"selected_move\n";
                     MoveUtils::display(selected_move);
-                }
+                    cout<<"score: "<<score<<endl;
+                    cout<<"alpha: "<<alpha<<endl;
+                } 
+                alpha = score;
             } 
-            // else if(score < alpha && side == BLACK){
-            //     alpha = score;
-            //     if(depth_left == max_depth){
-            //         selected_move = move;
-            //         cout<<"selected move\n";
-            //         MoveUtils::display(selected_move);
-            //     }
-            // }
+            no_moves_left = false;
         }
+
     }
-    // return best_value;
+
+    if(no_moves_left){
+
+        if(side == starting_side){
+            return -1e5;
+        } else {
+            return 1e5;
+        }
+        // if(starting_side == BLACK)
+        //     return eval->get_material();
+        // else 
+        //     return -eval->get_material();
+    }
     return alpha;
 }
-int Search::quiesce(int alpha, int beta, unsigned int side, int depth){
+int Search::quiesce(int alpha, int beta, int depth, unsigned int side,  unsigned int starting_side){
     int static_eval = eval->get_material();
+    // if(starting_side == BLACK){
+    //     static_eval = -static_eval;
+    // }
+    // int static_eval = eval->get_material();
     // Stand Pat
-    // if(depth > 0)
-    //     return static_eval;
     int best_value = static_eval;
     if( best_value >= beta )
         return best_value;
     if( best_value > alpha )
         alpha = best_value;
 
-    // cout<<"quiesce depth: "<<depth<<endl;
     MoveGen mg = MoveGen(side, 0, true);
-    // MoveUtils::display(mg.get_move());
     unsigned int move = 0;
     while((move = mg.get_move()) != NO_MOVES_LEFT){
         if(move == INCREMENTING_MOVE_TYPE || (!MoveUtils::is_capture(move) && !MoveUtils::is_ep_capture(move))){
@@ -115,7 +174,7 @@ int Search::quiesce(int alpha, int beta, unsigned int side, int depth){
         // MoveUtils::display(move);
 
         if(b->apply_move_if_legal(move)){
-            int score = -quiesce(-beta, -alpha, side ^ 1, depth + 1);
+            int score = -quiesce(-beta, -alpha, 0, side ^ 1, starting_side);
             b->reverse_move(move);
             if(score >= beta)
                 return score;
@@ -128,6 +187,67 @@ int Search::quiesce(int alpha, int beta, unsigned int side, int depth){
     }
 
     return best_value;
+}
+int Search::alpha_beta_1(int alpha, int beta, int depth_left, unsigned int side, unsigned int starting_side){
+    if(depth_left == 0){
+        int val = eval->get_material();
+        return (starting_side == WHITE) ? val : -val;
+    }
+    if((starting_side ^ 1) == side){
+        int value = -1e5;
+        MoveGen mg = MoveGen(side);
+        unsigned int move = 0;
+
+        while((move = mg.get_move()) != NO_MOVES_LEFT){
+            if(move == INCREMENTING_MOVE_TYPE)
+                continue;
+
+            if(b->apply_move_if_legal(move)){
+                value = max(value, alpha_beta_1(alpha, beta, depth_left - 1, side ^ 1, starting_side));
+                b->reverse_move(move);
+                if(value >= beta)
+                    break;
+                if(value > alpha){
+
+                    if(depth_left == max_depth){
+                        selected_move = move;
+                        cout<<"selected move\n";
+                        MoveUtils::display(selected_move);
+                        cout<<"alpha after: "<<value<<endl;
+                    }
+                    alpha = value;
+                }
+            }
+        }
+        return value;
+    } else {
+        int value = 1e5;
+        MoveGen mg = MoveGen(side);
+        unsigned int move = 0;
+
+        while((move = mg.get_move()) != NO_MOVES_LEFT){
+            if(move == INCREMENTING_MOVE_TYPE)
+                continue;
+
+            if(b->apply_move_if_legal(move)){
+                value = min(value, alpha_beta_1(alpha, beta, depth_left - 1, side ^ 1, starting_side));
+                b->reverse_move(move);
+                if(value <= alpha)
+                    break;
+                if(value < beta){
+                    if(depth_left == max_depth){
+                        selected_move = move;
+                        cout<<"selected move\n";
+                        MoveUtils::display(selected_move);
+                        cout<<"beta after: "<<value<<endl;
+                    }
+                    beta = value;
+                }
+            }
+        }
+
+        return value;
+    }
 }
 // float Search::alpha_beta(float alpha, float beta, int depth_left, int side, Line* line ){
 //     Line line;
@@ -175,9 +295,6 @@ int Search::quiesce(int alpha, int beta, unsigned int side, int depth){
 //     cout << "===> alpha-beta final alpha: " << alpha << "\n";
 //     cout << "===> depth_left: " << depth_left << "\n";
 //     return alpha;
-// }
-// float Search::quiesce(float alpha, float beta, unsigned int side){
-
 // }
 float Search::evaluate(){
     return 0.f;
