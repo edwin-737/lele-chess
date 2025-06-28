@@ -1,1 +1,1 @@
-./engine > output.txt -f ./positions/bk_1.txt -d 6 -s b -t a
+./engine > output.txt -f ./positions/alpha_beta_test_3.txt -j a -d 4 -s b 

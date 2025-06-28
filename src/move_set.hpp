@@ -27,8 +27,9 @@ namespace MoveSet{
     uint64 get_rook_attack_set(Bitboard* bb, int sq);
     uint64 get_bishop_attack_set(Bitboard* bb, int sq, int side);
     uint64 get_rook_attack_set(Bitboard* bb, int sq, int side);
-    uint64 get_piece_move_set(Bitboard* bb, int piece, int sq, int side);
-    uint64 get_piece_attack_set(Bitboard* bb, int piece, int sq, int side);
+    uint64 get_all_move_set(Bitboard* bb, int piece, int sq, int side);
+    uint64 get_capture_move_set(Bitboard* bb, int piece, int sq, int side);
+    uint64 get_quiet_move_set(Bitboard* bb, int piece, int sq, int side);
     bool king_attacked_by_move(Bitboard* bb, int piece, int sq, int side);
     inline map<int, uint64>  rook_attack_set[NUM_SQUARES], bishop_attack_set[NUM_SQUARES];
     inline Magics mg = Magics();

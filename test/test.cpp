@@ -256,6 +256,8 @@ TEST_CASE("En Passant Move Generated", "[En Passant]"){
         MoveUtils::create_move(d7, d5, BLACK, pPAWN, NO_PIECE, DOUBLE_PAWN_PUSH),
     };
     MoveGen mg = MoveGen(WHITE, mEP_CAPTURE);
+    // MoveGen mg = MoveGen(WHITE);
+    // mg.set_move_type(mEP_CAPTURE);
 
     SECTION("move type is mEP_CAPTURE"){
         REQUIRE(mg.get_special_move_type() == mEP_CAPTURE);
@@ -283,6 +285,8 @@ TEST_CASE("En Passant Move Generated", "[En Passant]"){
         MoveUtils::create_move(b7, b5, BLACK, pPAWN, NO_PIECE, DOUBLE_PAWN_PUSH)
     };    
     MoveGen mg1 = MoveGen(WHITE, mEP_CAPTURE);
+    // MoveGen mg1 = MoveGen(WHITE);
+    // mg1.set_move_type(mEP_CAPTURE);
 
     SECTION("queen side (a-b capture) en passant move generated"){
 
@@ -309,6 +313,9 @@ TEST_CASE("En Passant Move Generated", "[En Passant]"){
 
     MoveGen mg2 = MoveGen(WHITE, mEP_CAPTURE);
 
+    // MoveGen mg2 = MoveGen(WHITE);
+    // mg2.set_move_type(mEP_CAPTURE);
+
     SECTION("queen side (b-a capture) en passant move generated"){
 
         for(auto move: move_list){
@@ -332,6 +339,9 @@ TEST_CASE("En Passant Move Generated", "[En Passant]"){
         MoveUtils::create_move(g7, g5, BLACK, pPAWN, NO_PIECE, DOUBLE_PAWN_PUSH)
     };
     MoveGen mg3 = MoveGen(WHITE,  mEP_CAPTURE);
+    // MoveGen mg3 = MoveGen(WHITE);
+    // mg3.set_move_type(mEP_CAPTURE);
+
     SECTION("king side (h-g capture) en passant move generated"){
 
         for(auto move: move_list){
@@ -367,11 +377,16 @@ TEST_CASE("Only Captures","[MoveGen]"){
     Board* b = new Board();
     const char* fen_path = "./positions/starting_position.txt";
     b->parse_fen(fen_path);
-    MoveGen mg = MoveGen(WHITE, mQUIET, true);
+    // MoveGen mg = MoveGen(WHITE, mQUIET, true);
+    MoveGen mg = MoveGen(WHITE);
+    mg.set_gen_type(ONLY_CAPTURES);
+
     SECTION("No captures generated with starting position"){
         unsigned int move = 0;
         int move_count = 0;
         while((move = mg.get_move()) != NO_MOVES_LEFT){
+            if(move == INCREMENTING_MOVE_TYPE)
+                continue;
             move_count++;
         }
         REQUIRE(move_count == 0);
@@ -386,7 +401,11 @@ TEST_CASE("Only Captures","[MoveGen]"){
     b = new Board();
     const char* queen_trade_path = "./positions/queen_trade.txt";
     b->parse_fen(queen_trade_path);
-    MoveGen mg1 = MoveGen(BLACK, mQUIET, true);
+
+    // MoveGen mg1 = MoveGen(BLACK, mQUIET, true);
+    MoveGen mg1 = MoveGen(BLACK);
+    mg1.set_gen_type(ONLY_CAPTURES);
+
     vector<unsigned int> expected_moves = {
         MoveUtils::create_move(f8, a3, BLACK, pBISHOP, pPAWN, CAPTURE),
         MoveUtils::create_move(d8, d1, BLACK, pQUEEN, pQUEEN, CAPTURE),
@@ -397,11 +416,19 @@ TEST_CASE("Only Captures","[MoveGen]"){
         int move_count = 0;
         
         while((move = mg1.get_move()) != NO_MOVES_LEFT){
+            if(move == INCREMENTING_MOVE_TYPE)
+                continue;
             move_count++;
             actual_moves.push_back(move);
         }
-        REQUIRE(are_move_vectors_equal(actual_moves, expected_moves));
+        for(int i = 0 ; i < actual_moves.size() ; i ++){
+            // cout<<actual_moves[i]<<" ";
+            MoveUtils::display(actual_moves[i]);
+            cout<<" ";
+        }
+        cout<<endl;
         REQUIRE(move_count == 2);
+        REQUIRE(are_move_vectors_equal(actual_moves, expected_moves));
     }
     delete b;
     delete Bitboard::instanceptr;

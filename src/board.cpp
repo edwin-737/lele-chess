@@ -223,12 +223,12 @@ void Board::reverse_move(unsigned int move, int update_num_moves){
 bool Board::apply_move_if_legal(unsigned int move, int update_num_moves)
 {
     // cout<<"apply_move_if_legal\n";
-    unsigned int defending_isde = MoveUtils::get_side(move);
+    unsigned int defending_side = MoveUtils::get_side(move);
     // cout<<"side: "<<side<<endl;
     apply_move(move, update_num_moves);
     // int king_location = get_piece_location(side, pKING);
-    int king_location = get_king_location(defending_isde);
-    if(bb->attacked(defending_isde, king_location)){
+    int king_location = get_king_location(defending_side);
+    if(bb->attacked(defending_side, king_location)){
         // cout<<"king attacked, reversing move\n";
         reverse_move(move, update_num_moves);
         return false;

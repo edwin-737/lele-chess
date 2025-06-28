@@ -9,12 +9,6 @@
 #include "board_info.hpp"
 #include "move_set.hpp"
 using namespace std::chrono;
-// #define NONE 0
-// #define FEN 1
-// #define DEPTH 2
-// #define SIDE 3
-// #define TASK 4
-
 typedef enum Task{
     PERFT,
     ALPHA_BETA
@@ -53,7 +47,7 @@ int main(int argc, char** argv)
             cout<<"side: "<< side << endl;
             arg_state = NONE;
         } else if(arg_state == TASK){
-            task = PERFT ? argv[i][0] == 'p' : ALPHA_BETA;
+            task = ALPHA_BETA ? argv[i][0] == 'a' : PERFT;
             cout<<"task: "<<task<<endl;
             arg_state = NONE;
         } else{
@@ -65,7 +59,7 @@ int main(int argc, char** argv)
             } else if(strcmp(argv[i], "-s") == 0){
                 arg_state = SIDE;
             }
-             else if(strcmp(argv[i], "-t") == 0){
+             else if(strcmp(argv[i], "-j") == 0){
                 arg_state = TASK;
             }
         }
@@ -86,10 +80,6 @@ int main(int argc, char** argv)
     BoardInfo::set_castle_rights(b->get_initial_castle_rights());
     BoardInfo::set_ep_rights(b->get_initial_ep_rights());
     BoardInfo::set_board_info(b->get_initial_castle_rights(), b->get_initial_ep_rights());
-    // cout<<"initial ep rights\n";
-    // cout<<b->get_board_info()->peek_ep_right()<<endl;
-    // cout<<"initial castle rights\n";
-    // cout<<b->get_board_info()->peek_castle_right()<<endl;
 
     Search* s = new Search(b, depth);
     auto start = high_resolution_clock::now();
@@ -110,8 +100,8 @@ int main(int argc, char** argv)
         cout<<"search max depth: "<<s->max_depth<<endl;
         cout<<"search depth: "<<depth<<endl;
         cout<<"side: "<<side<<endl;
-        // int score = s->alpha_beta_1(-1e5, 1e5, depth, side, side);
+
         int score = s->alpha_beta(-1e5, 1e5, depth, side, side);
-        // int score = s->negamax(depth, side, side);
+
     }
 }

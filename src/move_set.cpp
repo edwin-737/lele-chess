@@ -196,7 +196,7 @@ uint64 MoveSet::get_rook_attack_set(Bitboard* bb, int sq)
     uint64 attack_set = rook_attack_set[sq][index];
     return attack_set;
 }
-uint64 MoveSet::get_piece_move_set(Bitboard* bb, int piece, int sq, int side)
+uint64 MoveSet::get_all_move_set(Bitboard* bb, int piece, int sq, int side)
 {
     switch(piece){
         case Piece::pPAWN:
@@ -215,26 +215,44 @@ uint64 MoveSet::get_piece_move_set(Bitboard* bb, int piece, int sq, int side)
             return 0;
     }
 }
-uint64 MoveSet::get_piece_attack_set(Bitboard* bb, int piece, int sq, int side)
+uint64 MoveSet::get_capture_move_set(Bitboard* bb, int piece, int sq, int side)
 {
     switch(piece){
         case Piece::pPAWN:
-            return get_pawn_attack_set(bb, sq, side);
+            return get_pawn_attack_set(bb, sq, side) & bb->collective_piece_boards[side ^ 1];
         case Piece::pBISHOP:
-            return get_bishop_attack_set(bb, sq, side);
+            return get_bishop_attack_set(bb, sq, side) & bb->collective_piece_boards[side ^ 1];
         case Piece::pROOK:
-            return get_rook_attack_set(bb, sq, side);
+            return get_rook_attack_set(bb, sq, side) & bb->collective_piece_boards[side ^ 1];
         case Piece::pKNIGHT:
-            return get_knight_attack_set(bb, sq, side);
+            return get_knight_attack_set(bb, sq, side) & bb->collective_piece_boards[side ^ 1];
         case Piece::pKING:
-            return get_king_attack_set(bb, sq, side);
+            return get_king_attack_set(bb, sq, side) & bb->collective_piece_boards[side ^ 1];
         case Piece::pQUEEN:
-            return get_bishop_attack_set(bb, sq, side) | get_rook_attack_set(bb, sq, side);
+            return (get_bishop_attack_set(bb, sq, side) | get_rook_attack_set(bb, sq, side)) & bb->collective_piece_boards[side ^ 1];
         default:
             return 0;
     }
 }
-
+uint64 MoveSet::get_quiet_move_set(Bitboard* bb, int piece, int sq, int side)
+{
+    switch(piece){
+        case Piece::pPAWN:
+            return get_pawn_forward_mask(bb, sq, side) & (~bb->collective_piece_boards[side ^ 1]);
+        case Piece::pBISHOP:
+            return get_bishop_attack_set(bb, sq, side) & (~bb->collective_piece_boards[side ^ 1]);
+        case Piece::pROOK:
+            return get_rook_attack_set(bb, sq, side) & (~bb->collective_piece_boards[side ^ 1]);
+        case Piece::pKNIGHT:
+            return get_knight_attack_set(bb, sq, side) & (~bb->collective_piece_boards[side ^ 1]);
+        case Piece::pKING:
+            return get_king_attack_set(bb, sq, side) & (~bb->collective_piece_boards[side ^ 1]);
+        case Piece::pQUEEN:
+            return (get_bishop_attack_set(bb, sq, side) | get_rook_attack_set(bb, sq, side)) & (~bb->collective_piece_boards[side ^ 1]);
+        default:
+            return 0;
+    }
+}
 bool MoveSet::king_attacked_by_move(Bitboard* bb, int piece, int sq, int side){
-    return get_piece_attack_set(bb, piece, sq, side) & bb->piece_boards[side ^ 1][pKING];
+    return get_capture_move_set(bb, piece, sq, side) & bb->piece_boards[side ^ 1][pKING];
 }

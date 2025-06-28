@@ -18,6 +18,11 @@ using namespace BoardSquares;
 #define BLACK_QUEEN_CASTLE_SQUARES 0xe00000000000000ULL
 #define EP_START -1
 #define EP_FINISHED 8
+enum GenType {
+    ALL_MOVES,
+    ONLY_CAPTURES,
+    ONLY_QUIET
+};
 class MoveGen{
     /**
      * Move generation class which keeps a stack of moves being explored during search
@@ -26,10 +31,10 @@ public:
     MoveGen():move_type(QUIET_MOVE),side(WHITE),piece(pPAWN),from(0),to(0),ep_from(EP_START){
     }
     MoveGen(
-        int _side, int _move_type=mQUIET, bool _only_captures=false, int _piece=0, int _from=0, int _to=0): side(_side), move_type(_move_type), only_captures(_only_captures), piece(_piece), from(_from), to(_to), ep_from(EP_START){
-            // if(_from > 0 && _to > 0)
-            //     initialised = true;
+        int _side, int _move_type=mQUIET, bool _only_captures=false): side(_side), move_type(_move_type), gen_type(ALL_MOVES), only_captures(_only_captures), piece(pPAWN), from(0), to(0), ep_from(EP_START){
         }
+    void set_gen_type(int _gen_type);
+    void set_move_type(int _move_type);
     int get_special_move_type();
     unsigned int get_move();
     unsigned int get_special_move();
@@ -37,27 +42,23 @@ public:
     // void add_move(unsigned int move);
     // void add_capture(unsigned int capture);
 private:
-    // vector<unsigned int> moves, captures;
     bool initialise_piece();
     bool update_piece();
-    int get_next_piece();
     bool update_from();
-    int get_next_from();
     bool update_to();
-    int get_next_to();
     bool can_castle_kingside(int side);
     bool can_castle_queenside(int side);
     unsigned int get_ep_capture(int side);
     Bitboard* bb = Bitboard::get_instance();
     BoardInfo* bi = BoardInfo::get_instance();
-    unsigned int move_type = mQUIET, piece, from, to;
+    unsigned int move_type = mQUIET, gen_type, piece, from, to;
     int max_special_moves[7] = {
         250, 1, 1, 2, 8, 8, 8
     };
     int num_special_moves[7] = {
         0, 0, 0, 0, 0, 0, 0
     };
-    bool finished_special_move[13],only_captures;
+    bool only_captures;
     int ep_from;
     const int side;
     int depth;

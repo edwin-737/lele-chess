@@ -8,10 +8,7 @@
 #include "move_gen.hpp"
 #include "evaluation.hpp"
 using namespace std;
-// typedef struct LINE {
-//     int cmove;              // Number of moves in the line.
-//     unsigned int argmove[MAX_DEPTH];  // The line.
-// }   LINE;
+
 class Search{
 public:
     Search(Board* _b, int _max_depth=5): b(_b), max_depth(_max_depth){
@@ -19,10 +16,7 @@ public:
     }
 
     unsigned int perft(int original_depth,int depth_left, unsigned int side, unsigned int root_move = 0ULL);
-    // int alpha_beta(int alpha, int beta, int depth_left, unsigned int side);
     int alpha_beta(int alpha, int beta, int depth_left, unsigned int side, unsigned int starting_side, unsigned int root_move=0);
-    int alpha_beta_1(int alpha, int beta, int depth_left, unsigned int side, unsigned int starting_side);
-    int negamax(int depth_left, unsigned int side, unsigned int starting_side);
     int quiesce(int alpha, int beta, int depth, unsigned int side, unsigned int starting_side);
     float evaluate();
     int static_exchange_evaluation(unsigned int side, int square);
