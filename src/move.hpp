@@ -1,6 +1,7 @@
 #ifndef move_h
 #define move_h
 #include <string>
+#include "const.hpp"
 using namespace std;
 typedef enum add_info{
     // generated as normal moves
@@ -38,7 +39,7 @@ typedef enum move_types {
 // 4 bits: additional info
 // 3 bits: ep capture file
 namespace MoveUtils{
-    unsigned int create_move(unsigned int from, unsigned int to, unsigned int side, unsigned int piece, unsigned int captured_piece = 0, unsigned int additional_info = 0, unsigned int ep_capture_file = 0);
+    unsigned int create_move(unsigned int from, unsigned int to, unsigned int side, unsigned int piece, unsigned int captured_piece=NO_PIECE, unsigned int additional_info = 0, unsigned int ep_capture_file = 0);
     unsigned int get_from(unsigned int move);
     unsigned int get_to(unsigned int move);
     unsigned int get_side(unsigned int move);
@@ -46,15 +47,29 @@ namespace MoveUtils{
     unsigned int get_captured_piece(unsigned int move);
     unsigned int get_additional_info(unsigned int move);
     unsigned int get_ep_capture_file(unsigned int move);
+    int get_ep_capture_sq(unsigned int side, unsigned int ep_capture_file);
+    bool is_quiet(unsigned int move);
+    bool is_double_pawn_push(unsigned int move);
     bool is_capture(unsigned int move);
     bool is_ep_capture(unsigned int move);
     bool is_castle(unsigned int move);
     bool is_king_castle(unsigned int move);
     bool is_queen_castle(unsigned int move);
+    bool is_capture_promotion(unsigned int move);
+    bool is_knight_capture_promotion(unsigned int move);
+    bool is_bishop_capture_promotion(unsigned int move);
+    bool is_rook_capture_promotion(unsigned int move);
+    bool is_queen_capture_promotion(unsigned int move);
+    bool is_promotion(unsigned int move);
+    bool is_knight_promotion(unsigned int move);
+    bool is_bishop_promotion(unsigned int move);
+    bool is_rook_promotion(unsigned int move);
+    bool is_queen_promotion(unsigned int move);
     void display(unsigned int move);
     string piece_as_string(unsigned int piece);
     string side_as_string(unsigned int side);
     string move_as_string(unsigned int move);
     string square_as_string(unsigned int square);
+    string additional_info_as_string(unsigned int additional_info);
 };
 #endif

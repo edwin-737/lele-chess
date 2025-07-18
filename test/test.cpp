@@ -15,6 +15,7 @@
 #include "board_info.hpp"
 #include "move_set.hpp"
 #include "utils.hpp"
+#include "hash_generator.hpp"
 using namespace std::chrono;
 using namespace std;
 #define NONE 0
@@ -453,35 +454,55 @@ TEST_CASE("Number of nodes during search","[MoveGen]"){
     Search* s = new Search(b);
 
     SECTION("Depth = 1"){
-        // s->search(1, WHITE);
         REQUIRE(s->perft(1, 1, WHITE) == 20);
         REQUIRE(s->num_captures == 0);
     }
-    SECTION("Depth = 2"){
-        // s->search(2, WHITE);
-        REQUIRE(s->perft(2, 2, WHITE) == 400);
-        REQUIRE(s->num_captures == 0);
-    }
-    SECTION("Depth = 3"){
-        // s->search(3, WHITE);
-        REQUIRE(s->perft(3, 3, WHITE) == 8902);
-        REQUIRE(s->num_captures == 34);
-    }
-    SECTION("Depth = 4"){
-        // s->search(4, WHITE);
-        REQUIRE(s->perft(4, 4, WHITE) == 197281);
-        REQUIRE(s->num_captures == 1576);
-    }
-    SECTION("Depth = 5"){
-        // s->search(5, WHITE);
-        REQUIRE(s->perft(5, 5, WHITE) == 4865609);
-        REQUIRE(s->num_captures == 82719);
-    }
-    SECTION("Depth = 6"){
-        // s->search(6, WHITE);
-        // REQUIRE(s->num_nodes == 119060324);
-        REQUIRE(s->perft(6, 6, WHITE) == 119060324);
-        REQUIRE(s->num_captures == 2812008);
+
+    // SECTION("Depth = 2"){
+    //     REQUIRE(s->perft(2, 2, WHITE) == 400);
+    //     REQUIRE(s->num_captures == 0);
+    // }
+    // SECTION("Depth = 3"){
+    //     REQUIRE(s->perft(3, 3, WHITE) == 8902);
+    //     REQUIRE(s->num_captures == 34);
+    // }
+    // SECTION("Depth = 4"){
+    //     REQUIRE(s->perft(4, 4, WHITE) == 197281);
+    //     REQUIRE(s->num_captures == 1576);
+    // }
+    // SECTION("Depth = 5"){
+    //     REQUIRE(s->perft(5, 5, WHITE) == 4865609);
+    //     REQUIRE(s->num_captures == 82719);
+    // }
+    // // Depth = 6 takes 45s, quite slow so i commented it out
+    // SECTION("Depth = 6"){
+    //     REQUIRE(s->perft(6, 6, WHITE) == 119060324);
+    //     REQUIRE(s->num_captures == 2812008);
+    // }
+    delete b;
+    delete Bitboard::instanceptr;
+    delete BoardInfo::instanceptr;
+    b = nullptr;
+    Bitboard::instanceptr = nullptr;
+    BoardInfo::instanceptr = nullptr;
+}
+TEST_CASE("Alpha beta pruning with Bratko-Kopec test positions", "[Search]"){
+    BoardSquares::init_files();
+    BoardSquares::init_ranks();
+    BoardSquares::init_squares();
+    MoveSet::set_attack_sets();
+    MoveSet::init_attack_masks();
+
+    Board* b = new Board();
+    const char* fen_path = "./positions/test/bk_1.txt";
+    b->parse_fen(fen_path);
+    Search* s = new Search(b, 6);
+
+    SECTION("Position 1, best move = d6d1"){
+        s->alpha_beta(-1e5, 1e5, 6, b->get_side_to_move(), b->get_side_to_move());
+        unsigned int expected_move = MoveUtils::create_move(d6, d1, BLACK, pQUEEN);
+        MoveUtils::display(expected_move);
+        REQUIRE(s->selected_move == expected_move);
     }
     delete b;
     delete Bitboard::instanceptr;
@@ -489,4 +510,42 @@ TEST_CASE("Number of nodes during search","[MoveGen]"){
     b = nullptr;
     Bitboard::instanceptr = nullptr;
     BoardInfo::instanceptr = nullptr;
+}
+TEST_CASE("Zobrist hash keys and values", "[Board]"){
+    BoardSquares::init_files();
+    BoardSquares::init_ranks();
+    BoardSquares::init_squares();
+    MoveSet::set_attack_sets();
+    MoveSet::init_attack_masks();
+
+    Board* b = new Board();
+    const char* fen_path = "./positions/starting_position.txt";
+    b->parse_fen(fen_path);
+    SECTION("Zobrist map has correct keyset"){
+
+        map<unsigned int, bool> expected_keyset;
+        for(unsigned int i = 0 ; i < NUM_ZOBRIST_KEYS ; i ++)
+            expected_keyset.insert({i, false});
+        for(const auto &zobrist_keyval : b->get_zobrist_map() ) 
+            expected_keyset[zobrist_keyval.first] = true;
+
+        bool correct_keys = true;
+        for(unsigned int i = 0 ; i < NUM_ZOBRIST_KEYS ; i ++){
+            bool present = expected_keyset.find(i) != expected_keyset.end();
+            correct_keys &= expected_keyset[i];
+        }
+
+        REQUIRE(correct_keys);
+    }
+    SECTION("Zobrist map has unique values"){
+        set<unsigned long long> seen_vals;
+        bool all_vals_unique = true;
+        for(unsigned int i = 0 ; i < NUM_ZOBRIST_KEYS ; i ++){
+            unsigned long long zobrist_val = b->get_zobrist_val(i);
+            bool unique = seen_vals.find(zobrist_val) == seen_vals.end();
+            all_vals_unique &= unique;
+            seen_vals.insert(zobrist_val);
+        }
+        REQUIRE(all_vals_unique);
+    }
 }

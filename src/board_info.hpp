@@ -15,7 +15,7 @@ private:
     // ep_rights: 4 bits
     // letter: file of pawn that was just double pawn pushed and that can be captured
     // 0: a | 1: b ... 7: h
-    stack<int> castle_rights_stack, ep_rights_stack, move_stack, bi_stack;
+    stack<unsigned int> castle_rights_stack, ep_rights_stack, move_stack, bi_stack;
 public:    
     unsigned int num_nodes = 0, num_captures = 0, num_ep_captures = 0, num_checks = 0, num_checkmates = 0, num_castles = 0;
     static BoardInfo* instanceptr;
@@ -28,7 +28,7 @@ public:
         // castle_rights_stack.push(INITIAL_CASTLE_RIGHTS);
         // ep_rights_stack.push(NO_EP_RIGHTS);
     }
-    BoardInfo(int initial_castle_rights, int initial_ep_rights){
+    BoardInfo(unsigned int initial_castle_rights, unsigned int initial_ep_rights){
         bi_stack.push((initial_castle_rights << 4) | initial_ep_rights);
 
         // castle_rights_stack.push(initial_castle_rights);
@@ -42,28 +42,28 @@ public:
         }
         return instanceptr;
     }
-    static void set_board_info(int castle_rights, int ep_rights){
+    static void set_board_info(unsigned int castle_rights, unsigned int ep_rights){
         if(instanceptr == nullptr){
             return;
         }
         instanceptr->remove_board_info();
         instanceptr->add_board_info(castle_rights, ep_rights);
     }
-    static void set_ep_rights(int ep_rights){
+    static void set_ep_rights(unsigned int ep_rights){
         if(instanceptr == nullptr){
             return;
         }
         instanceptr->remove_ep_right();
         instanceptr->add_ep_right(ep_rights);
     }
-    static void set_castle_rights(int castle_rights){
+    static void set_castle_rights(unsigned int castle_rights){
         if(instanceptr == nullptr){
             return;
         }
         instanceptr->remove_castle_right();
         instanceptr->add_castle_right(castle_rights);
     }
-    void add_board_info(int castle_right, int ep_right){
+    void add_board_info(unsigned int castle_right, unsigned int ep_right){
         // cout<<"add board info\n";
         // cout<<"castle right: "<<castle_right<<endl;
         // cout<<"ep right: "<<ep_right<<endl;
@@ -74,41 +74,41 @@ public:
         if(!bi_stack.empty())
             bi_stack.pop();
     }
-    int peek_board_info(){
+    unsigned int peek_board_info(){
         if(!bi_stack.empty())
             return bi_stack.top();
         else 
             return 0;
     }
-    void add_castle_right(int castle_right){
+    void add_castle_right(unsigned int castle_right){
         castle_rights_stack.push(castle_right);
     }
     void remove_castle_right(){
         if(!castle_rights_stack.empty())
             castle_rights_stack.pop();
     }
-    int peek_castle_right(){
+    unsigned int peek_castle_right(){
         return peek_board_info() >> 4;
         // if(!castle_rights_stack.empty())
         //     return castle_rights_stack.top();
         // else 
         //     return 0;
     }
-    void add_ep_right(int ep_right){
+    void add_ep_right(unsigned int ep_right){
         ep_rights_stack.push(ep_right);
     }
     void remove_ep_right(){
         if(!ep_rights_stack.empty())
             ep_rights_stack.pop();
     }
-    int peek_ep_right(){
+    unsigned int peek_ep_right(){
         return peek_board_info() & 0xf;
         // if(!ep_rights_stack.empty())
         //     return ep_rights_stack.top();
         // else
         //     return 0;
     }
-    void add_move(int move){
+    void add_move(unsigned int move){
         move_stack.push(move);
     }
     void remove_move(){

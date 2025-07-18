@@ -58,8 +58,7 @@ int main(int argc, char** argv)
                 arg_state = DEPTH;
             } else if(strcmp(argv[i], "-s") == 0){
                 arg_state = SIDE;
-            }
-             else if(strcmp(argv[i], "-j") == 0){
+            } else if(strcmp(argv[i], "-j") == 0){
                 arg_state = TASK;
             }
         }
@@ -84,12 +83,13 @@ int main(int argc, char** argv)
     Search* s = new Search(b, depth);
     auto start = high_resolution_clock::now();
     if(task == PERFT){
-        unsigned int num_nodes = s->perft(depth, depth, side);
+        unsigned int perft_num_nodes = s->perft(depth, depth, side);
         auto stop = high_resolution_clock::now();    
         auto duration = duration_cast<microseconds>(stop - start);
         cout << "Time taken by perft at depth=" << depth<<":"
             << duration.count() << " microseconds" << endl;
-        cout<<"nodes: "<<num_nodes<<endl;
+        cout<<"nodes using transposition: "<<perft_num_nodes<<endl;
+        cout<<"nodes explored: "<<s->num_nodes<<endl;
         cout<<"captures: "<<s->num_captures<<endl;
         cout<<"ep_captures: "<<s->num_ep_captures<<endl;
         cout<<"checks: "<<s->num_checks<<endl;
@@ -99,9 +99,9 @@ int main(int argc, char** argv)
     } else {
         cout<<"search max depth: "<<s->max_depth<<endl;
         cout<<"search depth: "<<depth<<endl;
-        cout<<"side: "<<side<<endl;
+        cout<<"side: "<<b->get_side_to_move()<<endl;
 
-        int score = s->alpha_beta(-1e5, 1e5, depth, side, side);
+        int score = s->alpha_beta(-1e5, 1e5, depth, b->get_side_to_move(), b->get_side_to_move());
 
     }
 }

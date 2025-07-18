@@ -22,6 +22,7 @@ public:
     int static_exchange_evaluation(unsigned int side, int square);
     int static_exchange_evaluation(int move);
     unsigned int num_nodes = 0, num_captures = 0, num_ep_captures = 0, num_checks = 0, num_checkmates = 0, num_castles = 0;
+    unsigned int selected_move = 0;
     const int max_depth;
 private:
     Board* b;
@@ -31,7 +32,6 @@ private:
     // LINE* pv;
     // unsigned int moves[MAX_DEPTH];
     // int variation_idx = 0, depth_idx = MAX_DEPTH - 1;
-    unsigned int selected_move; 
     int material = 0;
 };
 

@@ -38,7 +38,6 @@ public:
     int get_special_move_type();
     unsigned int get_move();
     unsigned int get_special_move();
-    unsigned int get_capture();
     // void add_move(unsigned int move);
     // void add_capture(unsigned int capture);
 private:
@@ -48,16 +47,11 @@ private:
     bool update_to();
     bool can_castle_kingside(int side);
     bool can_castle_queenside(int side);
+    bool is_final_rank(int side, int sq);
     unsigned int get_ep_capture(int side);
     Bitboard* bb = Bitboard::get_instance();
     BoardInfo* bi = BoardInfo::get_instance();
     unsigned int move_type = mQUIET, gen_type, piece, from, to;
-    int max_special_moves[7] = {
-        250, 1, 1, 2, 8, 8, 8
-    };
-    int num_special_moves[7] = {
-        0, 0, 0, 0, 0, 0, 0
-    };
     bool only_captures;
     int ep_from;
     const int side;

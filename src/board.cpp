@@ -2,15 +2,57 @@
 #include "board.hpp"
 #include "board_squares.hpp"
 using namespace BoardSquares;
-void Board::apply_move(unsigned int move, int update_num_moves){
+void Board::apply_move(unsigned int move){
     unsigned int side = MoveUtils::get_side(move);
     unsigned int piece = MoveUtils::get_piece(move);
     unsigned int from = MoveUtils::get_from(move);
     unsigned int to = MoveUtils::get_to(move);        
-    int castle_rights = bi->peek_castle_right();
-
-    if(MoveUtils::is_castle(move)){
-        // bi->num_castles += update_num_moves;
+    unsigned int castle_rights = bi->peek_castle_right();
+    unsigned int ep_rights = bi->peek_ep_right();
+    if(MoveUtils::is_quiet(move)){
+        uint64 from_to = get_from_to(from, to);
+        bb->piece_boards[side][piece] ^= from_to;
+        bb->collective_piece_boards[side] ^= from_to;
+        unsigned int new_castle_rights = castle_rights;
+        unsigned int additional_info = MoveUtils::get_additional_info(move);
+        if(piece == pKING){
+            if(side == WHITE){
+                new_castle_rights &= 0x3;
+            } else{
+                new_castle_rights &= 0xc;
+            }
+            update_king_location(side, to);
+        } else if(piece == pROOK){
+            if(side == WHITE){
+                if(from == a1){
+                    new_castle_rights &= 0b1011;
+                } else if(from == h1){
+                    new_castle_rights &= 0b0111;
+                } 
+            } else{
+                if(from == a8){
+                    new_castle_rights &= 0b1110;
+                } else if(from == h8 ){
+                    new_castle_rights &= 0b1101;
+                }
+            } 
+        }            
+        bi->add_board_info(new_castle_rights, NO_EP_RIGHTS);
+        update_zobrist_hash_val(move, ep_rights, NO_EP_RIGHTS, castle_rights, new_castle_rights);
+    } else if(MoveUtils::is_double_pawn_push(move)){
+        uint64 from_to = get_from_to(from, to);
+        bb->piece_boards[side][pPAWN] ^= from_to;
+        bb->collective_piece_boards[side] ^= from_to;
+        int new_ep_rights = ep_rights;
+        if(side == WHITE){
+            new_ep_rights = to - a4;
+        } else {
+            new_ep_rights = to - a5;
+        }
+        bi->add_board_info(castle_rights, new_ep_rights);
+        update_zobrist_hash_val(move, ep_rights, new_ep_rights, castle_rights, castle_rights);
+    } else if(MoveUtils::is_castle(move)){
+        unsigned int new_castle_rights = castle_rights;
         if(MoveUtils::is_king_castle(move) && side == WHITE){
             uint64 king_from_to = get_from_to(e1, g1);
             bb->piece_boards[side][pKING] ^= king_from_to;
@@ -20,7 +62,7 @@ void Board::apply_move(unsigned int move, int update_num_moves){
             bb->piece_boards[side][pROOK] ^= rook_from_to;
             bb->collective_piece_boards[side] ^= rook_from_to;
 
-            castle_rights &= 0x3;
+            new_castle_rights &= 0x3;
             update_king_location(side, g1);
         } else if(MoveUtils::is_queen_castle(move) && side == WHITE){
             uint64 king_from_to = get_from_to(e1, c1);
@@ -31,7 +73,7 @@ void Board::apply_move(unsigned int move, int update_num_moves){
             bb->piece_boards[side][pROOK] ^= rook_from_to;
             bb->collective_piece_boards[side] ^= rook_from_to;
 
-            castle_rights &= 0x3;
+            new_castle_rights &= 0x3;
             update_king_location(side, c1);
         } else if(MoveUtils::is_king_castle(move) && side == BLACK){
             uint64 king_from_to = get_from_to(e8, g8);
@@ -42,7 +84,7 @@ void Board::apply_move(unsigned int move, int update_num_moves){
             bb->piece_boards[side][pROOK] ^= rook_from_to;
             bb->collective_piece_boards[side] ^= rook_from_to;
 
-            castle_rights &= 0xc;
+            new_castle_rights &= 0xc;
             update_king_location(side, g8);
         } else if(MoveUtils::is_queen_castle(move) && side == BLACK){
             uint64 king_from_to = get_from_to(e8, c8);
@@ -53,11 +95,27 @@ void Board::apply_move(unsigned int move, int update_num_moves){
             bb->piece_boards[side][pROOK] ^= rook_from_to;
             bb->collective_piece_boards[side] ^= rook_from_to;
 
-            castle_rights &= 0xc;
+            new_castle_rights &= 0xc;
             update_king_location(side, c8);
         } 
+        bi->add_board_info(new_castle_rights, NO_EP_RIGHTS);
+        update_zobrist_hash_val(move, ep_rights, NO_EP_RIGHTS, castle_rights, new_castle_rights);
+
+    } else if(MoveUtils::is_ep_capture(move)){
+        uint64 from_to = get_from_to(from, to);
+        bb->piece_boards[side][piece] ^= from_to;
+        bb->collective_piece_boards[side] ^= from_to;
+        int captured_file = MoveUtils::get_ep_capture_file(move);
+        int captured_sq =  MoveUtils::get_ep_capture_sq(side, captured_file);
+
+        uint64 sq_bitboard = get_square_bitboard(captured_sq);
+        bb->piece_boards[side ^ 1][pPAWN] ^= sq_bitboard;
+        bb->collective_piece_boards[side ^ 1] ^= sq_bitboard;
         bi->add_board_info(castle_rights, NO_EP_RIGHTS);
+
+        update_zobrist_hash_val(move, ep_rights, NO_EP_RIGHTS, castle_rights, castle_rights);
     } else if(MoveUtils::is_capture(move)){    
+        unsigned int new_castle_rights = castle_rights;
         uint64 from_to = get_from_to(from, to);
         bb->piece_boards[side][piece] ^= from_to;
         bb->collective_piece_boards[side] ^= from_to;
@@ -68,85 +126,84 @@ void Board::apply_move(unsigned int move, int update_num_moves){
 
         if(piece == pKING){
             if(side == WHITE){
-                castle_rights &= 0x3;
+                new_castle_rights &= 0x3;
             } else{
-                castle_rights &= 0xc;
+                new_castle_rights &= 0xc;
             }
             update_king_location(side, to);
-            // cout<<"move is capture king move\n";
-            bi->add_board_info(castle_rights, NO_EP_RIGHTS);
-        } else {
-            bi->add_board_info(castle_rights, NO_EP_RIGHTS);
-        }
-    } else if(MoveUtils::is_ep_capture(move)){
-        // bi->num_ep_captures+=update_num_moves;
-        // bi->num_captures+=update_num_moves;
-        uint64 from_to = get_from_to(from, to);
-        bb->piece_boards[side][piece] ^= from_to;
-        bb->collective_piece_boards[side] ^= from_to;
-        int captured_file = MoveUtils::get_ep_capture_file(move);
-        int captured_sq =  side == WHITE ? a5 + captured_file : a4 + captured_file;
-
-        uint64 sq_bitboard = get_square_bitboard(captured_sq);
-        bb->piece_boards[side ^ 1][pPAWN] ^= sq_bitboard;
-        bb->collective_piece_boards[side ^ 1] ^= sq_bitboard;
-
-        bi->add_board_info(castle_rights, NO_EP_RIGHTS);
-    } else {
-        uint64 from_to = get_from_to(from, to);
-        bb->piece_boards[side][piece] ^= from_to;
-        bb->collective_piece_boards[side] ^= from_to;
-
-        unsigned int additional_info = MoveUtils::get_additional_info(move);
-        if(piece == pKING){
-            if(side == WHITE){
-                castle_rights &= 0x3;
-            } else{
-                castle_rights &= 0xc;
-            }
-            update_king_location(side, to);
-            // cout<<"move is quiet king move\n";
-            bi->add_board_info(castle_rights, NO_EP_RIGHTS);
+            bi->add_board_info(new_castle_rights, NO_EP_RIGHTS);
+            update_zobrist_hash_val(move, ep_rights, NO_EP_RIGHTS, castle_rights, new_castle_rights);
         } else if(piece == pROOK){
             if(side == WHITE){
                 if(from == a1){
-                    castle_rights &= (0b1111 ^ 0b0100);
+                    new_castle_rights &= 0b1011;
                 } else if(from == h1){
-                    castle_rights &= (0b1111 ^ 0b1000);
+                    new_castle_rights &= 0b0111;
                 } 
             } else{
                 if(from == a8){
-                    castle_rights &= (0b1111 ^ 0b0001);
+                    new_castle_rights &= 0b1110;
                 } else if(from == h8 ){
-                    castle_rights &= (0b1111 ^ 0b0010);
+                    new_castle_rights &= 0b1101;
                 }
             } 
-            // cout<<"move is quiet rook move\n";
-            bi->add_board_info(castle_rights, NO_EP_RIGHTS);
-        } else if(piece == pPAWN && additional_info == DOUBLE_PAWN_PUSH){
-            int ep_rights = bi->peek_ep_right();
-            if(side == WHITE){
-                ep_rights = to - a4;
-            } else {
-                ep_rights = to - a5;
-            }
-            bi->add_board_info(castle_rights, ep_rights);
+            bi->add_board_info(new_castle_rights, NO_EP_RIGHTS);
+            update_zobrist_hash_val(move, ep_rights, NO_EP_RIGHTS, castle_rights, new_castle_rights);
         } else {
             bi->add_board_info(castle_rights, NO_EP_RIGHTS);
+            update_zobrist_hash_val(move, ep_rights, NO_EP_RIGHTS, castle_rights, castle_rights);
         }
-        // update_piece_locations(side, piece, from, to);
-    }
+
+    } else if(MoveUtils::is_promotion(move)){
+        bb->piece_boards[side][piece] ^= get_square_bitboard(from);
+        uint64 to_bitboard = get_square_bitboard(to);
+        if(MoveUtils::is_queen_promotion(move)){
+            bb->piece_boards[side][pQUEEN] ^= to_bitboard;
+        } else if(MoveUtils::is_knight_promotion(move)){
+            bb->piece_boards[side][pKNIGHT] ^= to_bitboard;
+        } else if(MoveUtils::is_bishop_promotion(move)){
+            bb->piece_boards[side][pBISHOP] ^= to_bitboard;
+        } else if(MoveUtils::is_rook_promotion(move)){
+            bb->piece_boards[side][pROOK] ^= to_bitboard;
+        }
+        update_zobrist_hash_val(move, ep_rights, ep_rights, castle_rights, castle_rights);
+    } else if(MoveUtils::is_capture_promotion(move)){
+        unsigned int captured_piece = MoveUtils::get_captured_piece(move);
+        bb->piece_boards[side][piece] ^= get_square_bitboard(from);
+        uint64 to_bitboard = get_square_bitboard(to);
+        if(MoveUtils::is_queen_promotion(move)){
+            bb->piece_boards[side][pQUEEN] ^= to_bitboard;
+        } else if(MoveUtils::is_knight_promotion(move)){
+            bb->piece_boards[side][pKNIGHT] ^= to_bitboard;
+        } else if(MoveUtils::is_bishop_promotion(move)){
+            bb->piece_boards[side][pBISHOP] ^= to_bitboard;
+        } else if(MoveUtils::is_rook_promotion(move)){
+            bb->piece_boards[side][pROOK] ^= to_bitboard;
+        }
+        bb->piece_boards[side ^ 1][captured_piece] ^= to_bitboard;
+        update_zobrist_hash_val(move, ep_rights, ep_rights, castle_rights, castle_rights);
+    } 
     eval->update_material(move, false);
     bb->all = bb->collective_piece_boards[WHITE] | bb->collective_piece_boards[BLACK];
-    // bb->update();
 }
 
-void Board::reverse_move(unsigned int move, int update_num_moves){
+void Board::reverse_move(unsigned int move){
     unsigned int side = MoveUtils::get_side(move);
     unsigned int piece = MoveUtils::get_piece(move);
     unsigned int from = MoveUtils::get_from(move);
     unsigned int to = MoveUtils::get_to(move);
-    if (MoveUtils::is_capture(move)){ // capture
+    unsigned int ep_right = bi->peek_ep_right();
+    unsigned int castle_right = bi->peek_castle_right();
+    bi->remove_board_info();  
+    if(MoveUtils::is_quiet(move)){
+        uint64 from_to = get_from_to(from, to);
+        bb->piece_boards[side][piece] ^= from_to;
+        bb->collective_piece_boards[side] ^= from_to;         
+        if(piece == pKING)
+            update_king_location(side, from);
+        unsigned int new_castle_right = bi->peek_castle_right();
+        update_zobrist_hash_val(move, ep_right, ep_right, castle_right, new_castle_right);
+    } else if (MoveUtils::is_capture(move)){ // capture
         // bi->num_captures -= update_num_moves;
         uint64 from_to = get_from_to(from, to);
         bb->piece_boards[side][piece] ^= from_to;
@@ -157,28 +214,29 @@ void Board::reverse_move(unsigned int move, int update_num_moves){
         bb->collective_piece_boards[side ^ 1] ^= sq_bitboard;
         if(piece == pKING)
             update_king_location(side, from);
+        unsigned int new_castle_right = bi->peek_castle_right();
+        update_zobrist_hash_val(move, ep_right, ep_right, castle_right, new_castle_right);
     } else if(MoveUtils::is_ep_capture(move)){
-        // bi->num_ep_captures -= update_num_moves;
-        // bi->num_captures -= update_num_moves;
         uint64 from_to = get_from_to(from, to);
         bb->piece_boards[side][piece] ^= from_to;
         bb->collective_piece_boards[side] ^= from_to;
-        // int captured_piece = MoveUtils::get_captured_piece(move);
-        int captured_file = MoveUtils::get_ep_capture_file(move);
-        int captured_sq = side == WHITE ? a5 + captured_file: a4 + captured_file;
 
-        uint64 sq_bitboard = get_square_bitboard(captured_sq);
+        int ep_capture_file = MoveUtils::get_ep_capture_file(move);
+        int ep_capture_sq = MoveUtils::get_ep_capture_sq(side, ep_capture_file);
+
+        uint64 sq_bitboard = get_square_bitboard(ep_capture_sq);
         bb->piece_boards[side ^ 1][pPAWN] ^= sq_bitboard;
         bb->collective_piece_boards[side ^ 1] ^= sq_bitboard;
+
+        unsigned int new_ep_right = bi->peek_ep_right();
+        update_zobrist_hash_val(move, ep_right, new_ep_right, castle_right, castle_right);
     } else if(MoveUtils::is_castle(move)){ // castle, reverse location for both king and rook
-        // bi->num_castles -= update_num_moves;
         if(MoveUtils::is_king_castle(move) && side == WHITE){
             bb->piece_boards[side][pKING] ^= get_from_to(e1, g1);
             bb->collective_piece_boards[side] ^= get_from_to(e1, g1); 
             bb->piece_boards[side][pROOK] ^= get_from_to(h1, f1);
             bb->collective_piece_boards[side] ^= get_from_to(h1, f1); 
 
-            // update_piece_locations(side, pROOK, f1, h1);
             update_king_location(side, e1);
         } else if(MoveUtils::is_queen_castle(move) && side == WHITE){
             bb->piece_boards[side][pKING] ^= get_from_to(e1, c1);
@@ -186,7 +244,6 @@ void Board::reverse_move(unsigned int move, int update_num_moves){
             bb->piece_boards[side][pROOK] ^= get_from_to(a1, d1);
             bb->collective_piece_boards[side] ^= get_from_to(a1, d1); 
 
-            // update_piece_locations(side, pROOK, d1, a1);
             update_king_location(side, e1);
         } else if(MoveUtils::is_king_castle(move) && side == BLACK){
             bb->piece_boards[side][pKING] ^= get_from_to(e8, g8);
@@ -194,7 +251,6 @@ void Board::reverse_move(unsigned int move, int update_num_moves){
             bb->piece_boards[side][pROOK] ^= get_from_to(h8, f8);
             bb->collective_piece_boards[side] ^= get_from_to(h8, f8); 
 
-            // update_piece_locations(side, pROOK, f8, h8);
             update_king_location(side, e8);
         } else if(MoveUtils::is_queen_castle(move) && side == BLACK){
             bb->piece_boards[side][pKING] ^= get_from_to(e8, c8);
@@ -202,35 +258,61 @@ void Board::reverse_move(unsigned int move, int update_num_moves){
             bb->piece_boards[side][pROOK] ^= get_from_to(a8, d8);
             bb->collective_piece_boards[side] ^= get_from_to(a8, d8); 
 
-            // update_piece_locations(side, pROOK, d8, a8);
             update_king_location(side, e8);
         }
-    } else{ // quiet move, reverse location of the piece
+
+        unsigned int new_castle_right = bi->peek_castle_right();
+        update_zobrist_hash_val(move, ep_right, ep_right, castle_right, new_castle_right);
+
+    } else if(MoveUtils::is_promotion(move)){
+        uint64 from_bitboard = get_square_bitboard(from);
+        uint64 to_bitboard = get_square_bitboard(to);
+        bb->piece_boards[side][pPAWN] ^= from_bitboard;
+        if(MoveUtils::is_queen_promotion(move)){
+            bb->piece_boards[side][pQUEEN] ^= to_bitboard;
+        } else if(MoveUtils::is_knight_promotion(move)){
+            bb->piece_boards[side][pKNIGHT] ^= to_bitboard;
+        } else if(MoveUtils::is_bishop_promotion(move)){
+            bb->piece_boards[side][pBISHOP] ^= to_bitboard;
+        } else if(MoveUtils::is_rook_promotion(move)){
+            bb->piece_boards[side][pROOK] ^= to_bitboard;
+        }
+        update_zobrist_hash_val(move, ep_right, ep_right, castle_right, castle_right);
+    } else if(MoveUtils::is_capture_promotion(move)){ 
+        unsigned int captured_piece = MoveUtils::get_captured_piece(move);
+        uint64 from_bitboard = get_square_bitboard(from);
+        uint64 to_bitboard = get_square_bitboard(to);
+        bb->piece_boards[side][pPAWN] ^= from_bitboard;
+        if(MoveUtils::is_queen_promotion(move)){
+            bb->piece_boards[side][pQUEEN] ^= to_bitboard;
+        } else if(MoveUtils::is_knight_promotion(move)){
+            bb->piece_boards[side][pKNIGHT] ^= to_bitboard;
+        } else if(MoveUtils::is_bishop_promotion(move)){
+            bb->piece_boards[side][pBISHOP] ^= to_bitboard;
+        } else if(MoveUtils::is_rook_promotion(move)){
+            bb->piece_boards[side][pROOK] ^= to_bitboard;
+        }
+        bb->piece_boards[side ^ 1][captured_piece] ^= to_bitboard;
+        update_zobrist_hash_val(move, ep_right, ep_right, castle_right, castle_right);
+
+    } else if(MoveUtils::is_double_pawn_push(move)){ // quiet move, reverse location of the piece
         uint64 from_to = get_from_to(from, to);
         bb->piece_boards[side][piece] ^= from_to;
         bb->collective_piece_boards[side] ^= from_to; 
+        update_zobrist_hash_val(move, ep_right, ep_right, castle_right, castle_right);
 
-        int additional_info = MoveUtils::get_additional_info(move);
-        if(piece == pKING)
-            update_king_location(side, from);
     }
 
     eval->update_material(move, true);
     bb->all = bb->collective_piece_boards[WHITE] | bb->collective_piece_boards[BLACK];
-    bi->remove_board_info();
-    // bb->update();
 }
-bool Board::apply_move_if_legal(unsigned int move, int update_num_moves)
+bool Board::apply_move_if_legal(unsigned int move)
 {
-    // cout<<"apply_move_if_legal\n";
     unsigned int defending_side = MoveUtils::get_side(move);
-    // cout<<"side: "<<side<<endl;
-    apply_move(move, update_num_moves);
-    // int king_location = get_piece_location(side, pKING);
+    apply_move(move);
     int king_location = get_king_location(defending_side);
     if(bb->attacked(defending_side, king_location)){
-        // cout<<"king attacked, reversing move\n";
-        reverse_move(move, update_num_moves);
+        reverse_move(move);
         return false;
     }
     return true;
@@ -302,7 +384,6 @@ void Board::parse_fen(fs::path path){
             if(fen_state == SIDE_TO_MOVE){
                 side_to_move = WHITE ? ch == 'w' : ch == 'b';
             } else if(fen_state == CASTLE_RIGHTS){
-                // cout<<"fen state is castle rights\n";
                 if(ch == 'K'){
                     initial_castle_rights |= 0b1000;
                 } else if(ch == 'Q'){
@@ -312,27 +393,16 @@ void Board::parse_fen(fs::path path){
                     initial_castle_rights |= 0b0010;
                 } else if(ch == 'q'){
                     initial_castle_rights |= 0b0001;
-                }                
-                // cout<<"initial_castle_rights: "<<initial_castle_rights<<endl;
-
-                // bi->add_castle_right(castle_rights);
-                // initial_castle_rights = castle_rights;
+                }
             } else if(fen_state == EP_TARGET_SQUARE){
-                if(!isalpha(ch))
+                if(!isalpha(ch)) // ep rights will be b3, g6, etc, so just ignore the character if its a number
                     continue;
-                // cout<<"state is ep target square\n";
                 initial_ep_rights = ch - 'a';
-                // cout<<"parse fen inital ep rights: "<<initial_ep_rights<<endl;
             } else if(fen_state == POSITION){
                 if(isalpha(ch)){
                     pos += 1;
                     uint64 sq = BoardSquares::get_square_bitboard(pos);
-                    int side;
-                    if(ch > 'Z'){
-                        side = BLACK;
-                    } else {
-                        side = WHITE;
-                    }
+                    int side = BLACK ? ch > 'Z' : WHITE;
                     char piece_type = tolower(ch);
                     if(piece_type == 'p'){
                         bb->piece_boards[side][pPAWN] |= sq;
@@ -364,6 +434,8 @@ void Board::parse_fen(fs::path path){
     // init_piece_locations();
     bb->update();
     eval->init_material();
+    init_zobrist_map();
+    init_zobrist_hash_val();
     // cout<<"finished init material\n";
 }
 void Board::init_piece_locations(){
@@ -383,9 +455,36 @@ BoardInfo* Board::get_board_info(){
 Bitboard* Board::get_bitboard(){
     return bb;
 }
-int Board::get_initial_ep_rights(){
+unsigned int Board::get_initial_ep_rights(){
     return initial_ep_rights;
 }
-int Board::get_initial_castle_rights(){
+unsigned int Board::get_initial_castle_rights(){
     return initial_castle_rights;
+}
+unsigned int Board::get_zobrist_key(unsigned int side, unsigned int piece, unsigned int sq){
+    return tt->get_zobrist_key(side, piece, sq);
+}
+unsigned long long Board::get_zobrist_val(unsigned int key){
+    return tt->get_zobrist_val(key);
+}
+void Board::init_zobrist_map(){
+    tt->init_zobrist_map();
+}
+void Board::init_zobrist_hash_val(){
+    tt->init_zobrist_hash_val();
+}
+void Board::update_zobrist_hash_val(unsigned int move, unsigned int prev_ep_right, unsigned int next_ep_right, unsigned int prev_castle_right, unsigned int next_castle_right){
+    tt->update_zobrist_hash_val(move, prev_ep_right, next_ep_right, prev_castle_right, next_castle_right);
+}
+map<unsigned int, unsigned long long> Board::get_zobrist_map(){
+    return tt->get_zobrist_map();
+}
+void Board::update_transposition_table(unsigned long long key, unsigned long long val, int depth_left){
+    return tt->update_transposition_table(key, val, depth_left);
+}
+uint64 Board::get_transposition_table_value(unsigned long long key, int depth_left){
+    return tt->get_transposition_table_value(key, depth_left);
+}
+uint64 Board::get_current_hash_val(){
+    return tt->get_current_hash_val();
 }

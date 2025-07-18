@@ -24,6 +24,12 @@ enum Piece
     pROOK,
     pQUEEN,
     pKING,
+    NO_PIECE
+};
+enum RightType
+{
+    rCASTLE,
+    rEP
 };
 inline const int piece_values[] = {
     1, 3, 3, 5, 9, 10000

@@ -2,7 +2,6 @@
 #define bitboard_h
 #include "const.hpp"
 typedef unsigned long long uint64;
-#define NO_PIECE 8
 class Bitboard{
 private:
     Bitboard(){

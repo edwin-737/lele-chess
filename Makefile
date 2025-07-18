@@ -277,6 +277,33 @@ src/evaluation.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_engine.dir/build.make CMakeFiles/test_engine.dir/src/evaluation.cpp.s
 .PHONY : src/evaluation.cpp.s
 
+src/hash_generator.o: src/hash_generator.cpp.o
+.PHONY : src/hash_generator.o
+
+# target to build an object file
+src/hash_generator.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/engine.dir/build.make CMakeFiles/engine.dir/src/hash_generator.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_engine.dir/build.make CMakeFiles/test_engine.dir/src/hash_generator.cpp.o
+.PHONY : src/hash_generator.cpp.o
+
+src/hash_generator.i: src/hash_generator.cpp.i
+.PHONY : src/hash_generator.i
+
+# target to preprocess a source file
+src/hash_generator.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/engine.dir/build.make CMakeFiles/engine.dir/src/hash_generator.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_engine.dir/build.make CMakeFiles/test_engine.dir/src/hash_generator.cpp.i
+.PHONY : src/hash_generator.cpp.i
+
+src/hash_generator.s: src/hash_generator.cpp.s
+.PHONY : src/hash_generator.s
+
+# target to generate assembly for a file
+src/hash_generator.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/engine.dir/build.make CMakeFiles/engine.dir/src/hash_generator.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_engine.dir/build.make CMakeFiles/test_engine.dir/src/hash_generator.cpp.s
+.PHONY : src/hash_generator.cpp.s
+
 src/magics.o: src/magics.cpp.o
 .PHONY : src/magics.o
 
@@ -436,6 +463,33 @@ src/search.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_engine.dir/build.make CMakeFiles/test_engine.dir/src/search.cpp.s
 .PHONY : src/search.cpp.s
 
+src/transposition_table.o: src/transposition_table.cpp.o
+.PHONY : src/transposition_table.o
+
+# target to build an object file
+src/transposition_table.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/engine.dir/build.make CMakeFiles/engine.dir/src/transposition_table.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_engine.dir/build.make CMakeFiles/test_engine.dir/src/transposition_table.cpp.o
+.PHONY : src/transposition_table.cpp.o
+
+src/transposition_table.i: src/transposition_table.cpp.i
+.PHONY : src/transposition_table.i
+
+# target to preprocess a source file
+src/transposition_table.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/engine.dir/build.make CMakeFiles/engine.dir/src/transposition_table.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_engine.dir/build.make CMakeFiles/test_engine.dir/src/transposition_table.cpp.i
+.PHONY : src/transposition_table.cpp.i
+
+src/transposition_table.s: src/transposition_table.cpp.s
+.PHONY : src/transposition_table.s
+
+# target to generate assembly for a file
+src/transposition_table.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/engine.dir/build.make CMakeFiles/engine.dir/src/transposition_table.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_engine.dir/build.make CMakeFiles/test_engine.dir/src/transposition_table.cpp.s
+.PHONY : src/transposition_table.cpp.s
+
 test/test.o: test/test.cpp.o
 .PHONY : test/test.o
 
@@ -484,6 +538,9 @@ help:
 	@echo "... src/evaluation.o"
 	@echo "... src/evaluation.i"
 	@echo "... src/evaluation.s"
+	@echo "... src/hash_generator.o"
+	@echo "... src/hash_generator.i"
+	@echo "... src/hash_generator.s"
 	@echo "... src/magics.o"
 	@echo "... src/magics.i"
 	@echo "... src/magics.s"
@@ -502,6 +559,9 @@ help:
 	@echo "... src/search.o"
 	@echo "... src/search.i"
 	@echo "... src/search.s"
+	@echo "... src/transposition_table.o"
+	@echo "... src/transposition_table.i"
+	@echo "... src/transposition_table.s"
 	@echo "... test/test.o"
 	@echo "... test/test.i"
 	@echo "... test/test.s"

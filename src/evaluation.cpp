@@ -16,8 +16,6 @@ void Evaluation::init_material(){
             uint64 b = bb->piece_boards[side][piece];
             int count = 0;
             int set_bit = 0;
-            // cout<<"side: "<<side<<endl;
-            // cout<<"piece: "<<piece<<endl;
             while(set_bit != -1){ // bit scan the board and invert every set bit until its empty
                 set_bit = bit_scan_forward(b);
                 if (set_bit != -1) {
@@ -27,17 +25,6 @@ void Evaluation::init_material(){
                     break;
                 }
             }
-            //     if(set_bit != -1){
-            //         cout<<"not breaking\n";
-            //         count++;
-            //     } else {
-            //         cout<<"breaking loop\n";
-            //         break;
-            //     }
-            //     b &= ~get_square_bitboard(set_bit);
-            // }
-            // cout<<"finished while loop\n";
-            // material = side == WHITE ? material + (count * piece_values[piece]) : material - (count * piece_values[piece]);
         }
     }
 }
@@ -56,12 +43,6 @@ void Evaluation::update_material(unsigned int move, bool reverse){
         unsigned int side = MoveUtils::get_side(move);
         unsigned int change = piece_values[captured_piece];
 
-        // if(MoveUtils::get_from(move) == f2 && MoveUtils::get_to(move) == e3){
-        //     cout<<"reverse: "<<reverse<<endl;
-        //     cout<<"f2e3 material before: "<<get_material()<<endl;
-        //     cout<<"captured piece: "<<captured_piece<<endl;
-        //     cout<<"piece value: "<<change<<endl;
-        // }
         if(reverse)
             change *= -1;
 
@@ -71,8 +52,6 @@ void Evaluation::update_material(unsigned int move, bool reverse){
             material -= change;
         }
 
-        // if(MoveUtils::get_from(move) == f2 && MoveUtils::get_to(move) == e3)
-        //     cout<<"f2e3 material after: "<<get_material()<<endl;
     }
 }
 void Evaluation::update_piece_square_value(unsigned int move, bool reverse)

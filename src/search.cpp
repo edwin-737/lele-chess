@@ -4,7 +4,6 @@
 unsigned int Search::perft(int original_depth, int depth_left, unsigned int side, unsigned int root_move){
 
     if(depth_left == 0){
-
         if(MoveUtils::is_ep_capture(root_move)){
             num_captures ++;
             num_ep_captures ++;
@@ -16,6 +15,7 @@ unsigned int Search::perft(int original_depth, int depth_left, unsigned int side
         if(b->get_bitboard()->attacked(side, b->get_king_location(side))){
             num_checks ++;
         } 
+        num_nodes++;
         return 1ULL;
     } else if(depth_left == original_depth - 1){
         cout<<MoveUtils::move_as_string(root_move)<<": ";
@@ -27,9 +27,21 @@ unsigned int Search::perft(int original_depth, int depth_left, unsigned int side
     while((move = mg.get_move()) != NO_MOVES_LEFT){
         if(move == INCREMENTING_MOVE_TYPE)
             continue;
+        // MoveUtils::display(move);
         if(b->apply_move_if_legal(move)){
-            ans += perft(original_depth, depth_left - 1, side ^ 1, move);
+            uint64 tt_val = b->get_transposition_table_value(b->get_current_hash_val(), depth_left);
+            if(tt_val > 0){
+                ans += tt_val;
+            } else {
+                unsigned int perft_val = perft(original_depth, depth_left - 1, side ^ 1, move);
+                ans += perft_val;
+                b->update_transposition_table(b->get_current_hash_val(), perft_val, depth_left);
+            };
+
             b->reverse_move(move);
+            // unsigned int perft_val = perft(original_depth, depth_left - 1, side ^ 1, move);
+            // ans += perft_val;
+            // b->reverse_move(move);
         } 
     }
     if(depth_left == original_depth - 1){
