@@ -52,7 +52,7 @@ private:
     unsigned int get_ep_capture(int side);
     Bitboard* bb = Bitboard::get_instance();
     BoardInfo* bi = BoardInfo::get_instance();
-    unsigned int move_type = mQUIET, promoted_piece = pKNIGHT, gen_type, piece, from, to;
+    unsigned int move_type = mQUIET, promoted_piece = pKNIGHT, promotion_counter = 0, gen_type, piece, from, to;
     int max_special_moves[7] = {
         250, 1, 1, 2, 8, 8, 8
     };

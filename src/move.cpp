@@ -91,6 +91,7 @@ namespace MoveUtils{
         string from = square_as_string(get_from(move));
         string to = square_as_string(get_to(move));
         string piece = piece_as_string(get_piece(move));
+        // if(is_promotion(move) || is_capture_promotion(move)){}
         cout<<side<<" "<<piece<<" "<<from<<" "<<to<<" "<<endl;
 
     }
@@ -120,7 +121,28 @@ namespace MoveUtils{
     string move_as_string(unsigned int move){
         string from = square_as_string(get_from(move));
         string to = square_as_string(get_to(move));
-        return from + to;
+        string move_as_string = from + to;
+        if(is_promotion(move)){
+            if(is_knight_promotion(move))
+                move_as_string += "n";
+            else if(is_bishop_promotion(move))
+                move_as_string += "b";
+            else if(is_rook_promotion(move))
+                move_as_string += "r";
+            else if(is_queen_promotion(move))
+                move_as_string += "q";
+        } else if(is_capture_promotion(move)){
+            if(is_knight_capture_promotion(move))
+                move_as_string += "n";
+            else if(is_bishop_capture_promotion(move))
+                move_as_string += "b";
+            else if(is_rook_capture_promotion(move))
+                move_as_string += "r";
+            else if(is_queen_capture_promotion(move))
+                move_as_string += "q";
+
+        }
+        return move_as_string;
     }
     string square_as_string(unsigned int square){
         char rank = '1' + (square / 8);

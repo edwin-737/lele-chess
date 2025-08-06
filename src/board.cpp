@@ -1,4 +1,5 @@
 #include <iostream>
+#include <string>
 #include "board.hpp"
 #include "board_squares.hpp"
 using namespace BoardSquares;
@@ -107,6 +108,22 @@ void Board::apply_move(unsigned int move, int update_num_moves){
             update_king_location(side, to);
             // cout<<"move is capture king move\n";
             bi->add_board_info(castle_rights, NO_EP_RIGHTS);
+        } else if(piece == pROOK){
+            if(side == WHITE){
+                if(from == a1){
+                    castle_rights &= (0b1011);
+                } else if(from == h1){
+                    castle_rights &= (0b0111);
+                } 
+            } else{
+                if(from == a8){
+                    castle_rights &= (0b1110);
+                } else if(from == h8 ){
+                    castle_rights &= (0b1101);
+                }
+            } 
+            // cout<<"move is quiet rook move\n";
+            bi->add_board_info(castle_rights, NO_EP_RIGHTS);
         } else {
             bi->add_board_info(castle_rights, NO_EP_RIGHTS);
         }
@@ -134,6 +151,45 @@ void Board::apply_move(unsigned int move, int update_num_moves){
             ep_rights = to - a5;
         }
         bi->add_board_info(castle_rights, ep_rights);
+    } else if(MoveUtils::is_promotion(move)){
+        uint64 from_to = get_from_to(from, to);
+        uint64 from_bitboard = get_square_bitboard(from);
+        uint64 to_bitboard = get_square_bitboard(to);
+        bb->piece_boards[side][piece] ^= from_bitboard;
+        bb->collective_piece_boards[side] ^= from_to;
+
+        if(MoveUtils::is_knight_promotion(move)){
+            bb->piece_boards[side][pKNIGHT] ^= to_bitboard;
+        } else if(MoveUtils::is_bishop_promotion(move)){
+            bb->piece_boards[side][pBISHOP] ^= to_bitboard;
+        } else if(MoveUtils::is_rook_promotion(move)){
+            bb->piece_boards[side][pROOK] ^= to_bitboard;
+        } else if(MoveUtils::is_queen_promotion(move)){
+            bb->piece_boards[side][pQUEEN] ^= to_bitboard;
+        }
+        bi->add_board_info(castle_rights, NO_EP_RIGHTS);
+    } else if(MoveUtils::is_capture_promotion(move)){
+
+        uint64 from_to = get_from_to(from, to);
+        uint64 from_bitboard = get_square_bitboard(from);
+        uint64 to_bitboard = get_square_bitboard(to);
+        bb->piece_boards[side][piece] ^= from_bitboard;
+        bb->collective_piece_boards[side] ^= from_to;
+
+        unsigned int captured_piece = MoveUtils::get_captured_piece(move);
+        bb->piece_boards[side ^ 1][captured_piece] ^= to_bitboard;
+        bb->collective_piece_boards[side ^ 1] ^= to_bitboard;
+
+        if(MoveUtils::is_knight_promotion(move)){
+            bb->piece_boards[side][pKNIGHT] ^= to_bitboard;
+        } else if(MoveUtils::is_bishop_promotion(move)){
+            bb->piece_boards[side][pBISHOP] ^= to_bitboard;
+        } else if(MoveUtils::is_rook_promotion(move)){
+            bb->piece_boards[side][pROOK] ^= to_bitboard;
+        } else if(MoveUtils::is_queen_promotion(move)){
+            bb->piece_boards[side][pQUEEN] ^= to_bitboard;
+        }
+        bi->add_board_info(castle_rights, NO_EP_RIGHTS);
     }
     eval->update_material(move, false);
     bb->all = bb->collective_piece_boards[WHITE] | bb->collective_piece_boards[BLACK];
@@ -216,6 +272,43 @@ void Board::reverse_move(unsigned int move, int update_num_moves){
         uint64 from_to = get_from_to(from, to);
         bb->piece_boards[side][piece] ^= from_to;
         bb->collective_piece_boards[side] ^= from_to; 
+    } else if(MoveUtils::is_promotion(move)){
+        uint64 from_to = get_from_to(from, to);
+        uint64 from_bitboard = get_square_bitboard(from);
+        uint64 to_bitboard = get_square_bitboard(to);
+        bb->piece_boards[side][piece] ^= from_bitboard;
+        bb->collective_piece_boards[side] ^= from_to;
+
+        if(MoveUtils::is_knight_promotion(move)){
+            bb->piece_boards[side][pKNIGHT] ^= to_bitboard;
+        } else if(MoveUtils::is_bishop_promotion(move)){
+            bb->piece_boards[side][pBISHOP] ^= to_bitboard;
+        } else if(MoveUtils::is_rook_promotion(move)){
+            bb->piece_boards[side][pROOK] ^= to_bitboard;
+        } else if(MoveUtils::is_queen_promotion(move)){
+            bb->piece_boards[side][pQUEEN] ^= to_bitboard;
+        }
+    } else if(MoveUtils::is_capture_promotion(move)){
+
+        uint64 from_to = get_from_to(from, to);
+        uint64 from_bitboard = get_square_bitboard(from);
+        uint64 to_bitboard = get_square_bitboard(to);
+        bb->piece_boards[side][piece] ^= from_bitboard;
+        bb->collective_piece_boards[side] ^= from_to;
+
+        unsigned int captured_piece = MoveUtils::get_captured_piece(move);
+        bb->piece_boards[side ^ 1][captured_piece] ^= to_bitboard;
+        bb->collective_piece_boards[side ^ 1] ^= to_bitboard;
+
+        if(MoveUtils::is_knight_promotion(move)){
+            bb->piece_boards[side][pKNIGHT] ^= to_bitboard;
+        } else if(MoveUtils::is_bishop_promotion(move)){
+            bb->piece_boards[side][pBISHOP] ^= to_bitboard;
+        } else if(MoveUtils::is_rook_promotion(move)){
+            bb->piece_boards[side][pROOK] ^= to_bitboard;
+        } else if(MoveUtils::is_queen_promotion(move)){
+            bb->piece_boards[side][pQUEEN] ^= to_bitboard;
+        }
     }
 
     eval->update_material(move, true);
@@ -283,7 +376,89 @@ void Board::change_side_to_move(){
 void Board::parse_fen(fs::path path){
 
     std::ifstream file(path);
+    // if(file.is_open()){
+    //     string word;
+    //     FEN_STATE fen_state = POSITION;
+    //     int castle_rights = 0;
+    //     while(file >> word && fen_state != FINISHED){
+    //         if(fen_state == POSITION){
 
+    //             fen_state = SIDE_TO_MOVE;
+
+    //             int row = 7;
+    //             int pos = row * 8 - 1;
+    //             for(size_t i = 0 ; i < word.length() ; i ++){
+    //                 char ch = word[i];
+    //                 if(isalpha(ch)){
+    //                     pos += 1;
+    //                     uint64 square_bitboard = BoardSquares::get_square_bitboard(pos);
+    //                     int side;
+    //                     if(ch > 'Z'){
+    //                         side = BLACK;
+    //                     } else {
+    //                         side = WHITE;
+    //                     }
+    //                     char piece_type = tolower(ch);
+    //                     if(piece_type == 'p'){
+    //                         bb->piece_boards[side][pPAWN] |= square_bitboard;
+    //                     } else if(piece_type == 'n'){
+    //                         bb->piece_boards[side][pKNIGHT] |= square_bitboard;
+    //                     } else if(piece_type == 'b'){
+    //                         bb->piece_boards[side][pBISHOP] |= square_bitboard;
+    //                     } else if(piece_type == 'q'){
+    //                         bb->piece_boards[side][pQUEEN] |= square_bitboard;
+    //                     } else if(piece_type == 'k'){
+    //                         bb->piece_boards[side][pKING] |= square_bitboard;
+    //                     } else if(piece_type =='r'){
+    //                         bb->piece_boards[side][pROOK] |= square_bitboard;
+    //                     } 
+    //                 } else if(isnumber(ch)){
+
+    //                     int stride = ch - '0';
+    //                     pos += stride;
+    //                 } else if(ch == '/'){
+    //                     row -= 1;
+    //                     pos = row * 8 - 1;
+    //                     continue;
+    //                 } 
+    //             }
+    //         } else if(fen_state == SIDE_TO_MOVE){
+
+    //             fen_state = CASTLE_RIGHTS;
+
+    //             char ch = word[0];
+    //             side_to_move = WHITE ? ch == 'w' : ch == 'b';
+    //         } else if(fen_state == CASTLE_RIGHTS){
+
+    //             fen_state = EP_TARGET_SQUARE;
+
+    //             for(size_t i = 0 ; i < word.length() ; i ++){
+    //                 char ch = word[i];
+    //                 if(ch == 'K'){
+    //                     initial_castle_rights |= 0b1000;
+    //                 } else if(ch == 'Q'){
+    //                     initial_castle_rights |= 0b0100;
+    //                 }
+    //                 if(ch == 'k'){
+    //                     initial_castle_rights |= 0b0010;
+    //                 } else if(ch == 'q'){
+    //                     initial_castle_rights |= 0b0001;
+    //                 } 
+    //             }
+    //         } else if(fen_state == EP_TARGET_SQUARE){
+
+    //             fen_state = FINISHED;
+    //             char ch = word[0];
+    //             cout<<"state is ep target square: "<<ch<<endl;
+    //             if(!isalpha(ch))
+    //                 continue;
+    //             initial_ep_rights = ch - 'a';                
+    //             cout<<"initial_ep_rights: "<<initial_ep_rights<<endl;
+
+    //         } 
+    //         /*TODO: Halfmove clock*/
+    //     }
+    // }
     if(file.is_open()){
         char ch;
         int row = 7;

@@ -21,7 +21,7 @@ public:
     float evaluate();
     int static_exchange_evaluation(unsigned int side, int square);
     int static_exchange_evaluation(int move);
-    unsigned int num_nodes = 0, num_captures = 0, num_ep_captures = 0, num_checks = 0, num_checkmates = 0, num_castles = 0;
+    unsigned int num_nodes = 0, num_captures = 0, num_ep_captures = 0, num_checks = 0, num_checkmates = 0, num_castles = 0, num_promotions = 0, num_capture_promotions = 0;
     const int max_depth;
 private:
     Board* b;

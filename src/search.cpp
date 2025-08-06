@@ -4,7 +4,6 @@
 unsigned int Search::perft(int original_depth, int depth_left, unsigned int side, unsigned int root_move){
 
     if(depth_left == 0){
-
         if(MoveUtils::is_ep_capture(root_move)){
             num_captures ++;
             num_ep_captures ++;
@@ -12,7 +11,11 @@ unsigned int Search::perft(int original_depth, int depth_left, unsigned int side
             num_captures ++;
         } else if(MoveUtils::is_castle(root_move)){
             num_castles ++;
-        }   
+        } else if(MoveUtils::is_promotion(root_move)){
+            num_promotions ++;
+        } else if(MoveUtils::is_capture_promotion(root_move)){
+            num_capture_promotions ++;
+        }
         if(b->get_bitboard()->attacked(side, b->get_king_location(side))){
             num_checks ++;
         } 
@@ -28,6 +31,9 @@ unsigned int Search::perft(int original_depth, int depth_left, unsigned int side
         if(move == INCREMENTING_MOVE_TYPE)
             continue;
         if(b->apply_move_if_legal(move)){
+            if(original_depth == 1){
+                cout<<MoveUtils::move_as_string(move)<<": 1\n";
+            }
             ans += perft(original_depth, depth_left - 1, side ^ 1, move);
             b->reverse_move(move);
         } 

@@ -78,8 +78,8 @@ int main(int argc, char** argv)
     b->parse_fen(fen_path);
     b->get_bitboard()->display();
 
-    BoardInfo::set_castle_rights(b->get_initial_castle_rights());
-    BoardInfo::set_ep_rights(b->get_initial_ep_rights());
+    // BoardInfo::set_castle_rights(b->get_initial_castle_rights());
+    // BoardInfo::set_ep_rights(b->get_initial_ep_rights());
     BoardInfo::set_board_info(b->get_initial_castle_rights(), b->get_initial_ep_rights());
 
     Search* s = new Search(b, depth);
@@ -95,8 +95,9 @@ int main(int argc, char** argv)
         cout<<"ep_captures: "<<s->num_ep_captures<<endl;
         cout<<"checks: "<<s->num_checks<<endl;
         cout<<"checkmates: "<<s->num_checkmates<<endl;
-        cout<<"castles: "<<s->num_castles<<endl<<endl;
-        cout<<"move_counts: \n";
+        cout<<"castles: "<<s->num_castles<<endl;
+        cout<<"promotions: "<<s->num_promotions<<endl;
+        cout<<"capture promotions: "<<s->num_capture_promotions<<endl;
     } else {
         cout<<"search max depth: "<<s->max_depth<<endl;
         cout<<"search depth: "<<depth<<endl;

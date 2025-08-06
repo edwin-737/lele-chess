@@ -38,29 +38,37 @@ unsigned int MoveGen::get_move(){
         additional_info = CAPTURE;
     } else if(piece == pPAWN && abs((int)from - (int)to) == 16){
         additional_info = DOUBLE_PAWN_PUSH;
-    } else if(piece == pPAWN && is_final_rank(to)){
+    } 
+    if(piece == pPAWN && is_final_rank(to)){
+        // cout<<"is final rank to: "<<MoveUtils::square_as_string(to)<<endl;
         if(captured_piece != NO_PIECE && captured_piece != pKING){
-            // if(promoted_piece == pKNIGHT)
-            //     additional_info = KNIGHT_CAPTURE_PROMOTION;
-            // else if(promoted_piece == pBISHOP)
-            //     additional_info = BISHOP_CAPTURE_PROMOTION;
-            // else if(promoted_piece == pROOK)
-            //     additional_info = ROOK_CAPTURE_PROMOTION;
-            // else if(promoted_piece == pQUEEN)
-            //     additional_info = QUEEN_CAPTURE_PROMOTION;
-            // promoted_piece = (promoted_piece - 1) + 1 % 4 + 1;
-            additional_info = QUEEN_CAPTURE_PROMOTION;
+            if(promoted_piece == pKNIGHT)
+                additional_info = KNIGHT_CAPTURE_PROMOTION;
+            else if(promoted_piece == pBISHOP)
+                additional_info = BISHOP_CAPTURE_PROMOTION;
+            else if(promoted_piece == pROOK)
+                additional_info = ROOK_CAPTURE_PROMOTION;
+            else if(promoted_piece == pQUEEN)
+                additional_info = QUEEN_CAPTURE_PROMOTION;
+            promoted_piece += 1;
         } else {
-            // if(promoted_piece == pKNIGHT)
-            //     additional_info = KNIGHT_PROMOTION;
-            // else if(promoted_piece == pBISHOP)
-            //     additional_info = BISHOP_PROMOTION;
-            // else if(promoted_piece == pROOK)
-            //     additional_info = ROOK_PROMOTION;
-            // else if(promoted_piece == pQUEEN)
-            //     additional_info = QUEEN_PROMOTION;
-            // promoted_piece = (promoted_piece - 1) + 1 % 4 + 1;
-            additional_info = QUEEN_PROMOTION;
+            if(promoted_piece == pKNIGHT)
+                additional_info = KNIGHT_PROMOTION;
+            else if(promoted_piece == pBISHOP)
+                additional_info = BISHOP_PROMOTION;
+            else if(promoted_piece == pROOK)
+                additional_info = ROOK_PROMOTION;
+            else if(promoted_piece == pQUEEN)
+                additional_info = QUEEN_PROMOTION;
+            promoted_piece += 1;
+        }
+        promotion_counter += 1;
+        if(promoted_piece <= pQUEEN){
+            if(!(move_set & get_square_bitboard(to)))
+                move_set ^= get_square_bitboard(to);
+        }
+        if(promoted_piece > pQUEEN && promotion_counter < 12){
+            promoted_piece = pKNIGHT;
         }
     }
     unsigned int move = MoveUtils::create_move(from, to, side, piece, captured_piece, additional_info);
@@ -209,9 +217,10 @@ bool MoveGen::can_castle_queenside(int side){
 
 unsigned int MoveGen::get_ep_capture(int side){
     const int ep_rights = bi->peek_ep_right();
-
+    // cout<<"get_ep_capture peek ep rights: "<<ep_rights<<endl;
     if(ep_rights == NO_EP_RIGHTS) {
         ep_from = EP_FINISHED;
+        // cout<<"NO EP RIGHT\n";
         return 0;
     };
 
