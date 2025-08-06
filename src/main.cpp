@@ -1,5 +1,7 @@
 #include <chrono>
 #include <stdlib.h>
+#include <vector>
+#include <string>
 #include "move.hpp"
 // #include "evaluation.hpp"
 #include "board_squares.hpp"
@@ -15,7 +17,7 @@ typedef enum Task{
 } Task;
 
 typedef enum ArgState{
-    NONE,
+    ARG_TYPE,
     FEN,
     DEPTH,
     SIDE,
@@ -26,42 +28,41 @@ BoardInfo* BoardInfo::instanceptr=nullptr;
 
 int main(int argc, char** argv)
 {
-    int arg_state = NONE;
-    char* fen_path = (char*) calloc(256, sizeof(char));
+    int arg_state = ARG_TYPE;
+    vector<string> arg_list(argv, argv + argc);
+    string fen_path = "";
     int depth = 1;
     bool include_fen = false;
     int side = WHITE;
     int task = PERFT;
     for(int i = 0 ; i < argc ; i ++){
-        char* arg = argv[i];
-        if(arg_state == FEN){
-            strcpy(fen_path, arg);
-            cout<<"fen path: "<<fen_path<<endl;
-            arg_state = NONE;
-        } else if(arg_state == DEPTH){
-            depth = argv[i][0] - '0';
-            cout<<"depth: "<<depth<<endl;
-            arg_state = NONE;
-        } else if(arg_state == SIDE){
-            side = BLACK ? argv[i][0] == 'b' : WHITE;
-            cout<<"side: "<< side << endl;
-            arg_state = NONE;
-        } else if(arg_state == TASK){
-            task = ALPHA_BETA ? argv[i][0] == 'a' : PERFT;
-            cout<<"task: "<<task<<endl;
-            arg_state = NONE;
-        } else{
-            if(strcmp(argv[i], "-f") == 0){
+        if(arg_state == ARG_TYPE){
+            if(arg_list[i] == "-f"){
                 arg_state = FEN;
                 include_fen = true;
-            } else if(strcmp(argv[i], "-d") == 0){
+            } else if(arg_list[i] == "-d"){
                 arg_state = DEPTH;
-            } else if(strcmp(argv[i], "-s") == 0){
+            } else if(arg_list[i] == "-s"){
                 arg_state = SIDE;
-            }
-             else if(strcmp(argv[i], "-j") == 0){
+            } else if(arg_list[i] =="-j"){
                 arg_state = TASK;
             }
+        } else if(arg_state == FEN){
+            fen_path = arg_list[i];
+            cout<<"fen path: "<<fen_path<<endl;
+            arg_state = ARG_TYPE;
+        } else if(arg_state == DEPTH){
+            depth = stoi(arg_list[i]);
+            cout<<"depth: "<<depth<<endl;
+            arg_state = ARG_TYPE;
+        } else if(arg_state == SIDE){
+            side = BLACK ? arg_list[i] == "b" : WHITE;
+            cout<<"side: "<<side<<endl;
+            arg_state = ARG_TYPE;
+        } else if(arg_state == TASK){
+            task = ALPHA_BETA ? arg_list[i] == "a" : PERFT;
+            cout<<"task: "<<task<<endl;
+            arg_state = ARG_TYPE;
         }
     }
     BoardSquares::init_files();
