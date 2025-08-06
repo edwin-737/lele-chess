@@ -27,8 +27,14 @@ namespace MoveUtils{
     unsigned int get_ep_capture_file(unsigned int move){
         return move & 0xf;
     }
+    bool is_quiet(unsigned int move){
+        return get_additional_info(move) == QUIET_MOVE;
+    }
     bool is_capture(unsigned int move){
         return get_additional_info(move) == CAPTURE;
+    }
+    bool is_double_pawn_push(unsigned int move){
+        return get_additional_info(move) == DOUBLE_PAWN_PUSH;
     }
     bool is_ep_capture(unsigned int move){
         return get_additional_info(move) == EP_CAPTURE;
@@ -41,6 +47,44 @@ namespace MoveUtils{
     }
     bool is_queen_castle(unsigned int move){
         return get_additional_info(move) == QUEEN_CASTLE;
+    }
+    bool is_promotion(unsigned int move){
+        return 
+            get_additional_info(move) == QUEEN_PROMOTION || 
+            get_additional_info(move) == BISHOP_PROMOTION ||
+            get_additional_info(move) == KNIGHT_PROMOTION || 
+            get_additional_info(move) == ROOK_PROMOTION;
+    }
+    bool is_capture_promotion(unsigned int move){
+        return
+            get_additional_info(move) == QUEEN_CAPTURE_PROMOTION ||
+            get_additional_info(move) == BISHOP_CAPTURE_PROMOTION ||
+            get_additional_info(move) == KNIGHT_CAPTURE_PROMOTION ||
+            get_additional_info(move) == ROOK_CAPTURE_PROMOTION;
+    }
+    bool is_queen_promotion(unsigned int move){
+        return get_additional_info(move) == QUEEN_PROMOTION;
+    }
+    bool is_knight_promotion(unsigned int move){
+        return get_additional_info(move) == KNIGHT_PROMOTION;
+    }
+    bool is_bishop_promotion(unsigned int move){
+        return get_additional_info(move) == BISHOP_PROMOTION;
+    }
+    bool is_rook_promotion(unsigned int move){
+        return get_additional_info(move) == ROOK_PROMOTION;
+    }
+    bool is_queen_capture_promotion(unsigned int move){
+        return get_additional_info(move) == QUEEN_CAPTURE_PROMOTION;
+    }
+    bool is_knight_capture_promotion(unsigned int move){
+        return get_additional_info(move) == KNIGHT_CAPTURE_PROMOTION;
+    }
+    bool is_bishop_capture_promotion(unsigned int move){
+        return get_additional_info(move) == BISHOP_CAPTURE_PROMOTION;
+    }
+    bool is_rook_capture_promotion(unsigned int move){
+        return get_additional_info(move) == ROOK_CAPTURE_PROMOTION;
     }
     void display(unsigned int move){
         string side = side_as_string(get_side(move));

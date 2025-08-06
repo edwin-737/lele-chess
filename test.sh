@@ -1,1 +1,1 @@
-./test_engine > output.txt -f ./positions/starting_position.txt -d 5
+./test_engine -s

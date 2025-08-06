@@ -38,7 +38,31 @@ unsigned int MoveGen::get_move(){
         additional_info = CAPTURE;
     } else if(piece == pPAWN && abs((int)from - (int)to) == 16){
         additional_info = DOUBLE_PAWN_PUSH;
-    } 
+    } else if(piece == pPAWN && is_final_rank(to)){
+        if(captured_piece != NO_PIECE && captured_piece != pKING){
+            // if(promoted_piece == pKNIGHT)
+            //     additional_info = KNIGHT_CAPTURE_PROMOTION;
+            // else if(promoted_piece == pBISHOP)
+            //     additional_info = BISHOP_CAPTURE_PROMOTION;
+            // else if(promoted_piece == pROOK)
+            //     additional_info = ROOK_CAPTURE_PROMOTION;
+            // else if(promoted_piece == pQUEEN)
+            //     additional_info = QUEEN_CAPTURE_PROMOTION;
+            // promoted_piece = (promoted_piece - 1) + 1 % 4 + 1;
+            additional_info = QUEEN_CAPTURE_PROMOTION;
+        } else {
+            // if(promoted_piece == pKNIGHT)
+            //     additional_info = KNIGHT_PROMOTION;
+            // else if(promoted_piece == pBISHOP)
+            //     additional_info = BISHOP_PROMOTION;
+            // else if(promoted_piece == pROOK)
+            //     additional_info = ROOK_PROMOTION;
+            // else if(promoted_piece == pQUEEN)
+            //     additional_info = QUEEN_PROMOTION;
+            // promoted_piece = (promoted_piece - 1) + 1 % 4 + 1;
+            additional_info = QUEEN_PROMOTION;
+        }
+    }
     unsigned int move = MoveUtils::create_move(from, to, side, piece, captured_piece, additional_info);
     return move;
 }
@@ -219,6 +243,9 @@ unsigned int MoveGen::get_ep_capture(int side){
     unsigned int ep_capture_file = ep_rights & 0xf;
     unsigned int move = MoveUtils::create_move(ep_from, ep_to, side, pPAWN, pPAWN, EP_CAPTURE, ep_capture_file);
     return move;
+}
+bool MoveGen::is_final_rank(int square){
+    return (get_rank_bitboard(7) & get_square_bitboard(square)) || (get_rank_bitboard(0) & get_square_bitboard(square));
 }
 void MoveGen::set_gen_type(int _gen_type){
     gen_type = _gen_type;
