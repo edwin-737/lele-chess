@@ -43,22 +43,23 @@ public:
         // piece_locations[BLACK][pKING].insert({e8});
         king_location[BLACK] = e8;
     }
-    void apply_move(unsigned int move, int update_num_moves=0);
-    void reverse_move(unsigned int move, int update_num_moves=0);
+    void apply_move(unsigned int move);
+    void reverse_move(unsigned int move);
     bool is_move_legal(unsigned int move);
-    bool apply_move_if_legal(unsigned int move, int update_num_moves=0);
+    bool apply_move_if_legal(unsigned int move);
     void update_castle_rights(unsigned int move);
     void update_en_passant_rights(unsigned int move);
     bool can_castle_kingside(unsigned int side);
     bool can_castle_queenside(unsigned int side);
     void parse_fen(fs::path path);
     void parse_pgn(fs::path path);
-    int get_side_to_move();
+    unsigned int get_side_to_move();
     void change_side_to_move();
-    int get_piece_location(int side, int piece);
-    int get_king_location(int side);
+    int get_piece_location(unsigned int side, unsigned int piece);
+    int get_king_location(unsigned int side);
     int get_initial_ep_rights();
     int get_initial_castle_rights();
+    unsigned int create_move_using_pgn(unsigned int from, unsigned int to, unsigned int promoted_piece = NO_PIECE);
     BoardInfo* get_board_info();
     Bitboard* get_bitboard();
     set<int> piece_locations[NUM_SIDES][NUM_PIECE_TYPES];
@@ -70,7 +71,7 @@ private:
     BoardInfo* bi = BoardInfo::get_instance();
     Bitboard* bb = Bitboard::get_instance();
     Evaluation* eval = Evaluation::get_instance();
-    int side_to_move;
-    int initial_ep_rights = 0, initial_castle_rights = 0;
+    unsigned int side_to_move = WHITE;
+    int initial_ep_rights = NO_EP_RIGHTS, initial_castle_rights = 0xf;
 };
 #endif

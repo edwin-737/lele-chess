@@ -1,6 +1,7 @@
 #ifndef move_h
 #define move_h
 #include <string>
+#include "board_info.hpp"
 using namespace std;
 typedef enum add_info{
     // generated as normal moves
@@ -38,7 +39,7 @@ typedef enum move_types {
 // 4 bits: additional info
 // 3 bits: ep capture file
 namespace MoveUtils{
-    unsigned int create_move(unsigned int from, unsigned int to, unsigned int side, unsigned int piece, unsigned int captured_piece = 0, unsigned int additional_info = 0, unsigned int ep_capture_file = 0);
+    unsigned int create_move(unsigned int from, unsigned int to, unsigned int side, unsigned int piece, unsigned int additional_info = 0, unsigned int captured_piece = NO_PIECE, unsigned int ep_capture_file = NO_EP_RIGHTS);
     unsigned int get_from(unsigned int move);
     unsigned int get_to(unsigned int move);
     unsigned int get_side(unsigned int move);
@@ -63,7 +64,10 @@ namespace MoveUtils{
     bool is_knight_capture_promotion(unsigned int move);
     bool is_bishop_capture_promotion(unsigned int move);
     bool is_rook_capture_promotion(unsigned int move);
+    bool is_final_rank(unsigned int square);
     void display(unsigned int move);
+    unsigned int square_as_uint(string square);
+    unsigned int promoted_piece_as_uint(string piece);
     string piece_as_string(unsigned int piece);
     string side_as_string(unsigned int side);
     string move_as_string(unsigned int move);

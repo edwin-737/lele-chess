@@ -1,0 +1,55 @@
+fen path: ./positions/ep_fen.txt
+task: 0
+depth: 5
+side: 0
+Making objects 
+r n b q k b n r 
+p p p . p . p p 
+. . . . . . . . 
+. . . p P p . . 
+. . . . . . . . 
+. . . . . . . . 
+P P P P . P P P 
+R N B Q K B N R 
+set peek castle rights: 15
+set peek ep rights: 5
+a2a3: 490725
+a2a4: 562822
+b2b3: 556136
+b2b4: 556803
+c2c3: 545052
+c2c4: 566120
+d2d3: 632359
+d2d4: 721360
+f2f3: 405467
+f2f4: 454586
+g2g3: 549829
+g2g4: 560508
+h2h3: 490560
+h2h4: 562759
+e5e6: 380701
+b1a3: 520633
+b1c3: 624498
+g1e2: 351684
+g1f3: 455619
+g1h3: 505111
+f1e2: 456272
+f1d3: 561411
+f1c4: 626859
+f1b5: 134631
+f1a6: 531559
+d1e2: 559666
+d1f3: 856187
+d1g4: 976396
+d1h5: 59207
+e1e2: 363259
+e5f6: 803511
+Time taken by perft at depth=5:3887873 microseconds
+nodes: 16422290
+captures: 669892
+ep_captures: 174
+checks: 780315
+checkmates: 0
+castles: 12333
+promotions: 628
+capture promotions 9808

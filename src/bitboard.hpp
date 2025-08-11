@@ -2,7 +2,6 @@
 #define bitboard_h
 #include "const.hpp"
 typedef unsigned long long uint64;
-#define NO_PIECE 8
 class Bitboard{
 private:
     Bitboard(){
@@ -21,10 +20,10 @@ public:
     void update();
     bool any_piece_on_square(int sq);
     bool any_piece_on_square(int side, int sq);
-    bool attacked(int defending_side, int sq);
-    int get_lowest_value_attacker_to(int defending_side, int sq);
-    unsigned int get_piece_on_square(int side, int square);
-    unsigned int get_captured_piece(int move);
+    bool attacked(unsigned int defending_side, unsigned int sq);
+    unsigned int get_lowest_value_attacker_to(unsigned int defending_side, unsigned int sq);
+    unsigned int get_piece_on_square(unsigned int side, unsigned int square);
+    unsigned int get_captured_piece(unsigned int move);
     void display();
     void display_bitboard(uint64 b);
     uint64 piece_boards[NUM_SIDES][NUM_PIECE_TYPES];

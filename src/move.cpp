@@ -1,9 +1,11 @@
 #include <iostream>
 #include "move.hpp"
 #include "const.hpp"
+#include "board_squares.hpp"
 using namespace std;
+using namespace BoardSquares;
 namespace MoveUtils{
-    unsigned int create_move(unsigned int from, unsigned int to, unsigned int side, unsigned int piece, unsigned int captured_piece, unsigned int additional_info, unsigned int ep_capture_file){
+    unsigned int create_move(unsigned int from, unsigned int to, unsigned int side, unsigned int piece, unsigned int additional_info, unsigned int captured_piece, unsigned int ep_capture_file){
         return (from << 23) | (to << 17) | (side << 16) | (piece << 12) | (captured_piece << 8) | (additional_info << 4) | ep_capture_file;
     }
     unsigned int get_from(unsigned int move){
@@ -86,6 +88,9 @@ namespace MoveUtils{
     bool is_rook_capture_promotion(unsigned int move){
         return get_additional_info(move) == ROOK_CAPTURE_PROMOTION;
     }
+    bool is_final_rank(unsigned int square){
+        return (get_rank_bitboard(7) & get_square_bitboard(square)) || (get_rank_bitboard(0) & get_square_bitboard(square));
+    }
     void display(unsigned int move){
         string side = side_as_string(get_side(move));
         string from = square_as_string(get_from(move));
@@ -94,6 +99,28 @@ namespace MoveUtils{
         // if(is_promotion(move) || is_capture_promotion(move)){}
         cout<<side<<" "<<piece<<" "<<from<<" "<<to<<" "<<endl;
 
+    }
+
+    unsigned int square_as_uint(string square){
+        if(square.length() != 2){
+            return 0;
+        }
+        unsigned int file = square[0] - 'a';
+        unsigned int rank = square[1] - '0' - 1;
+        return rank * 8 + file;
+    }
+
+    unsigned int promoted_piece_as_uint(string promoted_piece){
+        if(promoted_piece == "k"){
+            return pQUEEN;
+        } else if(promoted_piece == "b"){
+            return pBISHOP;
+        } else if(promoted_piece == "r"){
+            return pBISHOP;
+        } else if(promoted_piece == "q"){
+            return pKNIGHT;
+        }
+        return 0;
     }
     string side_as_string(unsigned int side){
         if(side == WHITE){

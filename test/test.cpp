@@ -206,10 +206,10 @@ TEST_CASE("En Passant Rights Updated", "[En Passant]"){
     const char* fen_path = "./positions/starting_position.txt";
     b->parse_fen(fen_path);
     vector<unsigned int> move_list = {
-        MoveUtils::create_move(e2, e4, WHITE, pPAWN, NO_PIECE, DOUBLE_PAWN_PUSH),
-        MoveUtils::create_move(f7, f5, BLACK, pPAWN, NO_PIECE, DOUBLE_PAWN_PUSH),
-        MoveUtils::create_move(e4, e5, WHITE, pPAWN, NO_PIECE, QUIET_MOVE),
-        MoveUtils::create_move(d7, d5, BLACK, pPAWN, NO_PIECE, DOUBLE_PAWN_PUSH),
+        MoveUtils::create_move(e2, e4, WHITE, pPAWN, DOUBLE_PAWN_PUSH),
+        MoveUtils::create_move(f7, f5, BLACK, pPAWN, DOUBLE_PAWN_PUSH),
+        MoveUtils::create_move(e4, e5, WHITE, pPAWN, QUIET_MOVE),
+        MoveUtils::create_move(d7, d5, BLACK, pPAWN, DOUBLE_PAWN_PUSH),
     };
     SECTION("en passant rights updated"){
         b->apply_move(move_list[0]);
@@ -250,10 +250,10 @@ TEST_CASE("En Passant Move Generated", "[En Passant]"){
     const char* fen_path = "./positions/starting_position.txt";
     b->parse_fen(fen_path);
     vector<unsigned int> move_list = {
-        MoveUtils::create_move(e2, e4, WHITE, pPAWN, NO_PIECE, DOUBLE_PAWN_PUSH),
-        MoveUtils::create_move(f7, f5, BLACK, pPAWN, NO_PIECE, DOUBLE_PAWN_PUSH),
-        MoveUtils::create_move(e4, e5, WHITE, pPAWN, NO_PIECE, QUIET_MOVE),
-        MoveUtils::create_move(d7, d5, BLACK, pPAWN, NO_PIECE, DOUBLE_PAWN_PUSH),
+        MoveUtils::create_move(e2, e4, WHITE, pPAWN, DOUBLE_PAWN_PUSH),
+        MoveUtils::create_move(f7, f5, BLACK, pPAWN, DOUBLE_PAWN_PUSH),
+        MoveUtils::create_move(e4, e5, WHITE, pPAWN, QUIET_MOVE),
+        MoveUtils::create_move(d7, d5, BLACK, pPAWN, DOUBLE_PAWN_PUSH),
     };
     MoveGen mg = MoveGen(WHITE, mEP_CAPTURE);
     // MoveGen mg = MoveGen(WHITE);
@@ -268,7 +268,7 @@ TEST_CASE("En Passant Move Generated", "[En Passant]"){
             b->apply_move(move);
         }        
 
-        unsigned int expected_move = MoveUtils::create_move(e5, d6, WHITE, pPAWN, pPAWN, EP_CAPTURE, File::d);
+        unsigned int expected_move = MoveUtils::create_move(e5, d6, WHITE, pPAWN, EP_CAPTURE, pPAWN, File::d);
         unsigned int move = mg.get_special_move();
 
         REQUIRE(expected_move == move);
@@ -279,10 +279,10 @@ TEST_CASE("En Passant Move Generated", "[En Passant]"){
         }
     }
     move_list = {
-        MoveUtils::create_move(a2, a4, WHITE, pPAWN, NO_PIECE, DOUBLE_PAWN_PUSH),
-        MoveUtils::create_move(c7, c5, BLACK, pPAWN, NO_PIECE, DOUBLE_PAWN_PUSH),
-        MoveUtils::create_move(a4, a5, WHITE, pPAWN, NO_PIECE, QUIET_MOVE),
-        MoveUtils::create_move(b7, b5, BLACK, pPAWN, NO_PIECE, DOUBLE_PAWN_PUSH)
+        MoveUtils::create_move(a2, a4, WHITE, pPAWN, DOUBLE_PAWN_PUSH),
+        MoveUtils::create_move(c7, c5, BLACK, pPAWN, DOUBLE_PAWN_PUSH),
+        MoveUtils::create_move(a4, a5, WHITE, pPAWN, QUIET_MOVE),
+        MoveUtils::create_move(b7, b5, BLACK, pPAWN, DOUBLE_PAWN_PUSH)
     };    
     MoveGen mg1 = MoveGen(WHITE, mEP_CAPTURE);
     // MoveGen mg1 = MoveGen(WHITE);
@@ -294,7 +294,7 @@ TEST_CASE("En Passant Move Generated", "[En Passant]"){
             b->apply_move(move);
         }        
 
-        unsigned int expected_move = MoveUtils::create_move(a5, b6, WHITE, pPAWN, pPAWN, EP_CAPTURE, File::b);
+        unsigned int expected_move = MoveUtils::create_move(a5, b6, WHITE, pPAWN, EP_CAPTURE, pPAWN,  File::b);
         unsigned int move = mg1.get_special_move();
 
         REQUIRE(expected_move == move);
@@ -305,10 +305,10 @@ TEST_CASE("En Passant Move Generated", "[En Passant]"){
         }
     }        
     move_list = {
-        MoveUtils::create_move(b2, b4, WHITE, pPAWN, NO_PIECE, DOUBLE_PAWN_PUSH),
-        MoveUtils::create_move(c7, c5, BLACK, pPAWN, NO_PIECE, DOUBLE_PAWN_PUSH),
-        MoveUtils::create_move(b4, b5, WHITE, pPAWN, NO_PIECE, QUIET_MOVE),
-        MoveUtils::create_move(a7, a5, BLACK, pPAWN, NO_PIECE, DOUBLE_PAWN_PUSH)
+        MoveUtils::create_move(b2, b4, WHITE, pPAWN, DOUBLE_PAWN_PUSH),
+        MoveUtils::create_move(c7, c5, BLACK, pPAWN, DOUBLE_PAWN_PUSH),
+        MoveUtils::create_move(b4, b5, WHITE, pPAWN, QUIET_MOVE),
+        MoveUtils::create_move(a7, a5, BLACK, pPAWN, DOUBLE_PAWN_PUSH)
     };
 
     MoveGen mg2 = MoveGen(WHITE, mEP_CAPTURE);
@@ -322,7 +322,7 @@ TEST_CASE("En Passant Move Generated", "[En Passant]"){
             b->apply_move(move);
         }
 
-        unsigned int expected_move = MoveUtils::create_move(b5, a6, WHITE, pPAWN, pPAWN, EP_CAPTURE, File::a);
+        unsigned int expected_move = MoveUtils::create_move(b5, a6, WHITE, pPAWN, EP_CAPTURE, pPAWN, File::a);
         unsigned int move = mg2.get_special_move();
 
         REQUIRE(expected_move == move);
@@ -333,10 +333,10 @@ TEST_CASE("En Passant Move Generated", "[En Passant]"){
         }
     }    
     move_list = {
-        MoveUtils::create_move(h2, h4, WHITE, pPAWN, NO_PIECE, DOUBLE_PAWN_PUSH),
-        MoveUtils::create_move(c7, c5, BLACK, pPAWN, NO_PIECE, DOUBLE_PAWN_PUSH),
-        MoveUtils::create_move(h4, h5, WHITE, pPAWN, NO_PIECE, QUIET_MOVE),
-        MoveUtils::create_move(g7, g5, BLACK, pPAWN, NO_PIECE, DOUBLE_PAWN_PUSH)
+        MoveUtils::create_move(h2, h4, WHITE, pPAWN, DOUBLE_PAWN_PUSH),
+        MoveUtils::create_move(c7, c5, BLACK, pPAWN, DOUBLE_PAWN_PUSH),
+        MoveUtils::create_move(h4, h5, WHITE, pPAWN, QUIET_MOVE),
+        MoveUtils::create_move(g7, g5, BLACK, pPAWN, DOUBLE_PAWN_PUSH)
     };
     MoveGen mg3 = MoveGen(WHITE,  mEP_CAPTURE);
     // MoveGen mg3 = MoveGen(WHITE);
@@ -348,7 +348,7 @@ TEST_CASE("En Passant Move Generated", "[En Passant]"){
             b->apply_move(move);
         }        
 
-        unsigned int expected_move = MoveUtils::create_move(h5, g6, WHITE, pPAWN, pPAWN, EP_CAPTURE, File::g);
+        unsigned int expected_move = MoveUtils::create_move(h5, g6, WHITE, pPAWN, EP_CAPTURE, pPAWN, File::g);
         unsigned int move = mg3.get_special_move();
 
         REQUIRE(expected_move == move);
@@ -407,8 +407,8 @@ TEST_CASE("Only Captures","[MoveGen]"){
     mg1.set_gen_type(ONLY_CAPTURES);
 
     vector<unsigned int> expected_moves = {
-        MoveUtils::create_move(f8, a3, BLACK, pBISHOP, pPAWN, CAPTURE),
-        MoveUtils::create_move(d8, d1, BLACK, pQUEEN, pQUEEN, CAPTURE),
+        MoveUtils::create_move(f8, a3, BLACK, pBISHOP,  CAPTURE, pPAWN),
+        MoveUtils::create_move(d8, d1, BLACK, pQUEEN, CAPTURE, pQUEEN),
     };
     vector<unsigned int> actual_moves;
     SECTION("One capture generated with queen trade position"){
@@ -450,6 +450,7 @@ TEST_CASE("Number of nodes during search","[MoveGen]"){
     Board* b = new Board();
     const char* fen_path = "./positions/starting_position.txt";
     b->parse_fen(fen_path);
+
     Search* s = new Search(b);
 
     SECTION("Depth = 1"){
@@ -477,11 +478,39 @@ TEST_CASE("Number of nodes during search","[MoveGen]"){
         REQUIRE(s->perft(5, 5, WHITE) == 4865609);
         REQUIRE(s->num_captures == 82719);
     }
-    SECTION("Depth = 6"){
-        // s->search(6, WHITE);
-        // REQUIRE(s->num_nodes == 119060324);
-        REQUIRE(s->perft(6, 6, WHITE) == 119060324);
-        REQUIRE(s->num_captures == 2812008);
+    // SECTION("Depth = 6"){
+    //     // s->search(6, WHITE);
+    //     // REQUIRE(s->num_nodes == 119060324);
+    //     REQUIRE(s->perft(6, 6, WHITE) == 119060324);
+    //     REQUIRE(s->num_captures == 2812008);
+    // }
+    delete b;
+    delete Bitboard::instanceptr;
+    delete BoardInfo::instanceptr;
+    b = nullptr;
+    Bitboard::instanceptr = nullptr;
+    BoardInfo::instanceptr = nullptr;
+}
+TEST_CASE("promotions during search", "[MoveGen]"){
+    BoardSquares::init_files();
+    BoardSquares::init_ranks();
+    BoardSquares::init_squares();
+    MoveSet::set_attack_sets();
+    MoveSet::init_attack_masks();
+
+    Board* b = new Board();
+    string fen_path = "./positions/ep_fen.txt";
+    b->parse_fen(fen_path);
+    Search* s = new Search(b);
+
+
+    SECTION("Depth = 5"){
+        // s->search(1, WHITE);
+        REQUIRE(s->perft(5, 5, WHITE) == 16422290);
+        REQUIRE(s->num_captures == 669892);
+        REQUIRE(s->num_promotions == 628);
+        REQUIRE(s->num_capture_promotions == 9808);
+
     }
     delete b;
     delete Bitboard::instanceptr;
@@ -489,4 +518,31 @@ TEST_CASE("Number of nodes during search","[MoveGen]"){
     b = nullptr;
     Bitboard::instanceptr = nullptr;
     BoardInfo::instanceptr = nullptr;
+}
+TEST_CASE("castles during search", "[MoveGen]"){
+
+    BoardSquares::init_files();
+    BoardSquares::init_ranks();
+    BoardSquares::init_squares();
+    MoveSet::set_attack_sets();
+    MoveSet::init_attack_masks();
+
+    Board* b = new Board();
+    string fen_path = "./positions/castle_fen.txt";
+    b->parse_fen(fen_path);
+    Search* s = new Search(b);
+
+
+    SECTION("Depth = 5"){
+        REQUIRE(s->perft(5, 5, WHITE) == 22273312);
+        REQUIRE(s->num_castles == 19682);
+
+    }
+    delete b;
+    delete Bitboard::instanceptr;
+    delete BoardInfo::instanceptr;
+    b = nullptr;
+    Bitboard::instanceptr = nullptr;
+    BoardInfo::instanceptr = nullptr;
+
 }

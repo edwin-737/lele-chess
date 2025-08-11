@@ -56,12 +56,6 @@ void Evaluation::update_material(unsigned int move, bool reverse){
         unsigned int side = MoveUtils::get_side(move);
         unsigned int change = piece_values[captured_piece];
 
-        // if(MoveUtils::get_from(move) == f2 && MoveUtils::get_to(move) == e3){
-        //     cout<<"reverse: "<<reverse<<endl;
-        //     cout<<"f2e3 material before: "<<get_material()<<endl;
-        //     cout<<"captured piece: "<<captured_piece<<endl;
-        //     cout<<"piece value: "<<change<<endl;
-        // }
         if(reverse)
             change *= -1;
 
@@ -70,9 +64,6 @@ void Evaluation::update_material(unsigned int move, bool reverse){
         } else {
             material -= change;
         }
-
-        // if(MoveUtils::get_from(move) == f2 && MoveUtils::get_to(move) == e3)
-        //     cout<<"f2e3 material after: "<<get_material()<<endl;
     }
 }
 void Evaluation::update_piece_square_value(unsigned int move, bool reverse)

@@ -19,6 +19,7 @@ typedef enum Task{
 typedef enum ArgState{
     ARG_TYPE,
     FEN,
+    PGN,
     DEPTH,
     SIDE,
     TASK
@@ -30,9 +31,10 @@ int main(int argc, char** argv)
 {
     int arg_state = ARG_TYPE;
     vector<string> arg_list(argv, argv + argc);
-    string fen_path = "";
+    string fen_path = "", pgn_path = "";
     int depth = 1;
     bool include_fen = false;
+    bool include_pgn = false;
     int side = WHITE;
     int task = PERFT;
     for(int i = 0 ; i < argc ; i ++){
@@ -40,16 +42,23 @@ int main(int argc, char** argv)
             if(arg_list[i] == "-f"){
                 arg_state = FEN;
                 include_fen = true;
+            } else if(arg_list[i] == "-p"){
+                arg_state = PGN;
+                include_pgn = true;
             } else if(arg_list[i] == "-d"){
                 arg_state = DEPTH;
             } else if(arg_list[i] == "-s"){
                 arg_state = SIDE;
             } else if(arg_list[i] =="-j"){
                 arg_state = TASK;
-            }
+            } 
         } else if(arg_state == FEN){
             fen_path = arg_list[i];
             cout<<"fen path: "<<fen_path<<endl;
+            arg_state = ARG_TYPE;
+        } else if(arg_state == PGN){
+            pgn_path = arg_list[i];
+            cout<<"pgn path: "<<pgn_path<<endl;
             arg_state = ARG_TYPE;
         } else if(arg_state == DEPTH){
             depth = stoi(arg_list[i]);
@@ -75,17 +84,22 @@ int main(int argc, char** argv)
 
     cout << "Making objects \n";
     Board* b = new Board();
-    b->parse_fen(fen_path);
+    if(include_fen){
+        b->parse_fen(fen_path);
+    } else if(include_pgn){
+        b->parse_fen("./positions/starting_position.txt");
+        b->parse_pgn(pgn_path);
+    }
     b->get_bitboard()->display();
 
     // BoardInfo::set_castle_rights(b->get_initial_castle_rights());
     // BoardInfo::set_ep_rights(b->get_initial_ep_rights());
-    BoardInfo::set_board_info(b->get_initial_castle_rights(), b->get_initial_ep_rights());
+    // BoardInfo::set_board_info(b->get_initial_castle_rights(), b->get_initial_ep_rights());
 
     Search* s = new Search(b, depth);
     auto start = high_resolution_clock::now();
     if(task == PERFT){
-        unsigned int num_nodes = s->perft(depth, depth, side);
+        unsigned int num_nodes = s->perft(depth, depth, b->get_side_to_move());
         auto stop = high_resolution_clock::now();    
         auto duration = duration_cast<microseconds>(stop - start);
         cout << "Time taken by perft at depth=" << depth<<":"

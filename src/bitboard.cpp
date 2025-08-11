@@ -39,7 +39,7 @@ void Bitboard::init_piece_boards()
 }
 
 
-unsigned int Bitboard::get_piece_on_square(int side, int square)
+unsigned int Bitboard::get_piece_on_square(unsigned int side, unsigned int square)
 {
     for (int piece = 0; piece < NUM_PIECE_TYPES; piece++)
         if (piece_boards[side][piece] & BoardSquares::get_square_bitboard(square))
@@ -62,7 +62,7 @@ bool Bitboard::any_piece_on_square(int side, int square){
 }
 
 
-bool Bitboard::attacked(int defending_side, int sq)
+bool Bitboard::attacked(unsigned int defending_side, unsigned int sq)
 {
     // this->update();
     int attacking_side = defending_side ^ 1;
@@ -92,15 +92,15 @@ bool Bitboard::attacked(int defending_side, int sq)
     return false;
 }
 
-int Bitboard::get_lowest_value_attacker_to(int defending_side, int sq)
+unsigned int Bitboard::get_lowest_value_attacker_to(unsigned int defending_side, unsigned int sq)
 {
     for(int piece = 0 ; piece < NUM_PIECE_TYPES ; piece ++)
         if(attacked(defending_side, sq))
             return piece;
-    return -1;
+    return NO_PIECE;
 }
 
-unsigned int Bitboard::get_captured_piece(int move)
+unsigned int Bitboard::get_captured_piece(unsigned int move)
 {
     int side = MoveUtils::get_side(move);
     int to = MoveUtils::get_to(move);

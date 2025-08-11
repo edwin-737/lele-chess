@@ -3,7 +3,7 @@
 #include "board.hpp"
 #include "board_squares.hpp"
 using namespace BoardSquares;
-void Board::apply_move(unsigned int move, int update_num_moves){
+void Board::apply_move(unsigned int move){
     unsigned int side = MoveUtils::get_side(move);
     unsigned int piece = MoveUtils::get_piece(move);
     unsigned int from = MoveUtils::get_from(move);
@@ -196,7 +196,7 @@ void Board::apply_move(unsigned int move, int update_num_moves){
     // bb->update();
 }
 
-void Board::reverse_move(unsigned int move, int update_num_moves){
+void Board::reverse_move(unsigned int move){
     unsigned int side = MoveUtils::get_side(move);
     unsigned int piece = MoveUtils::get_piece(move);
     unsigned int from = MoveUtils::get_from(move);
@@ -241,7 +241,6 @@ void Board::reverse_move(unsigned int move, int update_num_moves){
             bb->piece_boards[side][pROOK] ^= get_from_to(h1, f1);
             bb->collective_piece_boards[side] ^= get_from_to(h1, f1); 
 
-            // update_piece_locations(side, pROOK, f1, h1);
             update_king_location(side, e1);
         } else if(MoveUtils::is_queen_castle(move) && side == WHITE){
             bb->piece_boards[side][pKING] ^= get_from_to(e1, c1);
@@ -249,7 +248,6 @@ void Board::reverse_move(unsigned int move, int update_num_moves){
             bb->piece_boards[side][pROOK] ^= get_from_to(a1, d1);
             bb->collective_piece_boards[side] ^= get_from_to(a1, d1); 
 
-            // update_piece_locations(side, pROOK, d1, a1);
             update_king_location(side, e1);
         } else if(MoveUtils::is_king_castle(move) && side == BLACK){
             bb->piece_boards[side][pKING] ^= get_from_to(e8, g8);
@@ -257,7 +255,6 @@ void Board::reverse_move(unsigned int move, int update_num_moves){
             bb->piece_boards[side][pROOK] ^= get_from_to(h8, f8);
             bb->collective_piece_boards[side] ^= get_from_to(h8, f8); 
 
-            // update_piece_locations(side, pROOK, f8, h8);
             update_king_location(side, e8);
         } else if(MoveUtils::is_queen_castle(move) && side == BLACK){
             bb->piece_boards[side][pKING] ^= get_from_to(e8, c8);
@@ -265,7 +262,6 @@ void Board::reverse_move(unsigned int move, int update_num_moves){
             bb->piece_boards[side][pROOK] ^= get_from_to(a8, d8);
             bb->collective_piece_boards[side] ^= get_from_to(a8, d8); 
 
-            // update_piece_locations(side, pROOK, d8, a8);
             update_king_location(side, e8);
         }
     } else if(MoveUtils::is_double_pawn_push(move)){
@@ -316,17 +312,17 @@ void Board::reverse_move(unsigned int move, int update_num_moves){
     bi->remove_board_info();
     // bb->update();
 }
-bool Board::apply_move_if_legal(unsigned int move, int update_num_moves)
+bool Board::apply_move_if_legal(unsigned int move)
 {
     // cout<<"apply_move_if_legal\n";
     unsigned int defending_side = MoveUtils::get_side(move);
     // cout<<"side: "<<side<<endl;
-    apply_move(move, update_num_moves);
+    apply_move(move);
     // int king_location = get_piece_location(side, pKING);
     int king_location = get_king_location(defending_side);
     if(bb->attacked(defending_side, king_location)){
         // cout<<"king attacked, reversing move\n";
-        reverse_move(move, update_num_moves);
+        reverse_move(move);
         return false;
     }
     return true;
@@ -354,18 +350,18 @@ void Board::update_piece_locations(int side, int piece, int from, int to){
 void Board::update_king_location(int side, int square){
     king_location[side] = square;
 }
-int Board::get_piece_location(int side, int piece){
+int Board::get_piece_location(unsigned int side, unsigned int piece){
     auto beginning = piece_locations[side][piece].begin();
     if(beginning != piece_locations[side][piece].end())
         return *beginning;
     return -1;
 
 }
-int Board::get_king_location(int side){
+int Board::get_king_location(unsigned int side){
     return king_location[side];
 }
 
-int Board::get_side_to_move(){
+unsigned int Board::get_side_to_move(){
     return side_to_move;
 }
 
@@ -373,176 +369,236 @@ void Board::change_side_to_move(){
     side_to_move ^= 1;
 }
 
+unsigned int Board::create_move_using_pgn(unsigned int from, unsigned int to, unsigned int promoted_piece){
+    unsigned int side = side_to_move;
+    unsigned int piece = bb->get_piece_on_square(side, from);
+    unsigned int captured_piece =  bb->get_piece_on_square(side ^ 1, to);
+    unsigned int additional_info = QUIET_MOVE;
+    unsigned int ep_target_file = 0;
+
+    uint64 from_bb = get_square_bitboard(from);
+    uint64 to_bb = get_square_bitboard(to);
+
+    if(piece == pKING){
+        int from_to_difference = (int)from - (int)to;
+        if(from_to_difference == 2){
+            additional_info = QUEEN_CASTLE;
+        } else if(from_to_difference == -2){
+            additional_info = KING_CASTLE;
+        }
+    } else if(piece == pPAWN){
+        int from_to_difference = abs((int)from - (int)to);
+        if(from_to_difference == 16){
+            additional_info = DOUBLE_PAWN_PUSH;
+        } else if(from_to_difference == 7 || from_to_difference == 9){
+            if(promoted_piece){
+                if(bb->collective_piece_boards[side ^ 1] & to_bb){
+                    if(promoted_piece == pKNIGHT){
+                        additional_info = KNIGHT_CAPTURE_PROMOTION;
+                    } else if(promoted_piece == pBISHOP){
+                        additional_info = BISHOP_CAPTURE_PROMOTION;
+                    } else if(promoted_piece == pROOK){
+                        additional_info = ROOK_CAPTURE_PROMOTION;
+                    } else {
+                        additional_info = QUEEN_CAPTURE_PROMOTION;
+                    }
+                } else {
+                    if(promoted_piece == pKNIGHT){
+                        additional_info = KNIGHT_PROMOTION;
+                    } else if(promoted_piece == pBISHOP){
+                        additional_info = BISHOP_PROMOTION;
+                    } else if(promoted_piece == pROOK){
+                        additional_info = ROOK_PROMOTION;
+                    } else {
+                        additional_info = QUEEN_PROMOTION;
+                    }
+                }
+            } else {
+                if(bb->collective_piece_boards[side ^ 1] & to_bb){
+                    additional_info = CAPTURE;
+                } else {
+                    additional_info = EP_CAPTURE;
+                }
+            }
+        } 
+    } else {
+        if(bb->collective_piece_boards[side ^ 1] & to_bb)
+            additional_info = CAPTURE;
+    }
+    if(additional_info == QUIET_MOVE){
+        cout<<"move is quiet\n";
+        return MoveUtils::create_move(from, to, side, piece, QUIET_MOVE);
+    } else if(additional_info == DOUBLE_PAWN_PUSH){
+        cout<<"move is double pawn push\n";
+        return MoveUtils::create_move(from, to, side, pPAWN, DOUBLE_PAWN_PUSH);
+    } else if(additional_info == CAPTURE){
+        return MoveUtils::create_move(from, to, side, piece, CAPTURE, captured_piece);
+    } else if(additional_info == EP_CAPTURE){
+        unsigned int ep_capture_file = 0;
+        if(side == WHITE){
+            ep_capture_file = to - a4;
+        } else {
+            ep_capture_file = to - a5;
+        }
+        return MoveUtils::create_move(from, to, side, pPAWN, EP_CAPTURE, pPAWN, ep_capture_file);
+    } else if(additional_info == KING_CASTLE){
+        return MoveUtils::create_move(from, to, side, pKING, KING_CASTLE);
+    } else if(additional_info == QUEEN_CASTLE){
+        return MoveUtils::create_move(from, to, side, pKING, QUEEN_CASTLE);
+    } else if(additional_info == KNIGHT_PROMOTION){
+        return MoveUtils::create_move(from, to, side, piece, KNIGHT_PROMOTION);
+    } else if(additional_info == BISHOP_PROMOTION){
+        return MoveUtils::create_move(from, to, side, piece, BISHOP_PROMOTION);
+    } else if(additional_info == ROOK_PROMOTION){
+        return MoveUtils::create_move(from, to, side, piece, ROOK_PROMOTION);
+    } else if(additional_info == QUEEN_PROMOTION){
+        return MoveUtils::create_move(from, to, side, piece, QUEEN_PROMOTION);
+    } else if(additional_info == KNIGHT_CAPTURE_PROMOTION){
+        return MoveUtils::create_move(from, to, side, piece, KNIGHT_CAPTURE_PROMOTION, captured_piece);
+    } else if(additional_info == BISHOP_CAPTURE_PROMOTION){
+        return MoveUtils::create_move(from, to, side, piece, BISHOP_CAPTURE_PROMOTION, captured_piece);
+    } else if(additional_info == ROOK_CAPTURE_PROMOTION){
+        return MoveUtils::create_move(from, to, side, piece, ROOK_CAPTURE_PROMOTION, captured_piece);
+    } else if(additional_info == QUEEN_CAPTURE_PROMOTION){
+        return MoveUtils::create_move(from, to, side, piece, QUEEN_CAPTURE_PROMOTION, captured_piece);
+    }
+    cout<<"no move match\n";
+    return 0;
+}
 void Board::parse_fen(fs::path path){
 
     std::ifstream file(path);
-    // if(file.is_open()){
-    //     string word;
-    //     FEN_STATE fen_state = POSITION;
-    //     int castle_rights = 0;
-    //     while(file >> word && fen_state != FINISHED){
-    //         if(fen_state == POSITION){
-
-    //             fen_state = SIDE_TO_MOVE;
-
-    //             int row = 7;
-    //             int pos = row * 8 - 1;
-    //             for(size_t i = 0 ; i < word.length() ; i ++){
-    //                 char ch = word[i];
-    //                 if(isalpha(ch)){
-    //                     pos += 1;
-    //                     uint64 square_bitboard = BoardSquares::get_square_bitboard(pos);
-    //                     int side;
-    //                     if(ch > 'Z'){
-    //                         side = BLACK;
-    //                     } else {
-    //                         side = WHITE;
-    //                     }
-    //                     char piece_type = tolower(ch);
-    //                     if(piece_type == 'p'){
-    //                         bb->piece_boards[side][pPAWN] |= square_bitboard;
-    //                     } else if(piece_type == 'n'){
-    //                         bb->piece_boards[side][pKNIGHT] |= square_bitboard;
-    //                     } else if(piece_type == 'b'){
-    //                         bb->piece_boards[side][pBISHOP] |= square_bitboard;
-    //                     } else if(piece_type == 'q'){
-    //                         bb->piece_boards[side][pQUEEN] |= square_bitboard;
-    //                     } else if(piece_type == 'k'){
-    //                         bb->piece_boards[side][pKING] |= square_bitboard;
-    //                     } else if(piece_type =='r'){
-    //                         bb->piece_boards[side][pROOK] |= square_bitboard;
-    //                     } 
-    //                 } else if(isnumber(ch)){
-
-    //                     int stride = ch - '0';
-    //                     pos += stride;
-    //                 } else if(ch == '/'){
-    //                     row -= 1;
-    //                     pos = row * 8 - 1;
-    //                     continue;
-    //                 } 
-    //             }
-    //         } else if(fen_state == SIDE_TO_MOVE){
-
-    //             fen_state = CASTLE_RIGHTS;
-
-    //             char ch = word[0];
-    //             side_to_move = WHITE ? ch == 'w' : ch == 'b';
-    //         } else if(fen_state == CASTLE_RIGHTS){
-
-    //             fen_state = EP_TARGET_SQUARE;
-
-    //             for(size_t i = 0 ; i < word.length() ; i ++){
-    //                 char ch = word[i];
-    //                 if(ch == 'K'){
-    //                     initial_castle_rights |= 0b1000;
-    //                 } else if(ch == 'Q'){
-    //                     initial_castle_rights |= 0b0100;
-    //                 }
-    //                 if(ch == 'k'){
-    //                     initial_castle_rights |= 0b0010;
-    //                 } else if(ch == 'q'){
-    //                     initial_castle_rights |= 0b0001;
-    //                 } 
-    //             }
-    //         } else if(fen_state == EP_TARGET_SQUARE){
-
-    //             fen_state = FINISHED;
-    //             char ch = word[0];
-    //             cout<<"state is ep target square: "<<ch<<endl;
-    //             if(!isalpha(ch))
-    //                 continue;
-    //             initial_ep_rights = ch - 'a';                
-    //             cout<<"initial_ep_rights: "<<initial_ep_rights<<endl;
-
-    //         } 
-    //         /*TODO: Halfmove clock*/
-    //     }
-    // }
+    unsigned int initial_side_to_move = WHITE;
     if(file.is_open()){
-        char ch;
-        int row = 7;
-        int pos = row * 8 - 1;
+        string word;
         FEN_STATE fen_state = POSITION;
-        int castle_rights = 0;
-        while(file.get(ch) && fen_state != FINISHED){
-            if(ch == ' '){
-                if(fen_state == POSITION){
-                    fen_state = SIDE_TO_MOVE;
-                } else if(fen_state == SIDE_TO_MOVE){
-                    fen_state = CASTLE_RIGHTS;
-                } else if(fen_state == CASTLE_RIGHTS){
-                    fen_state = EP_TARGET_SQUARE;
-                } else if(fen_state == EP_TARGET_SQUARE){
-                    fen_state = FINISHED;
-                }
-            }
-            if(fen_state == SIDE_TO_MOVE){
-                side_to_move = WHITE ? ch == 'w' : ch == 'b';
-            } else if(fen_state == CASTLE_RIGHTS){
-                // cout<<"fen state is castle rights\n";
-                if(ch == 'K'){
-                    initial_castle_rights |= 0b1000;
-                } else if(ch == 'Q'){
-                    initial_castle_rights |= 0b0100;
-                }
-                if(ch == 'k'){
-                    initial_castle_rights |= 0b0010;
-                } else if(ch == 'q'){
-                    initial_castle_rights |= 0b0001;
-                }                
-                // cout<<"initial_castle_rights: "<<initial_castle_rights<<endl;
+        while(file >> word && fen_state != FINISHED){
+            if(fen_state == POSITION){
 
-                // bi->add_castle_right(castle_rights);
-                // initial_castle_rights = castle_rights;
+                fen_state = SIDE_TO_MOVE;
+
+                int row = 7;
+                int pos = row * 8 - 1;
+                for(size_t i = 0 ; i < word.length() ; i ++){
+                    char ch = word[i];
+                    if(isalpha(ch)){
+                        pos += 1;
+                        uint64 square_bitboard = BoardSquares::get_square_bitboard(pos);
+                        int side;
+                        if(ch > 'Z'){
+                            side = BLACK;
+                        } else {
+                            side = WHITE;
+                        }
+                        char piece_type = tolower(ch);
+                        if(piece_type == 'p'){
+                            bb->piece_boards[side][pPAWN] |= square_bitboard;
+                        } else if(piece_type == 'n'){
+                            bb->piece_boards[side][pKNIGHT] |= square_bitboard;
+                        } else if(piece_type == 'b'){
+                            bb->piece_boards[side][pBISHOP] |= square_bitboard;
+                        } else if(piece_type == 'q'){
+                            bb->piece_boards[side][pQUEEN] |= square_bitboard;
+                        } else if(piece_type == 'k'){
+                            bb->piece_boards[side][pKING] |= square_bitboard;
+                        } else if(piece_type =='r'){
+                            bb->piece_boards[side][pROOK] |= square_bitboard;
+                        } 
+                    } else if(isnumber(ch)){
+
+                        int stride = ch - '0';
+                        pos += stride;
+                    } else if(ch == '/'){
+                        row -= 1;
+                        pos = row * 8 - 1;
+                        continue;
+                    } 
+                }
+            } else if(fen_state == SIDE_TO_MOVE){
+
+                fen_state = CASTLE_RIGHTS;
+
+                char ch = word[0];
+                // side_to_move = WHITE ? ch == 'w' : BLACK;
+                initial_side_to_move = WHITE ? ch == 'w' : BLACK;
+                // bi->set_side_to_move(WHITE ? ch == 'w' : BLACK);
+            } else if(fen_state == CASTLE_RIGHTS){
+
+                fen_state = EP_TARGET_SQUARE;
+
+                for(size_t i = 0 ; i < word.length() ; i ++){
+                    char ch = word[i];
+                    if(ch == 'K'){
+                        initial_castle_rights |= 0b1000;
+                    } else if(ch == 'Q'){
+                        initial_castle_rights |= 0b0100;
+                    }
+                    if(ch == 'k'){
+                        initial_castle_rights |= 0b0010;
+                    } else if(ch == 'q'){
+                        initial_castle_rights |= 0b0001;
+                    } 
+                }
             } else if(fen_state == EP_TARGET_SQUARE){
+
+                fen_state = FINISHED;
+                char ch = word[0];
+                cout<<"ep target square: "<<ch<<endl;
                 if(!isalpha(ch))
                     continue;
-                // cout<<"state is ep target square\n";
-                initial_ep_rights = ch - 'a';
-                // cout<<"parse fen inital ep rights: "<<initial_ep_rights<<endl;
-            } else if(fen_state == POSITION){
-                if(isalpha(ch)){
-                    pos += 1;
-                    uint64 sq = BoardSquares::get_square_bitboard(pos);
-                    int side;
-                    if(ch > 'Z'){
-                        side = BLACK;
-                    } else {
-                        side = WHITE;
-                    }
-                    char piece_type = tolower(ch);
-                    if(piece_type == 'p'){
-                        bb->piece_boards[side][pPAWN] |= sq;
-                    } else if(piece_type == 'n'){
-                        bb->piece_boards[side][pKNIGHT] |= sq;
-                    } else if(piece_type == 'b'){
-                        bb->piece_boards[side][pBISHOP] |= sq;
-                    } else if(piece_type == 'q'){
-                        bb->piece_boards[side][pQUEEN] |= sq;
-                    } else if(piece_type == 'k'){
-                        bb->piece_boards[side][pKING] |= sq;
-                    } else if(piece_type =='r'){
-                        bb->piece_boards[side][pROOK] |= sq;
-                    } 
-                } else if(isnumber(ch)){
-                    int stride = ch - '0';
-                    pos += stride;
-                } else if(ch =='/'){
-                    row -= 1;
-                    pos = row * 8 - 1;
-                    continue;
-                } else {
-                    break;
-                }
-            }
-            
+                initial_ep_rights = ch - 'a';                
+                cout<<"initial_ep_rights: "<<initial_ep_rights<<endl;
+
+            } 
+            /*TODO: Halfmove clock*/
         }
     }
-    // init_piece_locations();
+    // bi->set_side_to_move(initial_side_to_move);
+    bi->set_board_info(initial_castle_rights, initial_ep_rights);
     bb->update();
     eval->init_material();
-    // cout<<"finished init material\n";
+}
+void Board::parse_pgn(fs::path path){
+
+    bi->set_board_info(initial_castle_rights, initial_ep_rights);
+    bb->update();
+    eval->init_material();
+
+    std::ifstream file(path);
+    if(file.is_open()){
+        std::string move_string;
+        while(file >> move_string){
+            cout<<"move_string: "<<move_string<<endl;
+            cout<<"side_to_move: "<<side_to_move<<endl;
+            if(move_string.length() < 4){
+                cout<<"not applying move"<<endl;
+                return;
+            }
+            else if(move_string.length() == 4){
+                std::string from_string = move_string.substr(0, 2);
+                std::string to_string = move_string.substr(2, 2);
+
+                unsigned int from = MoveUtils::square_as_uint(from_string);
+                unsigned int to = MoveUtils::square_as_uint(to_string);
+                unsigned int move = create_move_using_pgn(from, to);
+                cout<<"created move: "<<MoveUtils::move_as_string(move)<<endl;
+                apply_move_if_legal(move);
+                change_side_to_move();
+            } else {
+                std::string from_string = move_string.substr(0, 2);
+                std::string to_string = move_string.substr(2, 2);
+                std::string promoted_piece_string = move_string.substr(4, 1);
+
+                unsigned int from = MoveUtils::square_as_uint(from_string);
+                unsigned int to = MoveUtils::square_as_uint(to_string);
+                unsigned int promoted_piece = MoveUtils::promoted_piece_as_uint(promoted_piece_string);
+                unsigned int move = create_move_using_pgn(from, to, promoted_piece);
+                cout<<"created move: "<<MoveUtils::move_as_string(move)<<endl;
+                apply_move_if_legal(move);
+                change_side_to_move();
+            } 
+        }
+    }
 }
 void Board::init_piece_locations(){
     for(int sq = 0 ; sq < NUM_SQUARES ; sq ++){

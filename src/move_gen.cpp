@@ -39,7 +39,7 @@ unsigned int MoveGen::get_move(){
     } else if(piece == pPAWN && abs((int)from - (int)to) == 16){
         additional_info = DOUBLE_PAWN_PUSH;
     } 
-    if(piece == pPAWN && is_final_rank(to)){
+    if(piece == pPAWN && MoveUtils::is_final_rank(to)){
         // cout<<"is final rank to: "<<MoveUtils::square_as_string(to)<<endl;
         if(captured_piece != NO_PIECE && captured_piece != pKING){
             if(promoted_piece == pKNIGHT)
@@ -71,7 +71,7 @@ unsigned int MoveGen::get_move(){
             promoted_piece = pKNIGHT;
         }
     }
-    unsigned int move = MoveUtils::create_move(from, to, side, piece, captured_piece, additional_info);
+    unsigned int move = MoveUtils::create_move(from, to, side, piece, additional_info, captured_piece);
     return move;
 }
 
@@ -85,7 +85,7 @@ unsigned int MoveGen::get_special_move(){
         // cout<<"move_type is mKING_CASTLE\n";
         if(can_castle_kingside(side)){
             // cout<<"getting king castle move\n";
-            move = side == WHITE ? MoveUtils::create_move(e1, g1, side, 0, 0, KING_CASTLE) : MoveUtils::create_move(e8, g8, side, 0, 0, KING_CASTLE);
+            move = side == WHITE ? MoveUtils::create_move(e1, g1, side, pKING, KING_CASTLE) : MoveUtils::create_move(e8, g8, side, pKING, KING_CASTLE);
             num_special_moves[mKING_CASTLE] ++;
         } else {
             move = INCREMENTING_MOVE_TYPE;
@@ -93,7 +93,7 @@ unsigned int MoveGen::get_special_move(){
         move_type ++;
     } else if(move_type == mQUEEN_CASTLE){
         if(can_castle_queenside(side)){
-            move = side == WHITE ? MoveUtils::create_move(e1, c1, side, 0, 0, QUEEN_CASTLE) : MoveUtils::create_move(e8, c8, side, 0, 0, QUEEN_CASTLE);
+            move = side == WHITE ? MoveUtils::create_move(e1, c1, side, pKING, QUEEN_CASTLE) : MoveUtils::create_move(e8, c8, side, pKING, QUEEN_CASTLE);
             num_special_moves[mQUEEN_CASTLE] ++;
         } else {
             move = INCREMENTING_MOVE_TYPE;
@@ -250,11 +250,8 @@ unsigned int MoveGen::get_ep_capture(int side){
     }
     unsigned int ep_to = side == WHITE ? ep_from_centre + 8 : ep_from_centre - 8;
     unsigned int ep_capture_file = ep_rights & 0xf;
-    unsigned int move = MoveUtils::create_move(ep_from, ep_to, side, pPAWN, pPAWN, EP_CAPTURE, ep_capture_file);
+    unsigned int move = MoveUtils::create_move(ep_from, ep_to, side, pPAWN, EP_CAPTURE, pPAWN, ep_capture_file);
     return move;
-}
-bool MoveGen::is_final_rank(int square){
-    return (get_rank_bitboard(7) & get_square_bitboard(square)) || (get_rank_bitboard(0) & get_square_bitboard(square));
 }
 void MoveGen::set_gen_type(int _gen_type){
     gen_type = _gen_type;

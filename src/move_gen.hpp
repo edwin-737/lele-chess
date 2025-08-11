@@ -46,7 +46,6 @@ private:
     bool update_piece();
     bool update_from();
     bool update_to();
-    bool is_final_rank(int square);
     bool can_castle_kingside(int side);
     bool can_castle_queenside(int side);
     unsigned int get_ep_capture(int side);
