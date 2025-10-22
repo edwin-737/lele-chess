@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include <vector>
 #include <string>
+#ifdef ENABLE_PROFILER
+#include <gperftools/profiler.h>
+#endif
 #include "move.hpp"
 // #include "evaluation.hpp"
 #include "board_squares.hpp"
@@ -98,25 +101,35 @@ int main(int argc, char** argv)
 
     Search* s = new Search(b, depth);
     auto start = high_resolution_clock::now();
-    if(task == PERFT){
-        unsigned int num_nodes = s->perft(depth, depth, b->get_side_to_move());
-        auto stop = high_resolution_clock::now();    
-        auto duration = duration_cast<microseconds>(stop - start);
-        cout << "Time taken by perft at depth=" << depth<<":"
-            << duration.count() << " microseconds" << endl;
-        cout<<"nodes: "<<num_nodes<<endl;
-        cout<<"captures: "<<s->num_captures<<endl;
-        cout<<"ep_captures: "<<s->num_ep_captures<<endl;
-        cout<<"checks: "<<s->num_checks<<endl;
-        cout<<"checkmates: "<<s->num_checkmates<<endl;
-        cout<<"castles: "<<s->num_castles<<endl;
-        cout<<"promotions: "<<s->num_promotions<<endl;
-        cout<<"capture promotions: "<<s->num_capture_promotions<<endl;
-    } else {
-        cout<<"search max depth: "<<s->max_depth<<endl;
-        cout<<"search depth: "<<depth<<endl;
-        cout<<"side: "<<side<<endl;
 
+    if (task == PERFT) {
+
+        #ifdef ENABLE_PROFILER
+            ProfilerStart("profile.prof");
+        #endif
+        unsigned int num_nodes = s->perft(depth, depth, b->get_side_to_move());
+        
+        #ifdef ENABLE_PROFILER
+            ProfilerStop();
+        #endif
+        auto stop = high_resolution_clock::now();
+        duration<double> elapsed = stop - start;  // seconds as double (fractional)
+        cout<<"depth = "<<depth<<endl;
+        cout<<"time = "<<elapsed.count()<<endl;
+        cout << "nodes per second = " << num_nodes  /  elapsed.count()<< endl;
+        cout<<"nodes = "<<num_nodes<<endl;
+        cout<<"captures = "<<s->num_captures<<endl;
+        cout<<"ep_captures = "<<s->num_ep_captures<<endl;
+        cout<<"checks = "<<s->num_checks<<endl;
+        cout<<"checkmates = "<<s->num_checkmates<<endl;
+        cout<<"castles = "<<s->num_castles<<endl;
+        cout<<"promotions = "<<s->num_promotions<<endl;
+        cout<<"capture promotions = "<<s->num_capture_promotions<<endl;
+    } else {
+        cout<<"search max depth = "<<s->max_depth<<endl;
+        cout<<"search depth = "<<depth<<endl;
+        cout<<"side = "<<side<<endl;
+        s->max_depth = depth;
         int score = s->alpha_beta(-1e5, 1e5, depth, side, side);
 
     }

@@ -36,9 +36,10 @@ string BoardSquares::get_square(int sq)
     algebraic_sq += rank;
     return algebraic_sq;
 }
-uint64& BoardSquares::get_square_bitboard(int idx)
+uint64 BoardSquares::get_square_bitboard(int idx)
 {
-    return squares[idx];
+    // return squares[idx];
+    return 1ULL << idx;
 }
 uint64& BoardSquares::get_file_bitboard(int idx)
 {

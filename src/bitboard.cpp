@@ -18,8 +18,8 @@ void Bitboard::update()
     // white = OR_mult(piece_boards[WHITE], 6);
     // black = OR_mult(piece_boards[BLACK], 6);
     // all = white | black;
-    collective_piece_boards[WHITE] = OR_mult(piece_boards[WHITE], 6);
-    collective_piece_boards[BLACK] = OR_mult(piece_boards[BLACK], 6);
+    collective_piece_boards[WHITE] = OR_mult6(piece_boards[WHITE]);
+    collective_piece_boards[BLACK] = OR_mult6(piece_boards[BLACK]);
     all = collective_piece_boards[WHITE] | collective_piece_boards[BLACK];
     // cout<<"updating collective piece boards\n";
     // cout<<"white collective piece board\n";

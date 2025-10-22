@@ -1,1 +1,1 @@
-./test_engine -s
+./build/test_engine -s

@@ -10,6 +10,17 @@ Evaluation* Evaluation::get_instance(){
         instanceptr = new Evaluation();
     return instanceptr;
 }
+
+void Evaluation::init_piece_square_value(){
+    for(int side = 0 ; side < NUM_SIDES ; side ++){
+        for(int piece = 0 ; piece < NUM_PIECE_TYPES ; piece ++){
+            for(int sq = 0 ; sq < NUM_SQUARES ; sq ++){
+                piece_square_value += PIECE_SQUARE_TABLE[side][piece][sq];
+            }
+        }
+    }
+}
+
 void Evaluation::init_material(){
     for(int side = 0 ; side < NUM_SIDES ; side ++){
         for(int piece = 0 ; piece < NUM_PIECE_TYPES ; piece ++){
@@ -44,11 +55,14 @@ void Evaluation::init_material(){
 int Evaluation::get_material(){
     return material;
 }
-int Evaluation::get_piece_square_values(){
+int Evaluation::get_piece_square_value(){
     return piece_square_value;
 }
 int Evaluation::get_evaluation(){
-    return 0;
+    // cout<<"piece_square_value: "<<piece_square_value<<endl;
+    // return 100 * material + piece_square_value;
+    // return 30 * material + piece_square_value;
+    return 100 * material + piece_square_value;
 }
 void Evaluation::update_material(unsigned int move, bool reverse){
     if(MoveUtils::is_capture(move)){
@@ -74,15 +88,28 @@ void Evaluation::update_piece_square_value(unsigned int move, bool reverse)
     unsigned int piece = MoveUtils::get_piece(move);
 
     int change = PIECE_SQUARE_TABLE[side][piece][to] - PIECE_SQUARE_TABLE[side][piece][from];
-    if(side == BLACK)
+    if(reverse)
         change *= -1;
     piece_square_value += change;
 
     if(MoveUtils::is_capture(move)){
         unsigned int captured_piece = MoveUtils::get_captured_piece(move);
         int captured_piece_change = -PIECE_SQUARE_TABLE[side][captured_piece][to];
-        if(side == BLACK)
+        if(reverse){
             captured_piece_change *= -1;
+        }
         piece_square_value += captured_piece_change;
     }
+}
+unsigned int Evaluation::get_chebyshev_distance(unsigned int from, unsigned int to){
+    int from_file = (int) get_file(from);
+    int to_file = (int) get_file(to);
+
+    int from_rank = (int) get_rank(from);
+    int to_rank = (int) get_rank(to);
+    
+    int rank_dist = abs(from_rank - to_rank);
+    int file_dist = abs(from_file - to_file);
+
+    return max(rank_dist, file_dist);
 }

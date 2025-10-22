@@ -546,3 +546,27 @@ TEST_CASE("castles during search", "[MoveGen]"){
     BoardInfo::instanceptr = nullptr;
 
 }
+TEST_CASE("Alpha beta pruning selected move", "[Search]"){
+    BoardSquares::init_files();
+    BoardSquares::init_ranks();
+    BoardSquares::init_squares();
+    MoveSet::set_attack_sets();
+    MoveSet::init_attack_masks();
+
+    Board* b = new Board();
+    string fen_path = "./positions/bratko-kopec/bk_1.txt";
+    b->parse_fen(fen_path);
+    Search* s = new Search(b);
+
+    SECTION("bk 1"){
+        s->max_depth = 6;
+        s->alpha_beta(-1e5, 1e5, 6, BLACK, BLACK);
+        MoveUtils::display(s->selected_move);
+        REQUIRE(s->selected_move == MoveUtils::create_move(d6, d1, BLACK, pQUEEN));
+    }
+}
+TEST_CASE("Chebyshev Distance", "[Evaluation]"){
+    unsigned int from = a1;
+    unsigned int to = b3;
+    REQUIRE(Evaluation::get_chebyshev_distance(from, to) == 2);  
+}

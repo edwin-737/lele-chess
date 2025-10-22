@@ -20,7 +20,8 @@ unsigned int Search::perft(int original_depth, int depth_left, unsigned int side
             num_checks ++;
         } 
         return 1ULL;
-    } else if(depth_left == original_depth - 1){
+    } 
+    else if(depth_left == original_depth - 1){
         cout<<MoveUtils::move_as_string(root_move)<<": ";
     }
     MoveGen mg = MoveGen(side);
@@ -47,6 +48,8 @@ unsigned int Search::perft(int original_depth, int depth_left, unsigned int side
 int Search::alpha_beta(int alpha, int beta, int depth_left, unsigned int side, unsigned int starting_side, unsigned int root_move){
     if(depth_left == 0) 
         return quiesce(alpha, beta, depth_left, side, starting_side);
+    if(depth_left == 6)
+        cout<<"alpha beta side: "<<side<<endl;
 
     MoveGen mg = MoveGen(side);
     unsigned int move = 0;
@@ -120,6 +123,7 @@ int Search::quiesce(int alpha, int beta, int depth, unsigned int side,  unsigned
 
     return best_value;
 }
-float Search::evaluate(){
-    return eval->get_material();
+int Search::evaluate(){
+    // return eval->get_material();
+    return eval->get_evaluation();
 }

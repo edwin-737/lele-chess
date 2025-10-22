@@ -28,13 +28,13 @@ namespace BoardSquares{
     void init_files();
     void init_ranks();
 
-    uint64& get_square_bitboard(int idx);
+    uint64 get_square_bitboard(int idx);
+
     uint64& get_file_bitboard(int idx);
     uint64& get_rank_bitboard(int idx);
     uint64& get_clear_file_bitboard(int idx);
     uint64 get_from_to(int from, int to);
     string get_square(int sq);
-
     inline uint64 files[8], ranks[8], squares[64], clear_files[8];
     inline int EP_FINISHED = h8 + 1;
 };

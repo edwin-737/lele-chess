@@ -17,6 +17,12 @@ const int index64[64] = {
    46, 26, 40, 15, 34, 20, 31, 10,
    25, 14, 19,  9, 13,  8,  7,  6
 };
+inline unsigned int get_file(unsigned int sq){
+    return sq % 8;
+}
+inline unsigned int get_rank(unsigned int sq){
+    return sq / 8;
+}
 inline void get_set_bit_indices(uint64 n, int* set_bits){
 
     for(int i = 0 ; i < NUM_SQUARES ; i ++)
@@ -31,22 +37,26 @@ inline void get_set_bit_indices(uint64 n, int* set_bits){
         index += 1;
     }
 }
-inline int bit_scan_forward(uint64 bb){
-    if(bb > 0){
-        // cout<<"bit scan not empty\n";
-        return index64[((bb & -bb) * DE_BRUIJN) >> 58];
-    }
-    else{
-        // cout<<"bit scan empty\n";
-        return -1;
-    }
+// inline int bit_scan_forward(uint64 bb){
+//     if(bb > 0){
+//         // cout<<"bit scan not empty\n";
+//         return index64[((bb & -bb) * DE_BRUIJN) >> 58];
+//     }
+//     else{
+//         // cout<<"bit scan empty\n";
+//         return -1;
+//     }
+// }
+inline int bit_scan_forward(uint64_t bb) {
+    return bb ? __builtin_ctzll(bb) : -1;
 }
-inline uint64 OR_mult(uint64 others[], int len)
+inline uint64 OR_mult6(const uint64 others[NUM_PIECE_TYPES])
 {
-    uint64 board_union = 0ULL;
-    for(int i = 0 ; i < len ; i ++)
-        board_union |= others[i];
-    return board_union;
+    return others[0] | others[1] | others[2] | others[3] | others[4] | others[5];
+}
+inline uint64 OR_mult8(const uint64 others[8])
+{
+    return others[0] | others[1] | others[2] | others[3] | others[4] | others[5] | others[6] | others[7];
 }
 inline uint64 AND_mult(uint64 others[], int len)
 {

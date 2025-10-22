@@ -22,7 +22,10 @@ public:
     stack<unsigned int> castle_rights_stack, ep_rights_stack, move_stack, bi_stack;
     unsigned int num_nodes = 0, num_captures = 0, num_ep_captures = 0, num_checks = 0, num_checkmates = 0, num_castles = 0;
     static BoardInfo* instanceptr;
+    unsigned int bi_arr[60];
+    int depth = -1;    
     BoardInfo(){
+        bi_arr[depth] = ((INITIAL_CASTLE_RIGHTS << 4) | NO_EP_RIGHTS); 
         bi_stack.push((INITIAL_CASTLE_RIGHTS << 4) | NO_EP_RIGHTS);
     }
     BoardInfo(unsigned int initial_castle_rights, unsigned int initial_ep_rights){
@@ -36,8 +39,15 @@ public:
         }
         return instanceptr;
     }
-
-    static void set_board_info(unsigned int castle_rights, unsigned int ep_rights){
+    // static void set_board_info(unsigned int castle_rights, unsigned int ep_rights){
+    //     if(instanceptr == nullptr){
+    //         return;
+    //     }
+    //     instanceptr->add_board_info(castle_rights, ep_rights);
+    //     cout<<"set peek castle rights: "<<instanceptr->peek_castle_right()<<endl;
+    //     cout<<"set peek ep rights: "<<instanceptr->peek_ep_right()<<endl;
+    // }
+    void set_board_info(unsigned int castle_rights, unsigned int ep_rights){
         if(instanceptr == nullptr){
             return;
         }
@@ -45,51 +55,32 @@ public:
         cout<<"set peek castle rights: "<<instanceptr->peek_castle_right()<<endl;
         cout<<"set peek ep rights: "<<instanceptr->peek_ep_right()<<endl;
     }
+    // void add_board_info(int castle_right, int ep_right){
+    //     bi_stack.push((castle_right << 4) | ep_right);
+    // }
     void add_board_info(int castle_right, int ep_right){
-        bi_stack.push((castle_right << 4) | ep_right);
+        depth ++;
+        bi_arr[depth] = (castle_right << 4) | ep_right;
     }
     void remove_board_info(){
-        if(!bi_stack.empty())
-            bi_stack.pop();
+        // if(!bi_stack.empty())
+        //     bi_stack.pop();
+        depth --;
     }
     unsigned int peek_board_info(){
-        if(!bi_stack.empty())
-            return bi_stack.top();
-        else 
-            return 0;
-    }
-    void add_castle_right(int castle_right){
-        castle_rights_stack.push(castle_right);
-    }
-    void remove_castle_right(){
-        if(!castle_rights_stack.empty())
-            castle_rights_stack.pop();
+        // if(!bi_stack.empty())
+        //     return bi_stack.top();
+        // else 
+        //     return 0;
+        if(depth >= 0)
+            return bi_arr[depth];
+        return 0;
     }
     unsigned int peek_castle_right(){
         return peek_board_info() >> 4;
     }
-    void add_ep_right(int ep_right){
-        ep_rights_stack.push(ep_right);
-    }
-    void remove_ep_right(){
-        if(!ep_rights_stack.empty())
-            ep_rights_stack.pop();
-    }
     unsigned int peek_ep_right(){
         return peek_board_info() & 0xf;
-    }
-    void add_move(int move){
-        move_stack.push(move);
-    }
-    void remove_move(){
-        if(!move_stack.empty())
-            move_stack.pop();
-    }
-    unsigned int peek_move(){
-        if(!move_stack.empty())
-            return move_stack.top();
-        else
-            return 0;
     }
 };
 #endif

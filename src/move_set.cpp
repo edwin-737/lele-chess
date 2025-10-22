@@ -27,7 +27,7 @@ void MoveSet::init_attack_masks()
         uint64 king_s = king_square >>  DirectionMap::general[Direction::General::south];
         uint64 king_se = king_clip_file_a >>  DirectionMap::general[Direction::General::south_east];
         uint64 king_possible_moves_vec[] = {king_ne, king_n, king_nw, king_e, king_w, king_sw, king_s, king_se};
-        king_attack_mask[sq] = OR_mult(king_possible_moves_vec,8);
+        king_attack_mask[sq] = OR_mult8(king_possible_moves_vec);
 
 
         uint64 knight_square = get_square_bitboard(sq);
@@ -50,7 +50,7 @@ void MoveSet::init_attack_masks()
         uint64 sr = knight_clip_file_h >> DirectionMap::knight[Direction::Knight::south_right];
         uint64 ed = knight_clip_file_gh >> DirectionMap::knight[Direction::Knight::east_down];
         uint64 knight_possible_moves_vec[] = {nr, nl, wu, wd, sl, sr, ed, eu};
-        knight_attack_mask[sq] = OR_mult(knight_possible_moves_vec, 8);
+        knight_attack_mask[sq] = OR_mult8(knight_possible_moves_vec);
 
 
         uint64 white_pawn_square = get_square_bitboard(sq);
@@ -67,7 +67,8 @@ void MoveSet::init_attack_masks()
         uint64 se = black_pawn_clip_file_h >> 7;
         uint64 sw = black_pawn_clip_file_a >> 9;
         black_pawn_attack_mask[sq] = se | sw;
-
+        bishop_attack_mask[sq] = bmask(sq);
+        rook_attack_mask[sq] = rmask(sq);
     }
 }
 
@@ -184,14 +185,14 @@ uint64 MoveSet::get_rook_attack_set(Bitboard* bb, int sq, int side)
 }
 uint64 MoveSet::get_bishop_attack_set(Bitboard* bb, int sq)
 {
-    uint64 cur_occ = bb->all & bmask(sq);
+    uint64 cur_occ = bb->all & bishop_attack_mask[sq];
     int index = transform(cur_occ, mg.bishop_magics[sq], BBits[sq]);
     uint64 attack_set = bishop_attack_set[sq][index];
     return attack_set;
 }
 uint64 MoveSet::get_rook_attack_set(Bitboard* bb, int sq)
 {
-    uint64 cur_occ = bb->all & rmask(sq);
+    uint64 cur_occ = bb->all & rook_attack_mask[sq];
     int index = transform(cur_occ, mg.rook_magics[sq], RBits[sq]);
     uint64 attack_set = rook_attack_set[sq][index];
     return attack_set;
