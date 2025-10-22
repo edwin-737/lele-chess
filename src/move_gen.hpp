@@ -55,9 +55,6 @@ private:
     int max_special_moves[7] = {
         250, 1, 1, 2, 8, 8, 8
     };
-    int num_special_moves[7] = {
-        0, 0, 0, 0, 0, 0, 0
-    };
     bool only_captures;
     int ep_from;
     const int side;

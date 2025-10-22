@@ -86,7 +86,6 @@ unsigned int MoveGen::get_special_move(){
         if(can_castle_kingside(side)){
             // cout<<"getting king castle move\n";
             move = side == WHITE ? MoveUtils::create_move(e1, g1, side, pKING, KING_CASTLE) : MoveUtils::create_move(e8, g8, side, pKING, KING_CASTLE);
-            num_special_moves[mKING_CASTLE] ++;
         } else {
             move = INCREMENTING_MOVE_TYPE;
         }
@@ -94,7 +93,6 @@ unsigned int MoveGen::get_special_move(){
     } else if(move_type == mQUEEN_CASTLE){
         if(can_castle_queenside(side)){
             move = side == WHITE ? MoveUtils::create_move(e1, c1, side, pKING, QUEEN_CASTLE) : MoveUtils::create_move(e8, c8, side, pKING, QUEEN_CASTLE);
-            num_special_moves[mQUEEN_CASTLE] ++;
         } else {
             move = INCREMENTING_MOVE_TYPE;
         }
