@@ -559,8 +559,16 @@ TEST_CASE("Alpha beta pruning selected move", "[Search]"){
     Search* s = new Search(b);
 
     SECTION("bk 1"){
+        pv_t* principal_var = (pv_t*) calloc(1, sizeof(pv_t));
+        principal_var->len = 0;
+
         s->max_depth = 6;
-        s->alpha_beta(-1e5, 1e5, 6, BLACK, BLACK);
+        int alpha = -1e5;
+        int beta = 1e5;
+        s->alpha_beta(alpha, beta, 6, BLACK, BLACK, 0, principal_var);
+
+        free(principal_var);
+
         MoveUtils::display(s->selected_move);
         REQUIRE(s->selected_move == MoveUtils::create_move(d6, d1, BLACK, pQUEEN));
     }

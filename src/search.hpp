@@ -8,6 +8,10 @@
 #include "move_gen.hpp"
 #include "evaluation.hpp"
 using namespace std;
+typedef struct pv {
+    int len;              // Number of moves in the variation.
+    unsigned int moves[20];  // The principal variation
+} pv_t;
 
 class Search{
 public:
@@ -16,7 +20,7 @@ public:
     }
 
     unsigned int perft(int original_depth,int depth_left, unsigned int side, unsigned int root_move = 0ULL);
-    int alpha_beta(int alpha, int beta, int depth_left, unsigned int side, unsigned int starting_side, unsigned int root_move=0);
+    int alpha_beta(int alpha, int beta, int depth_left, unsigned int side, unsigned int starting_side, unsigned int root_move=0, pv_t* = nullptr);
     int quiesce(int alpha, int beta, int depth, unsigned int side, unsigned int starting_side);
     int evaluate();
     int static_exchange_evaluation(unsigned int side, int square);
@@ -27,12 +31,7 @@ public:
     int side_to_move;
 private:
     Board* b;
-    // MoveGen* movegen = MoveGen::get_instance(b->get_side_to_move());
-    // MoveGen movegen = MoveGen(b->get_side_to_move();)
     Evaluation* eval = Evaluation::get_instance();
-    // LINE* pv;
-    // unsigned int moves[MAX_DEPTH];
-    // int variation_idx = 0, depth_idx = MAX_DEPTH - 1;
     int material = 0;
 };
 

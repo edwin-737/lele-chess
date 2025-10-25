@@ -1,7 +1,7 @@
 # ./build/engine > output.txt -f ./positions/starting_position.txt -j p -d  7 -s w
-# ./build/engine profile.prof -f ./positions/starting_position.txt -j p -d  6 -s w > output.txt 
+./build/engine profile.prof -f ./positions/starting_position.txt -j p -d  6 -s w > output.txt 
 # ./build/engine profile.prof -f ./positions/starting_position.txt -j p -d  5 -s w > output.txt 
-./build/engine > output.txt -f ./positions/ep_fen.txt -j p -d  5 -s w 
+# ./build/engine > output.txt -f ./positions/ep_fen.txt -j p -d  5 -s w 
 # ./build/engine > output.txt -f ./positions/castle_fen.txt -j p -d  5
 # ./engine > output.txt -p ./pgn/quiet_moves.txt -j p -d  5
 # ./engine > output.txt -f ./positions/ep.txt -j p -d 5 -s w

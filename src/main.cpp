@@ -105,7 +105,7 @@ int main(int argc, char** argv)
     if (task == PERFT) {
 
         #ifdef ENABLE_PROFILER
-            ProfilerStart("profile.prof");
+            ProfilerStart("perf-profile.prof");
         #endif
         unsigned int num_nodes = s->perft(depth, depth, b->get_side_to_move());
         
@@ -126,11 +126,29 @@ int main(int argc, char** argv)
         cout<<"promotions = "<<s->num_promotions<<endl;
         cout<<"capture promotions = "<<s->num_capture_promotions<<endl;
     } else {
-        cout<<"search max depth = "<<s->max_depth<<endl;
-        cout<<"search depth = "<<depth<<endl;
-        cout<<"side = "<<side<<endl;
+        cout<<"side = "<<MoveUtils::side_as_string(side)<<endl;
         s->max_depth = depth;
-        int score = s->alpha_beta(-1e5, 1e5, depth, side, side);
+
+        #ifdef ENABLE_PROFILER
+            ProfilerStart("alphabeta-profile.prof");
+        #endif
+
+        pv_t* principal_variation = (pv_t*) calloc(1, sizeof(pv_t));
+        principal_variation->len = 0;
+
+        int alpha = -1e5;
+        int beta = 1e5;
+        int score = s->alpha_beta(alpha, beta, depth, side, side, 0, principal_variation);
+
+        free(principal_variation);
+        #ifdef ENABLE_PROFILER
+            ProfilerStop();
+        #endif
+        auto stop = high_resolution_clock::now();
+        duration<double> elapsed = stop - start;  // seconds as double (fractional)
+        cout<<"depth = "<<depth<<endl;
+        cout<<"time = "<<elapsed.count()<<endl;
+        cout<<"nodes = "<<s->num_nodes<<endl;
 
     }
 }

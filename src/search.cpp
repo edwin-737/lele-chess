@@ -1,6 +1,7 @@
 #include "search.hpp"
 #include "move_gen.hpp"
 #include "move_set.hpp"
+#include "const.hpp"
 unsigned int Search::perft(int original_depth, int depth_left, unsigned int side, unsigned int root_move){
 
     if(depth_left == 0){
@@ -45,11 +46,11 @@ unsigned int Search::perft(int original_depth, int depth_left, unsigned int side
     return ans;
 }
 
-int Search::alpha_beta(int alpha, int beta, int depth_left, unsigned int side, unsigned int starting_side, unsigned int root_move){
+int Search::alpha_beta(int alpha, int beta, int depth_left, unsigned int side, unsigned int starting_side, unsigned int root_move, pv_t* principal_variation){
+    pv_t line;
+    line.len = 0;
     if(depth_left == 0) 
         return quiesce(alpha, beta, depth_left, side, starting_side);
-    if(depth_left == 6)
-        cout<<"alpha beta side: "<<side<<endl;
 
     MoveGen mg = MoveGen(side);
     unsigned int move = 0;
@@ -60,18 +61,38 @@ int Search::alpha_beta(int alpha, int beta, int depth_left, unsigned int side, u
             continue;
 
         if(b->apply_move_if_legal(move)){
-            int score = -alpha_beta(-beta, -alpha, depth_left - 1, side ^ 1, starting_side);
+            int score = -alpha_beta(-beta, -alpha, depth_left - 1, side ^ 1, starting_side, move, &line);
 
             b->reverse_move(move);
             if(score >= beta){
+                num_nodes++;
                 return beta;
-            } if(score > alpha){
+            } 
+            if(score > alpha){
+
+                principal_variation->moves[0] = move;
+                memcpy(principal_variation->moves + 1, line.moves, line.len * sizeof(unsigned int));
+                principal_variation->len = line.len + 1;
+
                 if(depth_left == max_depth){
                     selected_move = move;
-                    cout<<"selected_move\n";
+
+                    cout<<"-----------------\n";
+                    cout<<"selected_move:";
                     MoveUtils::display(selected_move);
                     cout<<"score: "<<score<<endl;
                     cout<<"alpha: "<<alpha<<endl;
+                    cout<<"-----------------\n";
+
+
+                    cout<<"-----------------\n";
+                    cout<<"current variation\n";
+                    cout<<"principal_variation length: "<<principal_variation->len<<endl;
+                    for(int i = 0 ; i < principal_variation->len ; i ++){
+                        cout<<i<<": ";
+                        MoveUtils::display(principal_variation->moves[i]);
+                    }
+                    cout<<"-----------------\n";
                 } 
                 alpha = score;
             } 
@@ -82,10 +103,20 @@ int Search::alpha_beta(int alpha, int beta, int depth_left, unsigned int side, u
 
     if(no_moves_left){
         if(b->get_bitboard()->attacked(side, b->get_king_location(side))){
-            return -100000 + (max_depth - depth_left); 
+            return CHECKMATE_EVAL(max_depth,depth_left);
         } else {
-            return 0;
+            return STALEMATE_EVAL;
         }
+    }
+    if(depth_left == max_depth){
+        cout<<"----------------------------\n";
+        cout<<"final variation\n";
+        cout<<"principal_variation length: "<<principal_variation->len<<endl;
+        for(int i = 0 ; i < principal_variation->len ; i ++){
+            cout<<i<<": ";
+            MoveUtils::display(principal_variation->moves[i]);
+        }
+        cout<<"----------------------------\n";
     }
     return alpha;
 }
@@ -94,9 +125,13 @@ int Search::quiesce(int alpha, int beta, int depth, unsigned int side,  unsigned
 
     // Stand Pat
     int best_value = static_eval;
-    if( best_value >= beta )
+    if( best_value >= beta ){
+        num_nodes++;
         return best_value;
-    if( best_value > alpha )
+    }
+    // int delta = 100;
+    int delta = 0;
+    if( best_value  + delta > alpha )
         alpha = best_value;
 
     // MoveGen mg = MoveGen(side, 0, true);
@@ -111,16 +146,19 @@ int Search::quiesce(int alpha, int beta, int depth, unsigned int side,  unsigned
         if(b->apply_move_if_legal(move)){
             int score = -quiesce(-beta, -alpha, 0, side ^ 1, starting_side);
             b->reverse_move(move);
-            if(score >= beta)
+            if(score >= beta){
+                num_nodes++;
                 return score;
+            }
             if(score > best_value)
                 best_value = score;
-            if(score > alpha)
+            if(score + delta > alpha)
                 alpha = score;
         }
 
     }
 
+    num_nodes++;
     return best_value;
 }
 int Search::evaluate(){

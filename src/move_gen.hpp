@@ -10,19 +10,6 @@
 #include "magics.hpp"
 using namespace std;
 using namespace BoardSquares;
-#define INCREMENTING_MOVE_TYPE 1ULL
-#define NO_MOVES_LEFT 0ULL
-#define WHITE_KING_CASTLE_SQUARES 0x60ULL
-#define WHITE_QUEEN_CASTLE_SQUARES 0xeULL
-#define BLACK_KING_CASTLE_SQUARES 0x6000000000000000ULL
-#define BLACK_QUEEN_CASTLE_SQUARES 0xe00000000000000ULL
-#define EP_START -1
-#define EP_FINISHED 8
-enum GenType {
-    ALL_MOVES,
-    ONLY_CAPTURES,
-    ONLY_QUIET
-};
 class MoveGen{
     /**
      * Move generation class which keeps a stack of moves being explored during search
@@ -39,8 +26,6 @@ public:
     unsigned int get_move();
     unsigned int get_special_move();
     unsigned int get_capture();
-    // void add_move(unsigned int move);
-    // void add_capture(unsigned int capture);
 private:
     bool initialise_piece();
     bool update_piece();
