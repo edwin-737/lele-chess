@@ -39,14 +39,6 @@ public:
         }
         return instanceptr;
     }
-    // static void set_board_info(unsigned int castle_rights, unsigned int ep_rights){
-    //     if(instanceptr == nullptr){
-    //         return;
-    //     }
-    //     instanceptr->add_board_info(castle_rights, ep_rights);
-    //     cout<<"set peek castle rights: "<<instanceptr->peek_castle_right()<<endl;
-    //     cout<<"set peek ep rights: "<<instanceptr->peek_ep_right()<<endl;
-    // }
     void set_board_info(unsigned int castle_rights, unsigned int ep_rights){
         if(instanceptr == nullptr){
             return;
@@ -55,9 +47,6 @@ public:
         cout<<"set peek castle rights: "<<instanceptr->peek_castle_right()<<endl;
         cout<<"set peek ep rights: "<<instanceptr->peek_ep_right()<<endl;
     }
-    // void add_board_info(int castle_right, int ep_right){
-    //     bi_stack.push((castle_right << 4) | ep_right);
-    // }
     void add_board_info(int castle_right, int ep_right){
         depth ++;
         bi_arr[depth] = (castle_right << 4) | ep_right;

@@ -452,44 +452,75 @@ TEST_CASE("Number of nodes during search","[MoveGen]"){
     b->parse_fen(fen_path);
 
     Search* s = new Search(b);
-
     SECTION("Depth = 1"){
-        // s->search(1, WHITE);
         REQUIRE(s->perft(1, 1, WHITE) == 20);
         REQUIRE(s->num_captures == 0);
     }
     SECTION("Depth = 2"){
-        // s->search(2, WHITE);
         REQUIRE(s->perft(2, 2, WHITE) == 400);
         REQUIRE(s->num_captures == 0);
     }
     SECTION("Depth = 3"){
-        // s->search(3, WHITE);
         REQUIRE(s->perft(3, 3, WHITE) == 8902);
         REQUIRE(s->num_captures == 34);
     }
-    SECTION("Depth = 4"){
-        // s->search(4, WHITE);
-        REQUIRE(s->perft(4, 4, WHITE) == 197281);
-        REQUIRE(s->num_captures == 1576);
-    }
-    SECTION("Depth = 5"){
-        // s->search(5, WHITE);
-        REQUIRE(s->perft(5, 5, WHITE) == 4865609);
-        REQUIRE(s->num_captures == 82719);
-    }
-    // SECTION("Depth = 6"){
-    //     // s->search(6, WHITE);
-    //     // REQUIRE(s->num_nodes == 119060324);
-    //     REQUIRE(s->perft(6, 6, WHITE) == 119060324);
-    //     REQUIRE(s->num_captures == 2812008);
-    // }
     delete b;
     delete Bitboard::instanceptr;
     delete BoardInfo::instanceptr;
     b = nullptr;
     Bitboard::instanceptr = nullptr;
     BoardInfo::instanceptr = nullptr;
+    TranspositionTable::instanceptr = nullptr;
+}
+TEST_CASE("Number of nodes during search depth 4","[MoveGen]"){
+
+
+    BoardSquares::init_files();
+    BoardSquares::init_ranks();
+    BoardSquares::init_squares();
+    MoveSet::set_attack_sets();
+    MoveSet::init_attack_masks();
+
+    Board* b = new Board();
+    const char* fen_path = "./positions/starting_position.txt";
+    b->parse_fen(fen_path);
+
+    Search* s = new Search(b);
+    SECTION("Depth = 4"){
+        REQUIRE(s->perft(4, 4, WHITE) == 197281);
+        REQUIRE(s->num_captures == 1576);
+    }
+    delete b;
+    delete Bitboard::instanceptr;
+    delete BoardInfo::instanceptr;
+    b = nullptr;
+    Bitboard::instanceptr = nullptr;
+    BoardInfo::instanceptr = nullptr;
+    TranspositionTable::instanceptr = nullptr;
+}
+TEST_CASE("Number of nodes during search depth 5","[MoveGen]"){
+
+    BoardSquares::init_files();
+    BoardSquares::init_ranks();
+    BoardSquares::init_squares();
+    MoveSet::set_attack_sets();
+    MoveSet::init_attack_masks();
+
+    Board* b = new Board();
+    const char* fen_path = "./positions/starting_position.txt";
+    b->parse_fen(fen_path);
+    Search* s = new Search(b);
+    SECTION("Depth = 5"){
+        REQUIRE(s->perft(5, 5, WHITE) == 4865609);
+        REQUIRE(s->num_captures == 82719);
+    }
+    delete b;
+    delete Bitboard::instanceptr;
+    delete BoardInfo::instanceptr;
+    b = nullptr;
+    Bitboard::instanceptr = nullptr;
+    BoardInfo::instanceptr = nullptr;
+    TranspositionTable::instanceptr = nullptr;
 }
 TEST_CASE("promotions during search", "[MoveGen]"){
     BoardSquares::init_files();
@@ -538,13 +569,303 @@ TEST_CASE("castles during search", "[MoveGen]"){
         REQUIRE(s->num_castles == 19682);
 
     }
+
     delete b;
     delete Bitboard::instanceptr;
     delete BoardInfo::instanceptr;
+    delete TranspositionTable::instanceptr;
     b = nullptr;
     Bitboard::instanceptr = nullptr;
     BoardInfo::instanceptr = nullptr;
+    TranspositionTable::instanceptr = nullptr;
 
+}
+TEST_CASE("Unique Zobrist Hash vals", "[TranspositionTable]"){
+    BoardSquares::init_files();
+    BoardSquares::init_ranks();
+    BoardSquares::init_squares();
+    MoveSet::set_attack_sets();
+    MoveSet::init_attack_masks();
+
+    Board* b = new Board();
+    string fen_path = "./positions/starting_position.txt";
+    b->parse_fen(fen_path);
+    vector<uint64> seen_zobrist_vals;
+    bool found_duplicate = false;
+    for(int i = 0 ; i < NUM_ZOBRIST_VALS ; i ++){
+        for(int j = 0 ; j < seen_zobrist_vals.size() ; j ++){
+            if(seen_zobrist_vals[j] == b->tt->zobrist_vals[i])
+                found_duplicate = true;
+        }
+        seen_zobrist_vals.push_back(b->tt->zobrist_vals[i]);
+    }
+    REQUIRE(!found_duplicate);
+    delete b;
+    delete Bitboard::instanceptr;
+    delete BoardInfo::instanceptr;
+    delete TranspositionTable::instanceptr;
+    b = nullptr;
+    Bitboard::instanceptr = nullptr;
+    BoardInfo::instanceptr = nullptr;
+    TranspositionTable::instanceptr = nullptr;
+}
+TEST_CASE("Updating hash val", "[TranspositionTable]"){
+    BoardSquares::init_files();
+    BoardSquares::init_ranks();
+    BoardSquares::init_squares();
+    MoveSet::set_attack_sets();
+    MoveSet::init_attack_masks();
+
+    Board* b = new Board();
+    string fen_path = "./positions/starting_position.txt";
+    b->parse_fen(fen_path);
+
+    cout<<"initial hash_val: "<<b->tt->hash_val<<endl;
+    SECTION("quiet moves"){
+
+        unsigned int move_order1[4] = {
+            MoveUtils::create_move(b2, b4, WHITE, pPAWN, DOUBLE_PAWN_PUSH),
+            MoveUtils::create_move(c7, c5, BLACK, pPAWN, DOUBLE_PAWN_PUSH),
+            MoveUtils::create_move(a2, a4, WHITE, pPAWN, DOUBLE_PAWN_PUSH),
+            MoveUtils::create_move(a7, a5, BLACK, pPAWN, DOUBLE_PAWN_PUSH)
+        };
+        unsigned int move_order2[4] = {
+            MoveUtils::create_move(a2, a4, WHITE, pPAWN, DOUBLE_PAWN_PUSH),
+            MoveUtils::create_move(c7, c5, BLACK, pPAWN, DOUBLE_PAWN_PUSH),
+            MoveUtils::create_move(b2, b4, WHITE, pPAWN, DOUBLE_PAWN_PUSH),
+            MoveUtils::create_move(a7, a5, BLACK, pPAWN, DOUBLE_PAWN_PUSH)
+        };
+        SECTION("applying and reversing move"){
+            vector<uint64> seen_hash_vals;
+            for(int i = 0 ; i < 4 ; i ++){
+                b->apply_move(move_order1[i]);
+                if(i > 0){
+                    REQUIRE(b->tt->hash_val != seen_hash_vals[i-1]);
+                }
+                seen_hash_vals.push_back(b->tt->hash_val);
+            }
+
+            bool found_hash_val = true;
+            for(int i = 3 ; i >= 0 ; i --){
+                b->reverse_move(move_order1[i]);
+                if(i > 0 && b->tt->hash_val != seen_hash_vals[i - 1]){
+                    found_hash_val = false;
+                }
+
+            }
+
+            REQUIRE(found_hash_val == true);
+        }
+    }
+    SECTION("captures"){
+        unsigned int move_order1[7] = {
+            MoveUtils::create_move(b2, b4, WHITE, pPAWN, DOUBLE_PAWN_PUSH),
+            MoveUtils::create_move(a7, a5, BLACK, pPAWN, DOUBLE_PAWN_PUSH),
+            MoveUtils::create_move(a2, a4, WHITE, pPAWN, DOUBLE_PAWN_PUSH),
+            MoveUtils::create_move(b7, b5, BLACK, pPAWN, DOUBLE_PAWN_PUSH),
+            MoveUtils::create_move(a4, b5, WHITE, pPAWN, CAPTURE),
+            MoveUtils::create_move(c7, c5, BLACK, pPAWN, DOUBLE_PAWN_PUSH),
+            MoveUtils::create_move(b4, a5, WHITE, pPAWN, CAPTURE)
+        };
+        unsigned int move_order2[7] = {
+            MoveUtils::create_move(b2, b4, WHITE, pPAWN, DOUBLE_PAWN_PUSH),
+            MoveUtils::create_move(a7, a5, BLACK, pPAWN, DOUBLE_PAWN_PUSH),
+            MoveUtils::create_move(a2, a4, WHITE, pPAWN, DOUBLE_PAWN_PUSH),
+            MoveUtils::create_move(b7, b5, BLACK, pPAWN, DOUBLE_PAWN_PUSH),
+            MoveUtils::create_move(b4, a5, WHITE, pPAWN, CAPTURE),
+            MoveUtils::create_move(c7, c5, BLACK, pPAWN, DOUBLE_PAWN_PUSH),
+            MoveUtils::create_move(a4, b5, WHITE, pPAWN, CAPTURE)
+        };
+        SECTION("applying and reversing move"){
+            vector<uint64> seen_hash_vals;
+            for(int i = 0 ; i < 7 ; i ++){
+                b->apply_move(move_order1[i]);
+                if(i > 0){
+                    REQUIRE(b->tt->hash_val != seen_hash_vals[i-1]);
+                }
+                seen_hash_vals.push_back(b->tt->hash_val);
+            }
+
+            bool found_hash_val = true;
+            for(int i = 6 ; i >= 0 ; i --){
+                b->reverse_move(move_order1[i]);
+                if(i > 0 && b->tt->hash_val != seen_hash_vals[i - 1]){
+                    found_hash_val = false;
+                }
+
+            }
+
+            REQUIRE(found_hash_val == true);
+        }
+        SECTION("hash_val from transposition should the same"){
+            vector<uint64> seen_hash_vals;
+            for(int i = 0 ; i < 7 ; i ++){
+                b->apply_move(move_order1[i]);
+                seen_hash_vals.push_back(b->tt->hash_val);
+            }
+            for(int i = 6 ; i >= 0 ; i --){
+                b->reverse_move(move_order1[i]);
+            }
+            for(int i = 0 ; i < 7 ; i ++){
+                b->apply_move(move_order2[i]);
+            }
+            // at index=6, the position of the move_order2 should be equal to the position after move_order1
+            REQUIRE(b->tt->hash_val == seen_hash_vals[6]);
+            for(int i = 6 ; i >= 0 ; i --){
+                b->reverse_move(move_order2[i]);
+            }
+
+            for(int i = 0 ; i < 6 ; i ++){
+                b->apply_move(move_order2[i]);
+            }
+            // at index=5, the position of the move_order2 should not be equal to the position after move_order1
+            REQUIRE(b->tt->hash_val != seen_hash_vals[5]);
+        }
+    }
+    delete b;
+    delete TranspositionTable::instanceptr;
+    delete Bitboard::instanceptr;
+    delete BoardInfo::instanceptr;
+    b = nullptr;
+    TranspositionTable::instanceptr = nullptr;
+    Bitboard::instanceptr = nullptr;
+    BoardInfo::instanceptr = nullptr;
+}
+TEST_CASE("Updating hash val en passant", "[TranspositionTable]"){
+    BoardSquares::init_files();
+    BoardSquares::init_ranks();
+    BoardSquares::init_squares();
+    MoveSet::set_attack_sets();
+    MoveSet::init_attack_masks();
+
+    Board* b = new Board();
+    string fen_path = "./positions/starting_position.txt";
+    b->parse_fen(fen_path);
+
+    cout<<"initial hash_val: "<<b->tt->hash_val<<endl;
+    SECTION("quiet moves"){
+
+        unsigned int move_order1[4] = {
+            MoveUtils::create_move(a2, a4, WHITE, pPAWN, DOUBLE_PAWN_PUSH),
+            MoveUtils::create_move(a7, a6, BLACK, pPAWN, QUIET_MOVE),
+            MoveUtils::create_move(a4, a5, WHITE, pPAWN, QUIET_MOVE),
+            MoveUtils::create_move(b7, b5, BLACK, pPAWN, DOUBLE_PAWN_PUSH)
+        };
+        unsigned int move_order2[4] = {
+            MoveUtils::create_move(a2, a4, WHITE, pPAWN, DOUBLE_PAWN_PUSH),
+            MoveUtils::create_move(b7, b5, BLACK, pPAWN, DOUBLE_PAWN_PUSH),
+            MoveUtils::create_move(a4, a5, WHITE, pPAWN, QUIET_MOVE),
+            MoveUtils::create_move(a7, a6, BLACK, pPAWN, QUIET_MOVE)
+        };
+        SECTION("applying and reversing move"){
+            vector<uint64> seen_hash_vals;
+            for(int i = 0 ; i < 4 ; i ++){
+                b->apply_move(move_order1[i]);
+                if(i > 0){
+                    REQUIRE(b->tt->hash_val != seen_hash_vals[i-1]);
+                }
+                seen_hash_vals.push_back(b->tt->hash_val);
+            }
+
+            bool found_hash_val = true;
+            for(int i = 3 ; i >= 0 ; i --){
+                b->reverse_move(move_order1[i]);
+                if(i > 0 && b->tt->hash_val != seen_hash_vals[i - 1]){
+                    found_hash_val = false;
+                }
+
+            }
+
+            REQUIRE(found_hash_val == true);
+        }
+        SECTION("hash_val from transposition should the same"){
+            vector<uint64> seen_hash_vals;
+            for(int i = 0 ; i < 4 ; i ++){
+                b->apply_move(move_order1[i]);
+                seen_hash_vals.push_back(b->tt->hash_val);
+            }
+            unsigned int move_order1_ep_right = BoardInfo::get_instance()->peek_ep_right();
+
+            for(int i = 3 ; i >= 0 ; i --){
+                b->reverse_move(move_order1[i]);
+            }
+            for(int i = 0 ; i < 4 ; i ++){
+                b->apply_move(move_order2[i]);
+            }            
+            unsigned int move_order2_ep_right = BoardInfo::get_instance()->peek_ep_right();
+            REQUIRE(move_order1_ep_right != move_order2_ep_right);
+            REQUIRE(b->tt->hash_val != seen_hash_vals[3]);
+        }
+    }
+    delete b;
+    delete TranspositionTable::instanceptr;
+    delete Bitboard::instanceptr;
+    delete BoardInfo::instanceptr;
+    b = nullptr;
+    TranspositionTable::instanceptr = nullptr;
+    Bitboard::instanceptr = nullptr;
+    BoardInfo::instanceptr = nullptr;
+}
+TEST_CASE("Transposition Table cach matches (simple)", "[TranspositionTable]"){
+    BoardSquares::init_files();
+    BoardSquares::init_ranks();
+    BoardSquares::init_squares();
+    MoveSet::set_attack_sets();
+    MoveSet::init_attack_masks();
+
+    Board* b = new Board();
+    string fen_path = "./positions/transposition_test.txt";
+    b->parse_fen(fen_path);
+    Search* s = new Search(b);
+    cout<<"before search tt_found_count[3]: "<<s->tt_found_count[3]<<endl;
+    s->perft(5,5, WHITE, 0, true);
+    SECTION("Depth = 4, tt_found_count == tt_match_count"){
+        REQUIRE(s->tt_found_count[1] == 0);
+        REQUIRE(s->tt_found_count[2] == 28);
+        REQUIRE(s->tt_found_count[3] == 520);
+    }
+
+    delete b;
+    delete s;
+    delete TranspositionTable::instanceptr;
+    delete Bitboard::instanceptr;
+    delete BoardInfo::instanceptr;
+    b = nullptr;
+    s = nullptr;
+    TranspositionTable::instanceptr = nullptr;
+    Bitboard::instanceptr = nullptr;
+    BoardInfo::instanceptr = nullptr;
+}
+TEST_CASE("Transposition Table cache matches", "[TranspositionTable]"){
+    BoardSquares::init_files();
+    BoardSquares::init_ranks();
+    BoardSquares::init_squares();
+    MoveSet::set_attack_sets();
+    MoveSet::init_attack_masks();
+
+    Board* b = new Board();
+    string fen_path = "./positions/starting_position.txt";
+    b->parse_fen(fen_path);
+    Search* s = new Search(b);
+    cout<<"before search tt_found_count[3]: "<<s->tt_found_count[3]<<endl;
+    unsigned int nodes = s->perft(6, 6, WHITE, 0, true);
+    SECTION("Depth = 6, tt_found_count == tt_match_count"){
+        REQUIRE(s->tt_found_count[2] == 1300);
+        REQUIRE(s->tt_found_count[3] == 67152);
+        REQUIRE(s->tt_found_count[4] == 1284092);
+        REQUIRE(s->tt_found_count[5] == 16699235);
+        REQUIRE(nodes == 119060324);
+    }
+    delete b;
+    delete s;
+    delete TranspositionTable::instanceptr;
+    delete Bitboard::instanceptr;
+    delete BoardInfo::instanceptr;
+    b = nullptr;
+    s = nullptr;
+    TranspositionTable::instanceptr = nullptr;
+    Bitboard::instanceptr = nullptr;
+    BoardInfo::instanceptr = nullptr;
 }
 TEST_CASE("Alpha beta pruning selected move", "[Search]"){
     BoardSquares::init_files();

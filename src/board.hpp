@@ -12,6 +12,7 @@
 #include "bitboard.hpp"
 #include "board_info.hpp"
 #include "evaluation.hpp"
+#include "transposition_table.hpp"
 using namespace std;
 using namespace BoardSquares;
 namespace fs = filesystem;
@@ -28,19 +29,7 @@ typedef enum fen_state{
 class Board{
 public:
     Board(): side_to_move(WHITE){
-        // piece_locations[WHITE][pPAWN].insert({a2,b2,c2,d2,e2,f2,g2,h2});
-        // piece_locations[WHITE][pKNIGHT].insert({b1, g1});
-        // piece_locations[WHITE][pBISHOP].insert({c1, f1});
-        // piece_locations[WHITE][pROOK].insert({a1, h1});
-        // piece_locations[WHITE][pQUEEN].insert({d1});
-        // piece_locations[WHITE][pKING].insert({e1});
         king_location[WHITE] = e1;
-        // piece_locations[BLACK][pPAWN].insert({a7,b7,c7,d7,e7,f7,g7,h7});
-        // piece_locations[BLACK][pKNIGHT].insert({b8, g8});
-        // piece_locations[BLACK][pBISHOP].insert({c8, f8});
-        // piece_locations[BLACK][pROOK].insert({a8, h8});
-        // piece_locations[BLACK][pQUEEN].insert({d8});
-        // piece_locations[BLACK][pKING].insert({e8});
         king_location[BLACK] = e8;
     }
     void apply_move(unsigned int move);
@@ -64,6 +53,7 @@ public:
     Bitboard* get_bitboard();
     set<int> piece_locations[NUM_SIDES][NUM_PIECE_TYPES];
     int king_location[NUM_SIDES];
+    TranspositionTable* tt = TranspositionTable::get_instance();
 private:
     void update_piece_locations(int side, int piece, int from, int to);
     void update_king_location(int side, int square);

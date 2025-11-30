@@ -2,8 +2,7 @@
 #include "move_gen.hpp"
 #include "move_set.hpp"
 #include "const.hpp"
-unsigned int Search::perft(int original_depth, int depth_left, unsigned int side, unsigned int root_move){
-
+unsigned int Search::perft(int original_depth, int depth_left, unsigned int side, unsigned int root_move, bool transposition){
     if(depth_left == 0){
         if(MoveUtils::is_ep_capture(root_move)){
             num_captures ++;
@@ -36,7 +35,23 @@ unsigned int Search::perft(int original_depth, int depth_left, unsigned int side
             if(original_depth == 1){
                 cout<<MoveUtils::move_as_string(move)<<": 1\n";
             }
-            ans += perft(original_depth, depth_left - 1, side ^ 1, move);
+            int depth_searched = original_depth - depth_left;
+            if(!transposition){
+                unsigned int perft_val = perft(original_depth, depth_left - 1, side ^ 1, move);
+                ans += perft_val;
+            } else {
+                unsigned int tt_val = tt->get_value(depth_searched);
+                if(!tt_val){
+                    unsigned int perft_val = perft(original_depth, depth_left - 1, side ^ 1, move, true);
+                    ans += perft_val;
+                    tt->add_value(depth_searched, perft_val);
+                    tt_not_found_count[depth_searched] ++;
+                }
+                else{
+                    ans += tt_val;
+                    tt_found_count[depth_searched] ++;
+                }
+            }
             b->reverse_move(move);
         } 
     }

@@ -8,7 +8,15 @@ void Board::apply_move(unsigned int move){
     unsigned int piece = MoveUtils::get_piece(move);
     unsigned int from = MoveUtils::get_from(move);
     unsigned int to = MoveUtils::get_to(move);        
-    int castle_rights = bi->peek_castle_right();
+
+    unsigned int castle_rights = bi->peek_castle_right();
+    unsigned int ep_rights = bi->peek_ep_right();
+
+    // for zobrist hash val update
+    unsigned int prev_castle_rights = bi->peek_castle_right();
+    unsigned int prev_ep_rights = bi->peek_ep_right();
+    tt->update_hash_val_piece_square(move);
+    tt->update_hash_val_side_to_move(move);
     if(MoveUtils::is_quiet(move)){
         uint64 from_to = get_from_to(from, to);
         bb->piece_boards[side][piece] ^= from_to;
@@ -193,7 +201,10 @@ void Board::apply_move(unsigned int move){
     }
     eval->update_material(move, false);
     bb->all = bb->collective_piece_boards[WHITE] | bb->collective_piece_boards[BLACK];
-    // bb->update();
+    unsigned int next_castle_rights = bi->peek_castle_right();
+    unsigned int next_ep_rights = bi->peek_ep_right();
+    tt->update_hash_val_castle_rights(prev_castle_rights, next_castle_rights);
+    tt->update_hash_val_ep_rights(prev_ep_rights, next_ep_rights);
 }
 
 void Board::reverse_move(unsigned int move){
@@ -201,6 +212,12 @@ void Board::reverse_move(unsigned int move){
     unsigned int piece = MoveUtils::get_piece(move);
     unsigned int from = MoveUtils::get_from(move);
     unsigned int to = MoveUtils::get_to(move);
+
+    // for zobrist hash val update
+    unsigned int prev_castle_rights = bi->peek_castle_right();
+    unsigned int prev_ep_rights = bi->peek_ep_right();
+    tt->update_hash_val_piece_square(move);
+    tt->update_hash_val_side_to_move(move);
     if(MoveUtils::is_quiet(move)){
         uint64 from_to = get_from_to(from, to);
         bb->piece_boards[side][piece] ^= from_to;
@@ -310,7 +327,10 @@ void Board::reverse_move(unsigned int move){
     eval->update_material(move, true);
     bb->all = bb->collective_piece_boards[WHITE] | bb->collective_piece_boards[BLACK];
     bi->remove_board_info();
-    // bb->update();
+    unsigned int next_castle_rights = bi->peek_castle_right();
+    unsigned int next_ep_rights = bi->peek_ep_right();
+    tt->update_hash_val_castle_rights(prev_castle_rights, next_castle_rights);
+    tt->update_hash_val_ep_rights(prev_ep_rights, next_ep_rights);
 }
 bool Board::apply_move_if_legal(unsigned int move)
 {
@@ -519,9 +539,7 @@ void Board::parse_fen(fs::path path){
                 fen_state = CASTLE_RIGHTS;
 
                 char ch = word[0];
-                // side_to_move = WHITE ? ch == 'w' : BLACK;
-                initial_side_to_move = WHITE ? ch == 'w' : BLACK;
-                // bi->set_side_to_move(WHITE ? ch == 'w' : BLACK);
+                side_to_move = !(ch == 'w');
             } else if(fen_state == CASTLE_RIGHTS){
 
                 fen_state = EP_TARGET_SQUARE;
@@ -553,10 +571,10 @@ void Board::parse_fen(fs::path path){
             /*TODO: Halfmove clock*/
         }
     }
-    // bi->set_side_to_move(initial_side_to_move);
     bi->set_board_info(initial_castle_rights, initial_ep_rights);
     bb->update();
     eval->init_material();
+    tt->initialise_hash_val(side_to_move, bb, bi);
 }
 void Board::parse_pgn(fs::path path){
 

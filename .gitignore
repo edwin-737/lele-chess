@@ -9,6 +9,10 @@ _deps/
 test_engine
 engine
 
+# profiles
+*.prof
+*.svg
+
 # vs code
 .vscode/
 
