@@ -148,24 +148,29 @@ void TranspositionTable::update_hash_val_ep_rights(unsigned int prev_ep_right, u
 void TranspositionTable::not_equal(){
     return;
 }
-unsigned int TranspositionTable::get_value(int depth_searched){
+unsigned int TranspositionTable::get_value_perft(int depth_searched){
     auto val = perft_table[depth_searched].find(hash_val);
     if(val != perft_table[depth_searched].end()){
         found_value();
         return val->second;
     }
-    // auto val = table.find(hash_val);
-    // if(val != table.end()){
-    //     found_value();
-    //     return val->second;
-    // }
     return 0;
+}
+int TranspositionTable::get_value_eval(){
+    auto val = eval_table.find(hash_val);
+    if(val != eval_table.end()){
+        found_value();
+        return val->second;
+    }
+    return DEFAULT_EVAL;
 }
 void TranspositionTable::found_value(){
     return;
 }
-void TranspositionTable::add_value(int depth_searched, unsigned int val){
+void TranspositionTable::add_value_perft(int depth_searched, unsigned int val){
     perft_table[depth_searched].insert({hash_val, val});
-    // table.insert({hash_val, val});
-
 }
+void TranspositionTable::add_value_eval(int val){
+    eval_table.insert({hash_val, val});
+}
+

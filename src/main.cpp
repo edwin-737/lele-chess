@@ -25,7 +25,8 @@ typedef enum ArgState{
     PGN,
     DEPTH,
     SIDE,
-    TASK
+    TASK,
+    TRANSPOSITION
 } ArgState;
 Bitboard* Bitboard::instanceptr=nullptr;
 BoardInfo* BoardInfo::instanceptr=nullptr;
@@ -40,6 +41,7 @@ int main(int argc, char** argv)
     bool include_pgn = false;
     int side = WHITE;
     int task = PERFT;
+    bool transposition = false;
     for(int i = 0 ; i < argc ; i ++){
         if(arg_state == ARG_TYPE){
             if(arg_list[i] == "-f"){
@@ -54,7 +56,9 @@ int main(int argc, char** argv)
                 arg_state = SIDE;
             } else if(arg_list[i] =="-j"){
                 arg_state = TASK;
-            } 
+            } else if(arg_list[i] == "-t"){
+                arg_state = TRANSPOSITION;
+            }
         } else if(arg_state == FEN){
             fen_path = arg_list[i];
             cout<<"fen path: "<<fen_path<<endl;
@@ -74,6 +78,10 @@ int main(int argc, char** argv)
         } else if(arg_state == TASK){
             task = ALPHA_BETA ? arg_list[i] == "a" : PERFT;
             cout<<"task: "<<task<<endl;
+            arg_state = ARG_TYPE;
+        } else if(arg_state == TRANSPOSITION){
+            transposition = arg_list[i] == "1";
+            cout<<"transposition: "<<transposition<<endl;
             arg_state = ARG_TYPE;
         }
     }
@@ -107,7 +115,7 @@ int main(int argc, char** argv)
         #ifdef ENABLE_PROFILER
             ProfilerStart("perf-profile.prof");
         #endif
-        unsigned int num_nodes = s->perft(depth, depth, b->get_side_to_move());
+        unsigned int num_nodes = s->perft(depth, depth, b->get_side_to_move(), transposition);
         
         #ifdef ENABLE_PROFILER
             ProfilerStop();
@@ -138,7 +146,7 @@ int main(int argc, char** argv)
 
         int alpha = -1e5;
         int beta = 1e5;
-        int score = s->alpha_beta(alpha, beta, depth, side, side, 0, principal_variation);
+        int score = s->alpha_beta(alpha, beta, depth, side, side, 0, principal_variation, transposition);
 
         free(principal_variation);
         #ifdef ENABLE_PROFILER

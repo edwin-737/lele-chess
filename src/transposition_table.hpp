@@ -9,6 +9,8 @@
 #define ZOBRIST_OFFSET_CASTLE_RIGHTS 769
 #define ZOBRIST_OFFSET_EP_RIGHTS 785 
 #define MAX_DEPTH 10
+#define DEFAULT_EVAL -1000000000
+
 using namespace BoardSquares;
 
 class TranspositionTable{
@@ -32,13 +34,14 @@ public:
     void update_hash_val_piece_square(unsigned int move);
     void update_hash_val_castle_rights(unsigned int prev_castle_right, unsigned int next_castle_right);
     void update_hash_val_ep_rights(unsigned int prev_ep_right, unsigned int next_ep_right);
-    unsigned int get_value(int depth);
+    unsigned int get_value_perft(int depth);
+    int get_value_eval();
     void found_value();
     void not_equal();
-    void add_value(int depth, unsigned int val);
+    void add_value_perft(int depth, unsigned int val);
+    void add_value_eval(int val);
     map<uint64, unsigned int> perft_table[MAX_DEPTH];
-    map<uint64, unsigned int> eval_table;
-    // map<uint64, unsigned int> table;
+    map<uint64, int> eval_table;
     uint64 zobrist_vals[NUM_ZOBRIST_VALS];
     uint64 hash_val = 0;
 };

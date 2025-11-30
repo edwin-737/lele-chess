@@ -893,6 +893,53 @@ TEST_CASE("Alpha beta pruning selected move", "[Search]"){
         MoveUtils::display(s->selected_move);
         REQUIRE(s->selected_move == MoveUtils::create_move(d6, d1, BLACK, pQUEEN));
     }
+    delete b;
+    delete s;
+    delete TranspositionTable::instanceptr;
+    delete Bitboard::instanceptr;
+    delete BoardInfo::instanceptr;
+    b = nullptr;
+    s = nullptr;
+    TranspositionTable::instanceptr = nullptr;
+    Bitboard::instanceptr = nullptr;
+    BoardInfo::instanceptr = nullptr;
+}
+TEST_CASE("Alpha beta pruning selected move with transpositions", "[Search]"){
+    BoardSquares::init_files();
+    BoardSquares::init_ranks();
+    BoardSquares::init_squares();
+    MoveSet::set_attack_sets();
+    MoveSet::init_attack_masks();
+
+    Board* b = new Board();
+    string fen_path = "./positions/bratko-kopec/bk_1.txt";
+    b->parse_fen(fen_path);
+    Search* s = new Search(b);
+
+    SECTION("bk 1"){
+        pv_t* principal_var = (pv_t*) calloc(1, sizeof(pv_t));
+        principal_var->len = 0;
+
+        s->max_depth = 6;
+        int alpha = -1e5;
+        int beta = 1e5;
+        s->alpha_beta(alpha, beta, 6, BLACK, BLACK, 0, principal_var, true);
+
+        free(principal_var);
+
+        MoveUtils::display(s->selected_move);
+        REQUIRE(s->selected_move == MoveUtils::create_move(d6, d1, BLACK, pQUEEN));
+    }
+    delete b;
+    delete s;
+    delete TranspositionTable::instanceptr;
+    delete Bitboard::instanceptr;
+    delete BoardInfo::instanceptr;
+    b = nullptr;
+    s = nullptr;
+    TranspositionTable::instanceptr = nullptr;
+    Bitboard::instanceptr = nullptr;
+    BoardInfo::instanceptr = nullptr;
 }
 TEST_CASE("Chebyshev Distance", "[Evaluation]"){
     unsigned int from = a1;

@@ -40,11 +40,11 @@ unsigned int Search::perft(int original_depth, int depth_left, unsigned int side
                 unsigned int perft_val = perft(original_depth, depth_left - 1, side ^ 1, move);
                 ans += perft_val;
             } else {
-                unsigned int tt_val = tt->get_value(depth_searched);
+                unsigned int tt_val = tt->get_value_perft(depth_searched);
                 if(!tt_val){
                     unsigned int perft_val = perft(original_depth, depth_left - 1, side ^ 1, move, true);
                     ans += perft_val;
-                    tt->add_value(depth_searched, perft_val);
+                    tt->add_value_perft(depth_searched, perft_val);
                     tt_not_found_count[depth_searched] ++;
                 }
                 else{
@@ -61,11 +61,11 @@ unsigned int Search::perft(int original_depth, int depth_left, unsigned int side
     return ans;
 }
 
-int Search::alpha_beta(int alpha, int beta, int depth_left, unsigned int side, unsigned int starting_side, unsigned int root_move, pv_t* principal_variation){
+int Search::alpha_beta(int alpha, int beta, int depth_left, unsigned int side, unsigned int starting_side, unsigned int root_move, pv_t* principal_variation, bool transposition){
     pv_t line;
     line.len = 0;
     if(depth_left == 0) 
-        return quiesce(alpha, beta, depth_left, side, starting_side);
+        return quiesce(alpha, beta, depth_left, side, starting_side, transposition);
 
     MoveGen mg = MoveGen(side);
     unsigned int move = 0;
@@ -76,8 +76,19 @@ int Search::alpha_beta(int alpha, int beta, int depth_left, unsigned int side, u
             continue;
 
         if(b->apply_move_if_legal(move)){
-            int score = -alpha_beta(-beta, -alpha, depth_left - 1, side ^ 1, starting_side, move, &line);
+            int score = 0;
+            if(transposition){
+                int tt_val = tt->get_value_eval();
+                if(tt_val == DEFAULT_EVAL){
+                    score = -alpha_beta(-beta, -alpha, depth_left - 1, side ^ 1, starting_side, move, &line, transposition);
+                    tt->add_value_eval(score);
+                } else {
+                    score = tt_val;
+                }
+            } else {
+                score = -alpha_beta(-beta, -alpha, depth_left - 1, side ^ 1, starting_side, move, &line, transposition);
 
+            }
             b->reverse_move(move);
             if(score >= beta){
                 num_nodes++;
@@ -135,7 +146,7 @@ int Search::alpha_beta(int alpha, int beta, int depth_left, unsigned int side, u
     }
     return alpha;
 }
-int Search::quiesce(int alpha, int beta, int depth, unsigned int side,  unsigned int starting_side){
+int Search::quiesce(int alpha, int beta, int depth, unsigned int side,  unsigned int starting_side, bool transposition){
     int static_eval = side == BLACK ? -evaluate() : evaluate();
 
     // Stand Pat
@@ -159,7 +170,18 @@ int Search::quiesce(int alpha, int beta, int depth, unsigned int side,  unsigned
             continue;
         }
         if(b->apply_move_if_legal(move)){
-            int score = -quiesce(-beta, -alpha, 0, side ^ 1, starting_side);
+            int score = 0;
+            if(transposition){
+                int tt_val = tt->get_value_eval();
+                if(tt_val == DEFAULT_EVAL){
+                    score = -quiesce(-beta, -alpha, 0, side ^ 1, starting_side, transposition);
+                    tt->add_value_eval(score);
+                } else {
+                    score = tt_val;
+                }
+            }else {
+                score = -quiesce(-beta, -alpha, 0, side ^ 1, starting_side, transposition);
+            }
             b->reverse_move(move);
             if(score >= beta){
                 num_nodes++;
