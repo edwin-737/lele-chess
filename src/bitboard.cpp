@@ -4,6 +4,7 @@
 #include "utils.hpp"
 #include "const.hpp"
 #include "move_set.hpp"
+#include "utils.hpp"
 using namespace BoardSquares;
 Bitboard* Bitboard::get_instance(){
     if(instanceptr == nullptr)
@@ -73,14 +74,14 @@ bool Bitboard::attacked(unsigned int defending_side, unsigned int sq)
     uint64 knights = piece_boards[attacking_side][pKNIGHT];
     if(MoveSet::get_knight_attack_set(this, sq, defending_side) & knights) return true;
 
-    uint64 bishop_attack_set = MoveSet::get_bishop_attack_set(this, sq, defending_side);
+    uint64 bishop_attack_set = MoveSet::get_bishop_legal_move_set(this, sq, defending_side);
     uint64 queens = piece_boards[attacking_side][pQUEEN];
     if(bishop_attack_set & queens) return true;   
 
     uint64 bishops = piece_boards[attacking_side][pBISHOP];
     if(bishop_attack_set & bishops) return true;
 
-    uint64 rook_attack_set = MoveSet::get_rook_attack_set(this, sq, defending_side);
+    uint64 rook_attack_set = MoveSet::get_rook_legal_move_set(this, sq, defending_side);
     if(rook_attack_set & queens) return true;
 
     uint64 rooks = piece_boards[attacking_side][pROOK];

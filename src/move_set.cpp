@@ -72,23 +72,23 @@ void MoveSet::init_attack_masks()
     }
 }
 
-uint64 MoveSet::get_king_attack_mask(int sq)
+uint64 MoveSet::get_king_attack_mask(unsigned int sq)
 {
     return king_attack_mask[sq];
 }
-uint64 MoveSet::get_knight_attack_mask(int sq)
+uint64 MoveSet::get_knight_attack_mask(unsigned int sq)
 {
     return knight_attack_mask[sq];
 }
-uint64 MoveSet::get_white_pawn_attack_mask(int sq)
+uint64 MoveSet::get_white_pawn_attack_mask(unsigned int sq)
 {
     return white_pawn_attack_mask[sq];
 }
-uint64 MoveSet::get_black_pawn_attack_mask(int sq)
+uint64 MoveSet::get_black_pawn_attack_mask(unsigned int sq)
 {
     return black_pawn_attack_mask[sq];
 }
-uint64 MoveSet::get_white_pawn_forward_mask(Bitboard* bb, int sq)
+uint64 MoveSet::get_white_pawn_forward_mask(Bitboard* bb, unsigned int sq)
 {
     uint64 pawn_square = get_square_bitboard(sq);
     uint64 pawn_front_1 = (pawn_square << 8) & ~bb->all;
@@ -100,7 +100,7 @@ uint64 MoveSet::get_white_pawn_forward_mask(Bitboard* bb, int sq)
     uint64 pawn_front = pawn_front_1 | pawn_front_2;
     return pawn_front;
 }
-uint64 MoveSet::get_black_pawn_forward_mask(Bitboard* bb, int sq){
+uint64 MoveSet::get_black_pawn_forward_mask(Bitboard* bb, unsigned int sq){
 
     uint64 pawn_square = get_square_bitboard(sq);
     uint64 pawn_front_1 = (pawn_square >> 8) & ~bb->all;
@@ -111,11 +111,11 @@ uint64 MoveSet::get_black_pawn_forward_mask(Bitboard* bb, int sq){
     uint64 pawn_front = pawn_front_1 | pawn_front_2;
     return pawn_front;
 }
-uint64 MoveSet::get_pawn_forward_mask(Bitboard* bb, int sq, int side)
+uint64 MoveSet::get_pawn_forward_mask(Bitboard* bb, unsigned int sq, unsigned int side)
 {
     return side == Side::WHITE ? get_white_pawn_forward_mask(bb, sq) : get_black_pawn_forward_mask(bb, sq);
 }
-void MoveSet::set_rook_attack_set(int sq)
+void MoveSet::set_rook_attack_set(unsigned int sq)
 {
     uint64 block;
     uint64 mask = rmask(sq);
@@ -126,9 +126,9 @@ void MoveSet::set_rook_attack_set(int sq)
         rook_attack_set[sq][index] = ratt(sq, block);
     }
 }
-void MoveSet::set_bishop_attack_set(int sq){
+void MoveSet::set_bishop_attack_set(unsigned int sq){
     uint64 block;
-    uint64 mask = bmask(sq);
+    uint64 mask = bmask(sq); 
     int n = count_1s(mask);
     for(int i = 0 ; i < 1 << n ; i ++){
         block = index_to_uint64(i, n, mask);
@@ -145,115 +145,124 @@ void MoveSet::set_attack_sets()
     }
 
 }
-uint64 MoveSet::get_white_pawn_attack_set(Bitboard* bb, int sq)
+uint64 MoveSet::get_white_pawn_attack_set(Bitboard* bb, unsigned int sq)
 {
     // return get_white_pawn_attack_mask(sq) & bb->black;
     return get_white_pawn_attack_mask(sq) & bb->collective_piece_boards[BLACK];
 }
-uint64 MoveSet::get_black_pawn_attack_set(Bitboard* bb,int sq)
+uint64 MoveSet::get_black_pawn_attack_set(Bitboard* bb,unsigned int sq)
 {
     // return get_black_pawn_attack_mask(sq) & bb->white;
     return get_black_pawn_attack_mask(sq) & bb->collective_piece_boards[WHITE];
 }
-uint64 MoveSet::get_pawn_attack_set(Bitboard* bb, int sq, int side)
+uint64 MoveSet::get_pawn_attack_set(Bitboard* bb, unsigned int sq, unsigned int side)
 {
     return side == Side::WHITE ? get_white_pawn_attack_set(bb, sq) : get_black_pawn_attack_set(bb, sq);
 
 }
-uint64 MoveSet::get_knight_attack_set(Bitboard* bb, int sq, int side)
+uint64 MoveSet::get_knight_attack_set(Bitboard* bb, unsigned int sq, unsigned int side)
 {
     // return side == Side::WHITE ? get_knight_attack_mask(sq) & ~bb->white : get_knight_attack_mask(sq) & ~bb->black;
     return get_knight_attack_mask(sq) & ~bb->collective_piece_boards[side];
 }
-uint64 MoveSet::get_king_attack_set(Bitboard* bb, int sq, int side)
+uint64 MoveSet::get_king_attack_set(Bitboard* bb, unsigned int sq, unsigned int side)
 {
     // return side == Side::WHITE ? get_king_attack_mask(sq) & ~bb->white : get_king_attack_mask(sq) & ~bb->black;
     return get_king_attack_mask(sq) & ~bb->collective_piece_boards[side];
 }
-uint64 MoveSet::get_bishop_attack_set(Bitboard* bb, int sq, int side)
+
+/* get legal bishop move set */
+uint64 MoveSet::get_bishop_legal_move_set(Bitboard* bb, unsigned int sq, unsigned int side)
 {
-    // return side == Side::WHITE ? get_bishop_attack_set(bb, sq) & ~bb->white : get_bishop_attack_set(bb, sq) & ~bb->black; 
-    return get_bishop_attack_set(bb, sq) & ~bb->collective_piece_boards[side];
+    return get_bishop_move_set(bb, sq) & ~bb->collective_piece_boards[side];
 
 }
-uint64 MoveSet::get_rook_attack_set(Bitboard* bb, int sq, int side)
+/* get legal rook move set */
+uint64 MoveSet::get_rook_legal_move_set(Bitboard* bb, unsigned int sq, unsigned int side)
 {
-    // return side == Side::WHITE ? get_rook_attack_set(bb, sq) & ~bb->white : get_rook_attack_set(bb, sq) & ~bb->black; 
-    return get_rook_attack_set(bb, sq) & ~bb->collective_piece_boards[side];
-
-
+    return get_rook_move_set(bb, sq) & ~bb->collective_piece_boards[side];
 }
-uint64 MoveSet::get_bishop_attack_set(Bitboard* bb, int sq)
+/* get bishop move set, including the pieces of the same side blocking the bishop */
+uint64 MoveSet::get_bishop_move_set(Bitboard* bb, unsigned int sq)
 {
     uint64 cur_occ = bb->all & bishop_attack_mask[sq];
     int index = transform(cur_occ, mg.bishop_magics[sq], BBits[sq]);
     uint64 attack_set = bishop_attack_set[sq][index];
     return attack_set;
 }
-uint64 MoveSet::get_rook_attack_set(Bitboard* bb, int sq)
+/* get rook move set, including the pieces of the same side blocking the rook */
+uint64 MoveSet::get_rook_move_set(Bitboard* bb, unsigned int sq)
 {
     uint64 cur_occ = bb->all & rook_attack_mask[sq];
     int index = transform(cur_occ, mg.rook_magics[sq], RBits[sq]);
     uint64 attack_set = rook_attack_set[sq][index];
     return attack_set;
 }
-uint64 MoveSet::get_all_move_set(Bitboard* bb, int piece, int sq, int side)
+/* get a bitboard of squares where a piece is blocking the bishop path*/
+uint64 MoveSet::get_bishop_blocking_set(Bitboard* bb, unsigned int sq, unsigned int side){
+    return ~get_bishop_legal_move_set(bb, sq, side) & get_bishop_move_set(bb, sq);
+}
+/* get a bitboard of squares where a piece is blocking the rook path*/
+uint64 MoveSet::get_rook_blocking_set(Bitboard* bb, unsigned int sq, unsigned int side){
+    return ~get_rook_legal_move_set(bb, sq, side) & get_rook_move_set(bb, sq);
+}
+uint64 MoveSet::get_legal_move_set(Bitboard* bb, unsigned int piece, unsigned int sq, unsigned int side)
 {
     switch(piece){
         case Piece::pPAWN:
             return get_pawn_attack_set(bb, sq, side) | get_pawn_forward_mask(bb, sq, side);
         case Piece::pBISHOP:
-            return get_bishop_attack_set(bb, sq, side);
+            return get_bishop_legal_move_set(bb, sq, side);
         case Piece::pROOK:
-            return get_rook_attack_set(bb, sq, side);
+            return get_rook_legal_move_set(bb, sq, side);
         case Piece::pKNIGHT:
             return get_knight_attack_set(bb, sq, side);
         case Piece::pKING:
             return get_king_attack_set(bb, sq, side);
         case Piece::pQUEEN:
-            return get_bishop_attack_set(bb, sq, side) | get_rook_attack_set(bb, sq, side);
+            return get_bishop_legal_move_set(bb, sq, side) | get_rook_legal_move_set(bb, sq, side);
         default:
             return 0;
     }
 }
-uint64 MoveSet::get_capture_move_set(Bitboard* bb, int piece, int sq, int side)
+uint64 MoveSet::get_capture_move_set(Bitboard* bb, unsigned int piece, unsigned int sq, unsigned int side)
 {
     switch(piece){
         case Piece::pPAWN:
             return get_pawn_attack_set(bb, sq, side) & bb->collective_piece_boards[side ^ 1];
         case Piece::pBISHOP:
-            return get_bishop_attack_set(bb, sq, side) & bb->collective_piece_boards[side ^ 1];
+            return get_bishop_legal_move_set(bb, sq, side) & bb->collective_piece_boards[side ^ 1];
         case Piece::pROOK:
-            return get_rook_attack_set(bb, sq, side) & bb->collective_piece_boards[side ^ 1];
+            return get_rook_legal_move_set(bb, sq, side) & bb->collective_piece_boards[side ^ 1];
         case Piece::pKNIGHT:
             return get_knight_attack_set(bb, sq, side) & bb->collective_piece_boards[side ^ 1];
         case Piece::pKING:
             return get_king_attack_set(bb, sq, side) & bb->collective_piece_boards[side ^ 1];
         case Piece::pQUEEN:
-            return (get_bishop_attack_set(bb, sq, side) | get_rook_attack_set(bb, sq, side)) & bb->collective_piece_boards[side ^ 1];
+            return (get_bishop_legal_move_set(bb, sq, side) | get_rook_legal_move_set(bb, sq, side)) & bb->collective_piece_boards[side ^ 1];
         default:
             return 0;
     }
 }
-uint64 MoveSet::get_quiet_move_set(Bitboard* bb, int piece, int sq, int side)
+uint64 MoveSet::get_quiet_move_set(Bitboard* bb, unsigned int piece, unsigned int sq, unsigned int side)
 {
     switch(piece){
         case Piece::pPAWN:
             return get_pawn_forward_mask(bb, sq, side) & (~bb->collective_piece_boards[side ^ 1]);
         case Piece::pBISHOP:
-            return get_bishop_attack_set(bb, sq, side) & (~bb->collective_piece_boards[side ^ 1]);
+            return get_bishop_legal_move_set(bb, sq, side) & (~bb->collective_piece_boards[side ^ 1]);
         case Piece::pROOK:
-            return get_rook_attack_set(bb, sq, side) & (~bb->collective_piece_boards[side ^ 1]);
+            return get_rook_legal_move_set(bb, sq, side) & (~bb->collective_piece_boards[side ^ 1]);
         case Piece::pKNIGHT:
             return get_knight_attack_set(bb, sq, side) & (~bb->collective_piece_boards[side ^ 1]);
         case Piece::pKING:
             return get_king_attack_set(bb, sq, side) & (~bb->collective_piece_boards[side ^ 1]);
         case Piece::pQUEEN:
-            return (get_bishop_attack_set(bb, sq, side) | get_rook_attack_set(bb, sq, side)) & (~bb->collective_piece_boards[side ^ 1]);
+            return (get_bishop_legal_move_set(bb, sq, side) | get_rook_legal_move_set(bb, sq, side)) & (~bb->collective_piece_boards[side ^ 1]);
         default:
             return 0;
     }
 }
-bool MoveSet::king_attacked_by_move(Bitboard* bb, int piece, int sq, int side){
+bool MoveSet::king_attacked_by_move(Bitboard* bb, unsigned int piece, unsigned int sq, unsigned int side){
     return get_capture_move_set(bb, piece, sq, side) & bb->piece_boards[side ^ 1][pKING];
 }

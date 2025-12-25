@@ -4,9 +4,6 @@
 #include <iostream>
 #include "const.hpp"
 using namespace std;
-#define INITIAL_CASTLE_RIGHTS 0xf
-#define NO_EP_RIGHTS 0x8
-#define NO_PIECE 0x8
 class BoardInfo{
 private:
     // castle_rights: 4 bits

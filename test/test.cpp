@@ -1,12 +1,11 @@
-#include <chrono>
 #include <vector>
-#include <set>
 #include <algorithm>
 #include <stdlib.h>
-#include <assert.h>
 #include <string>
 #include <catch2/catch_test_macros.hpp>
 
+#include "const.hpp"
+#include "evaluation.hpp"
 #include "move.hpp"
 #include "board_squares.hpp"
 #include "search.hpp"
@@ -14,6 +13,7 @@
 #include "bitboard.hpp"
 #include "board_info.hpp"
 #include "move_set.hpp"
+#include "transposition_table.hpp"
 #include "utils.hpp"
 using namespace std::chrono;
 using namespace std;
@@ -28,8 +28,8 @@ bool are_pieces_in_correct_locations(Board* b, vector<vector<int>> expected_piec
     bool correct_locations = true;
     for(int side = 0 ; side < NUM_SIDES ; side ++){
         uint64 piece_board = b->get_bitboard()->piece_boards[side][piece];
-        int piece_location = 64;
-        while((piece_location = bit_scan_forward(piece_board)) != -1){
+        unsigned piece_location = 64;
+        while((piece_location = bit_scan_forward(piece_board)) != INVALID_LOCATION){
             // remove "piece_location" square piece_location the piece_board
             piece_board ^= get_square_bitboard(piece_location);
             bool found_piece_location = false;
@@ -46,13 +46,13 @@ bool are_pieces_in_correct_locations(Board* b, vector<vector<int>> expected_piec
     return correct_locations;
 }
 
-bool are_move_vectors_equal(vector<unsigned int> actual_moves, vector<unsigned int> expected_moves){
-    if(actual_moves.size() != expected_moves.size())
+bool are_vectors_equal(vector<unsigned int> actual, vector<unsigned int> expected){
+    if(actual.size() != expected.size())
         return false;
-    sort(actual_moves.begin(), actual_moves.end());
-    sort(expected_moves.begin(), expected_moves.end());
-    for(int i = 0 ; i < actual_moves.size() ; i ++){
-        if(actual_moves[i] != expected_moves[i])
+    sort(actual.begin(), actual.end());
+    sort(expected.begin(), expected.end());
+    for(int i = 0 ; i < actual.size() ; i ++){
+        if(actual[i] != expected[i])
             return false;
     }
     return true;
@@ -118,11 +118,15 @@ TEST_CASE("Piece locations for starting position", "[Parsing FEN]"){
         REQUIRE(correct_piece_locations);
     }
     delete b;
+    delete TranspositionTable::instanceptr;
     delete Bitboard::instanceptr;
     delete BoardInfo::instanceptr;
+    delete Evaluation::instanceptr;
     b = nullptr;
+    TranspositionTable::instanceptr = nullptr;
     Bitboard::instanceptr = nullptr;
     BoardInfo::instanceptr = nullptr;
+    Evaluation::instanceptr = nullptr;
 }
 
 TEST_CASE("Piece locations for fen test position", "[Parsing FEN]"){
@@ -186,15 +190,257 @@ TEST_CASE("Piece locations for fen test position", "[Parsing FEN]"){
         bool correct_piece_locations = are_pieces_in_correct_locations(b, expected_king_locations, pKING);
         REQUIRE(correct_piece_locations);
     }
+
     delete b;
+    delete TranspositionTable::instanceptr;
     delete Bitboard::instanceptr;
     delete BoardInfo::instanceptr;
+    delete Evaluation::instanceptr;
     b = nullptr;
+    TranspositionTable::instanceptr = nullptr;
     Bitboard::instanceptr = nullptr;
     BoardInfo::instanceptr = nullptr;
+    Evaluation::instanceptr = nullptr;
+}
+TEST_CASE("Bishop and Rook Legal Move Set", "[MoveSet]"){
+    BoardSquares::init_files();
+    BoardSquares::init_ranks();
+    BoardSquares::init_squares();
+    MoveSet::set_attack_sets();
+    MoveSet::init_attack_masks();
+    Board* b = new Board();    
+    const char* fen_path = "./positions/bishop_move_set_test.txt";
+    b->parse_fen(fen_path);
+    SECTION("bishop has correct legal moveset"){
+
+        std::vector<unsigned int> expected_white_bishop_legal_moveset_squares = {d4, c5, f4, g5, h6};
+        std::vector<unsigned int> expected_black_bishop_legal_moveset_squares = {e5, d4, c3, b2, g5, h4};
+
+        unsigned int white_bishop_location = INVALID_LOCATION;
+        unsigned int black_bishop_location = INVALID_LOCATION;
+        for(unsigned int sq = 0; sq < NUM_SQUARES ; sq ++){
+            if(get_square_bitboard(sq) & b->get_bitboard()->piece_boards[WHITE][pBISHOP]){
+                white_bishop_location = sq;
+            } else if(get_square_bitboard(sq) & b->get_bitboard()->piece_boards[BLACK][pBISHOP]){
+                black_bishop_location = sq;
+            }
+        }
+
+        uint64 white_bishop_legal_moveset = MoveSet::get_bishop_legal_move_set(b->get_bitboard(), white_bishop_location, WHITE);
+        uint64 black_bishop_legal_moveset = MoveSet::get_bishop_legal_move_set(b->get_bitboard(), black_bishop_location, BLACK);
+
+        uint64 expected_white_bishop_legal_moveset = 0;
+        for(int i = 0 ; i < expected_white_bishop_legal_moveset_squares.size() ; i ++){
+            expected_white_bishop_legal_moveset ^= get_square_bitboard(expected_white_bishop_legal_moveset_squares[i]);
+        }
+        uint64 expected_black_bishop_legal_moveset = 0;
+        for(int i = 0 ; i < expected_black_bishop_legal_moveset_squares.size() ; i ++){
+            expected_black_bishop_legal_moveset ^= get_square_bitboard(expected_black_bishop_legal_moveset_squares[i]);
+        }
+        REQUIRE(expected_white_bishop_legal_moveset == white_bishop_legal_moveset);
+        REQUIRE(expected_black_bishop_legal_moveset == black_bishop_legal_moveset);
+    }
+    SECTION("bishop has correct move set"){
+        std::vector<unsigned int> expected_white_bishop_moveset_squares = {d4, c5, f4, g5, h6, d2, f2};
+        std::vector<unsigned int> expected_black_bishop_moveset_squares = {e5, d4, c3, b2, g5, h4, e7, g7};
+
+        unsigned int white_bishop_location = INVALID_LOCATION;
+        unsigned int black_bishop_location = INVALID_LOCATION;
+        for(unsigned int sq = 0; sq < NUM_SQUARES ; sq ++){
+            if(get_square_bitboard(sq) & b->get_bitboard()->piece_boards[WHITE][pBISHOP]){
+                white_bishop_location = sq;
+            } else if(get_square_bitboard(sq) & b->get_bitboard()->piece_boards[BLACK][pBISHOP]){
+                black_bishop_location = sq;
+            }
+        }
+
+        uint64 white_bishop_moveset = MoveSet::get_bishop_move_set(b->get_bitboard(), white_bishop_location);
+        uint64 black_bishop_moveset = MoveSet::get_bishop_move_set(b->get_bitboard(), black_bishop_location);
+
+        uint64 expected_white_bishop_moveset = 0;
+        for(int i = 0 ; i < expected_white_bishop_moveset_squares.size() ; i ++){
+            expected_white_bishop_moveset ^= get_square_bitboard(expected_white_bishop_moveset_squares[i]);
+        }
+        uint64 expected_black_bishop_moveset = 0;
+        for(int i = 0 ; i < expected_black_bishop_moveset_squares.size() ; i ++){
+            expected_black_bishop_moveset ^= get_square_bitboard(expected_black_bishop_moveset_squares[i]);
+        }
+
+        REQUIRE(expected_white_bishop_moveset == white_bishop_moveset);
+        REQUIRE(expected_black_bishop_moveset == black_bishop_moveset);
+    }
+
+
+    delete b;
+    delete TranspositionTable::instanceptr;
+    delete Bitboard::instanceptr;
+    delete BoardInfo::instanceptr;
+    delete Evaluation::instanceptr;
+    b = nullptr;
+    TranspositionTable::instanceptr = nullptr;
+    Bitboard::instanceptr = nullptr;
+    BoardInfo::instanceptr = nullptr;
+    Evaluation::instanceptr = nullptr;
+}
+TEST_CASE("Blocking Pieces Bitboard", "[Moveset]"){
+    BoardSquares::init_files();
+    BoardSquares::init_ranks();
+    BoardSquares::init_squares();
+    MoveSet::set_attack_sets();
+    MoveSet::init_attack_masks();
+
+    Board* b = new Board();    
+    const char* fen_path = "./positions/bishop_move_set_test.txt";
+    b->parse_fen(fen_path);
+    Evaluation* e = Evaluation::get_instance();
+    // e->init_blocking_pieces();
+    SECTION("Bishop has correct blocking pieces Bitboard"){
+        std::vector<unsigned int> expected_white_blocking_squares = {d2, f2};
+        std::vector<unsigned int> expected_black_blocking_squares = {e7, g7};
+
+        unsigned int white_bishop_location = INVALID_LOCATION;
+        unsigned int black_bishop_location = INVALID_LOCATION;
+        for(unsigned int sq = 0; sq < NUM_SQUARES ; sq ++){
+            if(get_square_bitboard(sq) & b->get_bitboard()->piece_boards[WHITE][pBISHOP]){
+                white_bishop_location = sq;
+            } else if(get_square_bitboard(sq) & b->get_bitboard()->piece_boards[BLACK][pBISHOP]){
+                black_bishop_location = sq;
+            }
+        }
+        uint64 white_bishop_blocking_set = MoveSet::get_bishop_blocking_set(b->get_bitboard(), white_bishop_location, WHITE);
+        uint64 black_bishop_blocking_set = MoveSet::get_bishop_blocking_set(b->get_bitboard(), black_bishop_location, BLACK);
+
+        uint64 expected_white_bishop_blocking_set = 0;
+        for(int i = 0 ; i < expected_white_blocking_squares.size() ; i ++){
+            expected_white_bishop_blocking_set ^= get_square_bitboard(expected_white_blocking_squares[i]);
+        }
+        uint64 expected_black_bishop_blocking_set = 0;
+        for(int i = 0 ; i < expected_black_blocking_squares.size() ; i ++){
+            expected_black_bishop_blocking_set ^= get_square_bitboard(expected_black_blocking_squares[i]);
+        }
+        REQUIRE(expected_white_bishop_blocking_set == white_bishop_blocking_set);
+        REQUIRE(expected_black_bishop_blocking_set == black_bishop_blocking_set);
+        
+    }
+
+
+    delete b;
+    delete TranspositionTable::instanceptr;
+    delete Bitboard::instanceptr;
+    delete BoardInfo::instanceptr;
+    delete Evaluation::instanceptr;
+    b = nullptr;
+    TranspositionTable::instanceptr = nullptr;
+    Bitboard::instanceptr = nullptr;
+    BoardInfo::instanceptr = nullptr;
+    Evaluation::instanceptr = nullptr;
 }
 
-TEST_CASE("En Passant Rights Updated", "[En Passant]"){
+TEST_CASE("Blocking Pieces", "[Bitboard]"){
+
+    BoardSquares::init_files();
+    BoardSquares::init_ranks();
+    BoardSquares::init_squares();
+    MoveSet::set_attack_sets();
+    MoveSet::init_attack_masks();
+
+    Board* b = new Board();
+    string fen_path = "./positions/bishop_move_set_test.txt";
+    b->parse_fen(fen_path);
+    Evaluation* e = Evaluation::get_instance();
+    // e->init_blocking_pieces();
+    SECTION("Initial blocking pieces", "[Bitboard]"){
+        std::vector<unsigned int> expected_white_blocking_squares = {d2, f2, c5};
+        std::vector<unsigned int> expected_black_blocking_squares = {e7, g7, b2};
+
+        unsigned int white_bishop_location = INVALID_LOCATION;
+        unsigned int black_bishop_location = INVALID_LOCATION;
+        for(unsigned int sq = 0; sq < NUM_SQUARES ; sq ++){
+            if(get_square_bitboard(sq) & b->get_bitboard()->piece_boards[WHITE][pBISHOP]){
+                white_bishop_location = sq;
+            } else if(get_square_bitboard(sq) & b->get_bitboard()->piece_boards[BLACK][pBISHOP]){
+                black_bishop_location = sq;
+            }
+        }
+        unsigned int white_bishop_key = e->get_piece_key_on_square(white_bishop_location);
+        unsigned int black_bishop_key =  e->get_piece_key_on_square(black_bishop_location);
+        cout<<"white_bishop_location: "<<white_bishop_location<<endl;
+        cout<<"black_bishop_location: "<<black_bishop_location<<endl;
+        cout<<"white_bishop_key: "<<white_bishop_key<<endl;
+        cout<<"black_bishop_key: "<<black_bishop_key<<endl;
+
+        std::vector<unsigned int> blocking_pieces_white_bishop = e->get_blocking_piece_keys(white_bishop_key);
+        for(int i = 0 ; i < blocking_pieces_white_bishop.size() ; i ++){
+            cout<<"white: "<<blocking_pieces_white_bishop[i]<<endl;
+        }
+
+        std::vector<unsigned int> blocking_pieces_black_bishop = e->get_blocking_piece_keys(black_bishop_key);
+        cout<<"num black blocking squares: "<< blocking_pieces_black_bishop.size()<<endl;
+        for(int i = 0 ; i < blocking_pieces_black_bishop.size() ; i ++){
+            cout<<"black: "<<blocking_pieces_black_bishop[i]<<endl;
+        }
+        bool white_correct = are_vectors_equal(expected_white_blocking_squares, blocking_pieces_white_bishop);
+        bool black_correct = are_vectors_equal(expected_black_blocking_squares, blocking_pieces_black_bishop);
+        REQUIRE(white_correct);
+        REQUIRE(black_correct);
+    }
+
+
+    delete b;
+    delete TranspositionTable::instanceptr;
+    delete Bitboard::instanceptr;
+    delete BoardInfo::instanceptr;
+    delete Evaluation::instanceptr;
+    b = nullptr;
+    TranspositionTable::instanceptr = nullptr;
+    Bitboard::instanceptr = nullptr;
+    BoardInfo::instanceptr = nullptr;
+    Evaluation::instanceptr = nullptr;
+}
+
+TEST_CASE("Attack table", "[Evaluation]"){
+
+    BoardSquares::init_files();
+    BoardSquares::init_ranks();
+    BoardSquares::init_squares();
+    MoveSet::set_attack_sets();
+    MoveSet::init_attack_masks();
+
+    Board* b = new Board();
+    Evaluation* e = Evaluation::get_instance();
+    string fen_path = "./positions/starting_position.txt";
+    b->parse_fen(fen_path);
+    // e->init_attack_table();
+    SECTION("Initial attack tables", "[Evaluation]"){
+
+        int expected_attack_table[] = {
+            0, 5, 1, 1, 1, 1, 5, 0,
+            5, 7, 1, 16, 16, 1, 7, 5,
+            16, 18, 25, 18, 18, 25, 18, 16,
+            0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0,
+            -16, -18, -25, -18, -18, -25, -18, -16,
+            -5, -7, -1, -16, -16, -1, -7, -5,
+            0, -5, -1, -1, -1, -1, -5, 0,
+        };
+        for(int sq = 0 ; sq < NUM_SQUARES ; sq ++){
+            REQUIRE(e->get_attack_table_val(sq) == expected_attack_table[sq]);
+        }
+    }
+
+    delete b;
+    delete TranspositionTable::instanceptr;
+    delete Bitboard::instanceptr;
+    delete BoardInfo::instanceptr;
+    delete Evaluation::instanceptr;
+    b = nullptr;
+    TranspositionTable::instanceptr = nullptr;
+    Bitboard::instanceptr = nullptr;
+    BoardInfo::instanceptr = nullptr;
+    Evaluation::instanceptr = nullptr;
+}
+
+TEST_CASE("En Passant Rights Updated", "[BoardInfo]"){
 
     BoardSquares::init_files();
     BoardSquares::init_ranks();
@@ -230,15 +476,21 @@ TEST_CASE("En Passant Rights Updated", "[En Passant]"){
         b->reverse_move(move_list[2]);
         REQUIRE(b->get_board_info()->peek_ep_right() == (f5 - a5));
     }
+
+
     delete b;
+    delete TranspositionTable::instanceptr;
     delete Bitboard::instanceptr;
     delete BoardInfo::instanceptr;
+    delete Evaluation::instanceptr;
     b = nullptr;
+    TranspositionTable::instanceptr = nullptr;
     Bitboard::instanceptr = nullptr;
     BoardInfo::instanceptr = nullptr;
+    Evaluation::instanceptr = nullptr;
 }
 
-TEST_CASE("En Passant Move Generated", "[En Passant]"){
+TEST_CASE("En Passant Move Generated", "[MoveGen]"){
 
     BoardSquares::init_files();
     BoardSquares::init_ranks();
@@ -346,8 +598,7 @@ TEST_CASE("En Passant Move Generated", "[En Passant]"){
 
         for(auto move: move_list){
             b->apply_move(move);
-        }        
-
+        }       
         unsigned int expected_move = MoveUtils::create_move(h5, g6, WHITE, pPAWN, EP_CAPTURE, pPAWN, File::g);
         unsigned int move = mg3.get_special_move();
 
@@ -361,9 +612,11 @@ TEST_CASE("En Passant Move Generated", "[En Passant]"){
     delete b;
     delete Bitboard::instanceptr;
     delete BoardInfo::instanceptr;
+    delete TranspositionTable::instanceptr;
     b = nullptr;
     Bitboard::instanceptr = nullptr;
     BoardInfo::instanceptr = nullptr;
+    TranspositionTable::instanceptr = nullptr;
 }
 
 TEST_CASE("Only Captures","[MoveGen]"){
@@ -428,14 +681,18 @@ TEST_CASE("Only Captures","[MoveGen]"){
         }
         cout<<endl;
         REQUIRE(move_count == 2);
-        REQUIRE(are_move_vectors_equal(actual_moves, expected_moves));
+        REQUIRE(are_vectors_equal(actual_moves, expected_moves));
     }
     delete b;
     delete Bitboard::instanceptr;
     delete BoardInfo::instanceptr;
+    delete Evaluation::instanceptr;
+    delete TranspositionTable::instanceptr;
     b = nullptr;
     Bitboard::instanceptr = nullptr;
     BoardInfo::instanceptr = nullptr;
+    TranspositionTable::instanceptr = nullptr;
+    Evaluation::instanceptr = nullptr;
 
 }
 TEST_CASE("Number of nodes during search","[MoveGen]"){
@@ -493,10 +750,12 @@ TEST_CASE("Number of nodes during search depth 4","[MoveGen]"){
     delete b;
     delete Bitboard::instanceptr;
     delete BoardInfo::instanceptr;
+    delete Evaluation::instanceptr;
     b = nullptr;
     Bitboard::instanceptr = nullptr;
     BoardInfo::instanceptr = nullptr;
     TranspositionTable::instanceptr = nullptr;
+    Evaluation::instanceptr = nullptr;
 }
 TEST_CASE("Number of nodes during search depth 5","[MoveGen]"){
 
@@ -517,10 +776,12 @@ TEST_CASE("Number of nodes during search depth 5","[MoveGen]"){
     delete b;
     delete Bitboard::instanceptr;
     delete BoardInfo::instanceptr;
+    delete Evaluation::instanceptr;
     b = nullptr;
     Bitboard::instanceptr = nullptr;
     BoardInfo::instanceptr = nullptr;
     TranspositionTable::instanceptr = nullptr;
+    Evaluation::instanceptr = nullptr;
 }
 TEST_CASE("promotions during search", "[MoveGen]"){
     BoardSquares::init_files();
@@ -544,11 +805,15 @@ TEST_CASE("promotions during search", "[MoveGen]"){
 
     }
     delete b;
+    delete TranspositionTable::instanceptr;
     delete Bitboard::instanceptr;
     delete BoardInfo::instanceptr;
+    delete Evaluation::instanceptr;
     b = nullptr;
+    TranspositionTable::instanceptr = nullptr;
     Bitboard::instanceptr = nullptr;
     BoardInfo::instanceptr = nullptr;
+    Evaluation::instanceptr = nullptr;
 }
 TEST_CASE("castles during search", "[MoveGen]"){
 
@@ -574,10 +839,12 @@ TEST_CASE("castles during search", "[MoveGen]"){
     delete Bitboard::instanceptr;
     delete BoardInfo::instanceptr;
     delete TranspositionTable::instanceptr;
+    delete Evaluation::instanceptr;
     b = nullptr;
     Bitboard::instanceptr = nullptr;
     BoardInfo::instanceptr = nullptr;
     TranspositionTable::instanceptr = nullptr;
+    Evaluation::instanceptr = nullptr;
 
 }
 TEST_CASE("Unique Zobrist Hash vals", "[TranspositionTable]"){
@@ -604,10 +871,12 @@ TEST_CASE("Unique Zobrist Hash vals", "[TranspositionTable]"){
     delete Bitboard::instanceptr;
     delete BoardInfo::instanceptr;
     delete TranspositionTable::instanceptr;
+    delete Evaluation::instanceptr;
     b = nullptr;
     Bitboard::instanceptr = nullptr;
     BoardInfo::instanceptr = nullptr;
     TranspositionTable::instanceptr = nullptr;
+    Evaluation::instanceptr = nullptr;
 }
 TEST_CASE("Updating hash val", "[TranspositionTable]"){
     BoardSquares::init_files();
@@ -726,10 +995,12 @@ TEST_CASE("Updating hash val", "[TranspositionTable]"){
     delete TranspositionTable::instanceptr;
     delete Bitboard::instanceptr;
     delete BoardInfo::instanceptr;
+    delete Evaluation::instanceptr;
     b = nullptr;
     TranspositionTable::instanceptr = nullptr;
     Bitboard::instanceptr = nullptr;
     BoardInfo::instanceptr = nullptr;
+    Evaluation::instanceptr = nullptr;
 }
 TEST_CASE("Updating hash val en passant", "[TranspositionTable]"){
     BoardSquares::init_files();
@@ -801,10 +1072,12 @@ TEST_CASE("Updating hash val en passant", "[TranspositionTable]"){
     delete TranspositionTable::instanceptr;
     delete Bitboard::instanceptr;
     delete BoardInfo::instanceptr;
+    delete Evaluation::instanceptr;
     b = nullptr;
     TranspositionTable::instanceptr = nullptr;
     Bitboard::instanceptr = nullptr;
     BoardInfo::instanceptr = nullptr;
+    Evaluation::instanceptr = nullptr;
 }
 TEST_CASE("Transposition Table cach matches (simple)", "[TranspositionTable]"){
     BoardSquares::init_files();
@@ -830,11 +1103,13 @@ TEST_CASE("Transposition Table cach matches (simple)", "[TranspositionTable]"){
     delete TranspositionTable::instanceptr;
     delete Bitboard::instanceptr;
     delete BoardInfo::instanceptr;
+    delete Evaluation::instanceptr;
     b = nullptr;
     s = nullptr;
     TranspositionTable::instanceptr = nullptr;
     Bitboard::instanceptr = nullptr;
     BoardInfo::instanceptr = nullptr;
+    Evaluation::instanceptr = nullptr;
 }
 TEST_CASE("Transposition Table cache matches", "[TranspositionTable]"){
     BoardSquares::init_files();
@@ -861,11 +1136,13 @@ TEST_CASE("Transposition Table cache matches", "[TranspositionTable]"){
     delete TranspositionTable::instanceptr;
     delete Bitboard::instanceptr;
     delete BoardInfo::instanceptr;
+    delete Evaluation::instanceptr;
     b = nullptr;
     s = nullptr;
     TranspositionTable::instanceptr = nullptr;
     Bitboard::instanceptr = nullptr;
     BoardInfo::instanceptr = nullptr;
+    Evaluation::instanceptr = nullptr;
 }
 TEST_CASE("Alpha beta pruning selected move", "[Search]"){
     BoardSquares::init_files();
@@ -898,11 +1175,13 @@ TEST_CASE("Alpha beta pruning selected move", "[Search]"){
     delete TranspositionTable::instanceptr;
     delete Bitboard::instanceptr;
     delete BoardInfo::instanceptr;
+    delete Evaluation::instanceptr;
     b = nullptr;
     s = nullptr;
     TranspositionTable::instanceptr = nullptr;
     Bitboard::instanceptr = nullptr;
     BoardInfo::instanceptr = nullptr;
+    Evaluation::instanceptr = nullptr;
 }
 TEST_CASE("Alpha beta pruning selected move with transpositions", "[Search]"){
     BoardSquares::init_files();
@@ -935,14 +1214,78 @@ TEST_CASE("Alpha beta pruning selected move with transpositions", "[Search]"){
     delete TranspositionTable::instanceptr;
     delete Bitboard::instanceptr;
     delete BoardInfo::instanceptr;
+    delete Evaluation::instanceptr;
     b = nullptr;
-    s = nullptr;
     TranspositionTable::instanceptr = nullptr;
     Bitboard::instanceptr = nullptr;
     BoardInfo::instanceptr = nullptr;
+    Evaluation::instanceptr = nullptr;
 }
-TEST_CASE("Chebyshev Distance", "[Evaluation]"){
-    unsigned int from = a1;
-    unsigned int to = b3;
-    REQUIRE(Evaluation::get_chebyshev_distance(from, to) == 2);  
+TEST_CASE("Piece Key to Square Table", "[Bitboard]"){
+    BoardSquares::init_files();
+    BoardSquares::init_ranks();
+    BoardSquares::init_squares();
+    MoveSet::set_attack_sets();
+    MoveSet::init_attack_masks();
+
+    Board* b = new Board();
+    Evaluation* e = Evaluation::get_instance();
+    string fen_path = "./positions/starting_position.txt";
+    b->parse_fen(fen_path);
+    vector<unsigned int> piece_key_vals = {
+        // white
+        0, 1, 2, 3, 4, 5, 6, 7,  // pawns
+        8, 9,                    // knights
+        16, 17,                  // bishops
+        24, 25,                  // rooks
+        32,                      // queen
+        40,                      // king
+        // black
+        48, 49, 50, 51, 52, 53, 54, 55, // pawns
+        56, 57,                         // knights
+        64, 65,                         // bishops
+        72, 73,                         // rooks
+        80,                             // queen
+        88                              // king
+    };
+
+    SECTION("piece keys present in piece_to_square map"){
+        set<unsigned int> found_squares;
+        for(unsigned int i = 0 ; i < piece_key_vals.size() ; i ++){
+            unsigned int expected_piece_key = piece_key_vals[i];
+            unsigned int value_of_expected_key = e->get_square_of_piece_key(expected_piece_key);
+            auto square = found_squares.find(expected_piece_key);
+            bool square_not_found = square == found_squares.end();
+            cout<<"expected_piece_key: "<<expected_piece_key<<"\n";
+            REQUIRE(square_not_found);
+            REQUIRE(value_of_expected_key < NUM_SQUARES);
+            found_squares.insert(expected_piece_key);
+        }
+    }
+    SECTION("square to piece key values"){
+        for(unsigned int i = 0 ; i < piece_key_vals.size() ; i ++){
+            int cnt_equal = 0;
+            unsigned int expected_piece_key = piece_key_vals[i];
+            for(int j = 0 ; j < NUM_SQUARES; j ++){
+                unsigned int actual_piece_key = e->get_piece_key_on_square(j);
+                if(actual_piece_key == expected_piece_key){
+                    cnt_equal++;
+                    cout<<"expected_piece_key: "<<expected_piece_key<<"\n";
+                    cout<<"actual_piece_key: "<<actual_piece_key<<"\n";
+                }
+            }
+            REQUIRE(cnt_equal == 1);
+        }
+    }
+
+    delete b;
+    delete TranspositionTable::instanceptr;
+    delete Bitboard::instanceptr;
+    delete BoardInfo::instanceptr;
+    delete Evaluation::instanceptr;
+    b = nullptr;
+    TranspositionTable::instanceptr = nullptr;
+    Bitboard::instanceptr = nullptr;
+    BoardInfo::instanceptr = nullptr;
+    Evaluation::instanceptr = nullptr;
 }

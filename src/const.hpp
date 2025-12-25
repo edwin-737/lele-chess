@@ -11,6 +11,12 @@
 #define EP_FINISHED 8
 #define CHECKMATE_EVAL(max_depth,depth_left) -100000+(max_depth-depth_left)
 #define STALEMATE_EVAL 0
+
+#define INITIAL_CASTLE_RIGHTS 0xf
+#define NO_EP_RIGHTS 0x8
+#define NO_PIECE 0x8
+#define NO_PIECE_KEY 97
+#define MAX_CAPTURE_VALUE 9
 enum GenType {
     ALL_MOVES,
     ONLY_CAPTURES,
@@ -46,8 +52,10 @@ inline const int piece_values[] = {
 #define NUM_SIDES 2
 #define NUM_PIECE_TYPES 6
 #define NUM_MOVE_TYPES 7
-#define MAX_PIECES 8
+#define MAX_NUM_PIECES 8
+#define NUM_PIECE_KEYS 100
 #define NUM_SQUARES 64
+#define INVALID_LOCATION 64
 inline int PAWN_WHITE[]={
     0,  0,  0,  0,  0,  0,  0, 0,
     5, 10, 10,-20,-20, 10, 10,  5,

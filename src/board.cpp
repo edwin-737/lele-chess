@@ -1,6 +1,10 @@
 #include <iostream>
+#include <fstream>
+#include <iostream>
 #include <string>
 #include "board.hpp"
+#include "const.hpp"
+#include "move.hpp"
 #include "board_squares.hpp"
 using namespace BoardSquares;
 void Board::apply_move(unsigned int move){
@@ -227,7 +231,6 @@ void Board::reverse_move(unsigned int move){
         if(piece == pKING)
             update_king_location(side, from);
     } else if (MoveUtils::is_capture(move)){ // capture
-        // bi->num_captures -= update_num_moves;
         uint64 from_to = get_from_to(from, to);
         bb->piece_boards[side][piece] ^= from_to;
         bb->collective_piece_boards[side] ^= from_to;
@@ -238,12 +241,9 @@ void Board::reverse_move(unsigned int move){
         if(piece == pKING)
             update_king_location(side, from);
     } else if(MoveUtils::is_ep_capture(move)){
-        // bi->num_ep_captures -= update_num_moves;
-        // bi->num_captures -= update_num_moves;
         uint64 from_to = get_from_to(from, to);
         bb->piece_boards[side][piece] ^= from_to;
         bb->collective_piece_boards[side] ^= from_to;
-        // int captured_piece = MoveUtils::get_captured_piece(move);
         int captured_file = MoveUtils::get_ep_capture_file(move);
         int captured_sq = side == WHITE ? a5 + captured_file: a4 + captured_file;
 
@@ -251,7 +251,6 @@ void Board::reverse_move(unsigned int move){
         bb->piece_boards[side ^ 1][pPAWN] ^= sq_bitboard;
         bb->collective_piece_boards[side ^ 1] ^= sq_bitboard;
     } else if(MoveUtils::is_castle(move)){ // castle, reverse location for both king and rook
-        // bi->num_castles -= update_num_moves;
         if(MoveUtils::is_king_castle(move) && side == WHITE){
             bb->piece_boards[side][pKING] ^= get_from_to(e1, g1);
             bb->collective_piece_boards[side] ^= get_from_to(e1, g1); 
@@ -363,16 +362,12 @@ bool Board::can_castle_queenside(unsigned int side){
     }
 }
 
-void Board::update_piece_locations(int side, int piece, int from, int to){
-    piece_locations[side][piece].erase(from);
-    piece_locations[side][piece].insert(to);
-}
 void Board::update_king_location(int side, int square){
     king_location[side] = square;
 }
 int Board::get_piece_location(unsigned int side, unsigned int piece){
-    auto beginning = piece_locations[side][piece].begin();
-    if(beginning != piece_locations[side][piece].end())
+    auto beginning = bb->piece_locations[side][piece].begin();
+    if(beginning != bb->piece_locations[side][piece].end())
         return *beginning;
     return -1;
 
@@ -485,8 +480,7 @@ unsigned int Board::create_move_using_pgn(unsigned int from, unsigned int to, un
     cout<<"no move match\n";
     return 0;
 }
-void Board::parse_fen(fs::path path){
-
+void Board::parse_fen(std::filesystem::path path){
     std::ifstream file(path);
     unsigned int initial_side_to_move = WHITE;
     if(file.is_open()){
@@ -571,12 +565,16 @@ void Board::parse_fen(fs::path path){
             /*TODO: Halfmove clock*/
         }
     }
+    eval->init_piece_keys();
+    eval->init_piece_locations();
     bi->set_board_info(initial_castle_rights, initial_ep_rights);
     bb->update();
     eval->init_material();
     tt->initialise_hash_val(side_to_move, bb, bi);
+    eval->init_attack_table();
+    eval->init_blocking_pieces();
 }
-void Board::parse_pgn(fs::path path){
+void Board::parse_pgn(std::filesystem::path path){
 
     bi->set_board_info(initial_castle_rights, initial_ep_rights);
     bb->update();
@@ -618,17 +616,7 @@ void Board::parse_pgn(fs::path path){
         }
     }
 }
-void Board::init_piece_locations(){
-    for(int sq = 0 ; sq < NUM_SQUARES ; sq ++){
-        for(int side = 0 ; side < NUM_SIDES ; side ++){
-            for(int piece = 0 ; piece < NUM_PIECE_TYPES ; piece ++){
-                if(bb->piece_boards[side][piece] & get_square_bitboard(sq)){
-                    piece_locations[side][piece].insert(sq);
-                }
-            }
-        }
-    }
-}
+
 BoardInfo* Board::get_board_info(){
     return bi;
 }

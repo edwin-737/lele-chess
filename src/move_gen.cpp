@@ -3,6 +3,7 @@
 #include <cmath>
 #include "move_gen.hpp"
 #include "board_squares.hpp"
+#include "const.hpp"
 #include "direction_map.hpp"
 #include "utils.hpp"
 #include "move.hpp"
@@ -154,14 +155,14 @@ bool MoveGen::update_from(){
     int counter = 0;
     while(!found_from && counter < 7){
         int next_from = bit_scan_forward(piece_board);
-        if(next_from == -1){
+        if(next_from == INVALID_LOCATION){
             return false;
         }
         piece_board ^= get_square_bitboard(next_from);
         from = next_from;
 
         if(gen_type == ALL_MOVES){
-            move_set = MoveSet::get_all_move_set(bb, piece, from, side);
+            move_set = MoveSet::get_legal_move_set(bb, piece, from, side);
         } else if(gen_type == ONLY_CAPTURES) {
             move_set = MoveSet::get_capture_move_set(bb, piece, from, side);
         } else if(gen_type == ONLY_QUIET) {
@@ -179,8 +180,8 @@ bool MoveGen::update_from(){
 }
 
 bool MoveGen::update_to(){
-    int next_to = bit_scan_forward(move_set);
-    if(next_to == -1){
+    unsigned int next_to = bit_scan_forward(move_set);
+    if(next_to == INVALID_LOCATION){
         return false;
     }
     move_set ^= get_square_bitboard(next_to);

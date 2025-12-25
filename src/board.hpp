@@ -1,21 +1,13 @@
 #ifndef board_h
 #define board_h
-#include <stack>
-#include <set>
-#include <iostream>
 #include <filesystem>
-#include <fstream>
-#include <cctype>
 #include "const.hpp"
 #include "board_squares.hpp"
-#include "move.hpp"
 #include "bitboard.hpp"
 #include "board_info.hpp"
 #include "evaluation.hpp"
 #include "transposition_table.hpp"
-using namespace std;
 using namespace BoardSquares;
-namespace fs = filesystem;
 
 
 typedef enum fen_state{
@@ -40,8 +32,8 @@ public:
     void update_en_passant_rights(unsigned int move);
     bool can_castle_kingside(unsigned int side);
     bool can_castle_queenside(unsigned int side);
-    void parse_fen(fs::path path);
-    void parse_pgn(fs::path path);
+    void parse_fen(std::filesystem::path path);
+    void parse_pgn(std::filesystem::path path);
     unsigned int get_side_to_move();
     void change_side_to_move();
     int get_piece_location(unsigned int side, unsigned int piece);
@@ -51,13 +43,10 @@ public:
     unsigned int create_move_using_pgn(unsigned int from, unsigned int to, unsigned int promoted_piece = NO_PIECE);
     BoardInfo* get_board_info();
     Bitboard* get_bitboard();
-    set<int> piece_locations[NUM_SIDES][NUM_PIECE_TYPES];
     int king_location[NUM_SIDES];
     TranspositionTable* tt = TranspositionTable::get_instance();
 private:
-    void update_piece_locations(int side, int piece, int from, int to);
     void update_king_location(int side, int square);
-    void init_piece_locations();
     BoardInfo* bi = BoardInfo::get_instance();
     Bitboard* bb = Bitboard::get_instance();
     Evaluation* eval = Evaluation::get_instance();

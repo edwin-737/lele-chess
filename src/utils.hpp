@@ -47,8 +47,8 @@ inline void get_set_bit_indices(uint64 n, int* set_bits){
 //         return -1;
 //     }
 // }
-inline int bit_scan_forward(uint64_t bb) {
-    return bb ? __builtin_ctzll(bb) : -1;
+inline unsigned int bit_scan_forward(uint64_t bb) {
+    return bb ? __builtin_ctzll(bb) : INVALID_LOCATION;
 }
 inline uint64 OR_mult6(const uint64 others[NUM_PIECE_TYPES])
 {
