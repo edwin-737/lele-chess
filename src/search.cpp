@@ -61,11 +61,11 @@ unsigned int Search::perft(int original_depth, int depth_left, unsigned int side
     return ans;
 }
 
-int Search::alpha_beta(int alpha, int beta, int depth_left, unsigned int side, unsigned int starting_side, unsigned int root_move, pv_t* principal_variation, bool transposition){
+int Search::alpha_beta(int alpha, int beta, int depth_left, unsigned int side, unsigned int starting_side, unsigned int root_move, pv_t* principal_variation, bool transposition, bool use_pesto){
     pv_t line;
     line.len = 0;
-    if(depth_left == 0) 
-        return quiesce(alpha, beta, depth_left, side, starting_side, transposition);
+    if(depth_left == 0)
+        return quiesce(alpha, beta, depth_left, side, starting_side, &line, transposition, use_pesto);
 
     MoveGen mg = MoveGen(side);
     unsigned int move = 0;
@@ -76,20 +76,24 @@ int Search::alpha_beta(int alpha, int beta, int depth_left, unsigned int side, u
             continue;
 
         if(b->apply_move_if_legal(move)){
+            if(use_pesto)
+                pesto->update_evaluation(move, 0);
             int score = 0;
             if(transposition){
                 int tt_val = tt->get_value_eval();
                 if(tt_val == DEFAULT_EVAL){
-                    score = -alpha_beta(-beta, -alpha, depth_left - 1, side ^ 1, starting_side, move, &line, transposition);
+                    score = -alpha_beta(-beta, -alpha, depth_left - 1, side ^ 1, starting_side, move, &line, transposition, use_pesto);
                     tt->add_value_eval(score);
                 } else {
                     score = tt_val;
                 }
             } else {
-                score = -alpha_beta(-beta, -alpha, depth_left - 1, side ^ 1, starting_side, move, &line, transposition);
+                score = -alpha_beta(-beta, -alpha, depth_left - 1, side ^ 1, starting_side, move, &line, transposition, use_pesto);
 
             }
             b->reverse_move(move);
+            if(use_pesto)
+                pesto->update_evaluation(move, 1);
             if(score >= beta){
                 num_nodes++;
                 return beta;
@@ -129,7 +133,11 @@ int Search::alpha_beta(int alpha, int beta, int depth_left, unsigned int side, u
 
     if(no_moves_left){
         if(b->get_bitboard()->attacked(side, b->get_king_location(side))){
-            return CHECKMATE_EVAL(max_depth,depth_left);
+            // return -CHECKMATE_EVAL(max_depth, depth_left);
+            if(starting_side == side)
+                return -CHECKMATE_EVAL(max_depth,depth_left);
+            else 
+                return CHECKMATE_EVAL(max_depth, depth_left);
         } else {
             return STALEMATE_EVAL;
         }
@@ -146,9 +154,15 @@ int Search::alpha_beta(int alpha, int beta, int depth_left, unsigned int side, u
     }
     return alpha;
 }
-int Search::quiesce(int alpha, int beta, int depth, unsigned int side,  unsigned int starting_side, bool transposition){
-    int static_eval = side == BLACK ? -evaluate() : evaluate();
-
+int Search::quiesce(int alpha, int beta, int depth, unsigned int side,  unsigned int starting_side, pv_t* principal_variation, bool transposition, bool use_pesto){
+    int static_eval;
+    if(use_pesto)
+        // static_eval =  pesto->get_evaluation(starting_side, side ^ 1);
+        static_eval =  pesto->get_evaluation(WHITE, side);
+    else
+        static_eval = side == BLACK ? -eval->get_evaluation() : eval->get_evaluation();
+    pv_t line;
+    line.len = 0;
     // Stand Pat
     int best_value = static_eval;
     if( best_value >= beta ){
@@ -157,7 +171,7 @@ int Search::quiesce(int alpha, int beta, int depth, unsigned int side,  unsigned
     }
     // int delta = 100;
     int delta = 0;
-    if( best_value  + delta > alpha )
+    if( best_value  > alpha )
         alpha = best_value;
 
     // MoveGen mg = MoveGen(side, 0, true);
@@ -170,27 +184,32 @@ int Search::quiesce(int alpha, int beta, int depth, unsigned int side,  unsigned
             continue;
         }
         if(b->apply_move_if_legal(move)){
-            int score = 0;
-            if(transposition){
-                int tt_val = tt->get_value_eval();
-                if(tt_val == DEFAULT_EVAL){
-                    score = -quiesce(-beta, -alpha, 0, side ^ 1, starting_side, transposition);
-                    tt->add_value_eval(score);
-                } else {
-                    score = tt_val;
-                }
-            }else {
-                score = -quiesce(-beta, -alpha, 0, side ^ 1, starting_side, transposition);
-            }
+            if(use_pesto)
+                pesto->update_evaluation(move, 0);
+            int score = -quiesce(-beta, -alpha, 0, side ^ 1, starting_side, &line, transposition, use_pesto);
             b->reverse_move(move);
+            if(use_pesto)
+                pesto->update_evaluation(move, 1);
             if(score >= beta){
                 num_nodes++;
                 return score;
             }
-            if(score > best_value)
+            if(score > best_value){
+                // principal_variation->moves[0] = move;
+                // memcpy(principal_variation->moves + 1, line.moves, line.len * sizeof(unsigned int));
+                // principal_variation->len = line.len + 1;
+
                 best_value = score;
-            if(score + delta > alpha)
+                // cout<<"selected move quiesce\n";
+            }
+            if(score > alpha){
+                principal_variation->moves[0] = move;
+                memcpy(principal_variation->moves + 1, line.moves, line.len * sizeof(unsigned int));
+                principal_variation->len = line.len + 1;
+
                 alpha = score;
+                // cout<<"selected move quiesce\n";
+            }
         }
 
     }
@@ -198,7 +217,10 @@ int Search::quiesce(int alpha, int beta, int depth, unsigned int side,  unsigned
     num_nodes++;
     return best_value;
 }
-int Search::evaluate(){
+int Search::evaluate(bool use_pesto){
     // return eval->get_material();
-    return eval->get_evaluation();
+    if(!use_pesto)
+        return eval->get_evaluation();
+    else
+        return pesto->get_evaluation(WHITE, WHITE);
 }

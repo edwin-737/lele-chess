@@ -37,19 +37,19 @@ inline void get_set_bit_indices(uint64 n, int* set_bits){
         index += 1;
     }
 }
-// inline int bit_scan_forward(uint64 bb){
-//     if(bb > 0){
-//         // cout<<"bit scan not empty\n";
-//         return index64[((bb & -bb) * DE_BRUIJN) >> 58];
-//     }
-//     else{
-//         // cout<<"bit scan empty\n";
-//         return -1;
-//     }
-// }
-inline int bit_scan_forward(uint64_t bb) {
-    return bb ? __builtin_ctzll(bb) : -1;
+inline int bit_scan_forward(uint64 bb){
+    if(bb > 0){
+        // cout<<"bit scan not empty\n";
+        return index64[((bb & -bb) * DE_BRUIJN) >> 58];
+    }
+    else{
+        // cout<<"bit scan empty\n";
+        return -1;
+    }
 }
+// inline int bit_scan_forward(uint64_t bb) {
+//     return bb ? __builtin_ctzll(bb) : INVALID_LOCATION;
+// }
 inline uint64 OR_mult6(const uint64 others[NUM_PIECE_TYPES])
 {
     return others[0] | others[1] | others[2] | others[3] | others[4] | others[5];

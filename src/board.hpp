@@ -12,6 +12,7 @@
 #include "bitboard.hpp"
 #include "board_info.hpp"
 #include "evaluation.hpp"
+#include "pesto.hpp"
 #include "transposition_table.hpp"
 using namespace std;
 using namespace BoardSquares;
@@ -62,6 +63,6 @@ private:
     Bitboard* bb = Bitboard::get_instance();
     Evaluation* eval = Evaluation::get_instance();
     unsigned int side_to_move = WHITE;
-    int initial_ep_rights = NO_EP_RIGHTS, initial_castle_rights = 0xf;
+    int initial_ep_rights = NO_EP_RIGHTS, initial_castle_rights = 0x0;
 };
 #endif

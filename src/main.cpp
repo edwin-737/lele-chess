@@ -9,7 +9,6 @@
 // #include "evaluation.hpp"
 #include "board_squares.hpp"
 #include "search.hpp"
-#include "magics.hpp"
 #include "bitboard.hpp"
 #include "board_info.hpp"
 #include "move_set.hpp"
@@ -146,7 +145,8 @@ int main(int argc, char** argv)
 
         int alpha = -1e5;
         int beta = 1e5;
-        int score = s->alpha_beta(alpha, beta, depth, side, side, 0, principal_variation, transposition);
+        int score = s->alpha_beta(alpha, beta, depth, side, side, 0, principal_variation, false, true);
+        // int score = s->alpha_beta(alpha, beta, depth, side, side, 0, principal_variation, transposition);
 
         free(principal_variation);
         #ifdef ENABLE_PROFILER

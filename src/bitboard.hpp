@@ -5,9 +5,7 @@ typedef unsigned long long uint64;
 class Bitboard{
 private:
     Bitboard(){
-        init_piece_boards();
-        update();
-        initialised = true;
+        reset();
     }
 
     bool initialised = false;
@@ -15,6 +13,7 @@ public:
     static Bitboard* instanceptr;
     Bitboard(const Bitboard& obj) = delete;
     static Bitboard* get_instance();
+    void reset();
     bool is_initialised();
     void init_piece_boards();
     void update();

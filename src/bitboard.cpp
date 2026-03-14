@@ -10,6 +10,11 @@ Bitboard* Bitboard::get_instance(){
         instanceptr = new Bitboard();
     return instanceptr;
 }
+void Bitboard::reset(){
+    init_piece_boards();
+    update();
+    initialised = true;
+}
 bool Bitboard::is_initialised(){
     return initialised;
 }

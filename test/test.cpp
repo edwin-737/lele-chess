@@ -1,20 +1,21 @@
-#include <chrono>
+
 #include <vector>
-#include <set>
 #include <algorithm>
 #include <stdlib.h>
-#include <assert.h>
 #include <string>
 #include <catch2/catch_test_macros.hpp>
 
+#include "const.hpp"
 #include "move.hpp"
 #include "board_squares.hpp"
+#include "pesto.hpp"
 #include "search.hpp"
 #include "magics.hpp"
 #include "bitboard.hpp"
 #include "board_info.hpp"
 #include "move_set.hpp"
 #include "utils.hpp"
+#include "move_gen.hpp"
 using namespace std::chrono;
 using namespace std;
 #define NONE 0
@@ -364,6 +365,157 @@ TEST_CASE("En Passant Move Generated", "[En Passant]"){
     b = nullptr;
     Bitboard::instanceptr = nullptr;
     BoardInfo::instanceptr = nullptr;
+}
+
+TEST_CASE("Initial value for pesto evaluation", "[PestoEvaluation]"){
+    BoardSquares::init_files();
+    BoardSquares::init_ranks();
+    BoardSquares::init_squares();
+    MoveSet::set_attack_sets();
+    MoveSet::init_attack_masks();
+
+    Board* b = new Board();
+    string fen_path = "./positions/starting_position.txt";
+    b->parse_fen(fen_path);
+
+    // SECTION("init_table"){
+    //     PestoEvaluation* pesto = PestoEvaluation::get_instance(WHITE);
+    //     int p, pc;
+    //     for (p = PAWN, pc = WHITE_PAWN; p <= KING; pc += 2, p++) {
+    //         for (int sq = 0; sq < 64; sq++) {
+    //             // mg_table[pc]  [sq] = mg_value[p] + mg_pesto_table[p][sq];
+    //             // eg_table[pc]  [sq] = eg_value[p] + eg_pesto_table[p][sq];
+    //             // mg_table[pc+1][sq] = mg_value[p] + mg_pesto_table[p][FLIP(sq)];
+    //             // eg_table[pc+1][sq] = eg_value[p] + eg_pesto_table[p][FLIP(sq)];
+    //             REQUIRE(pesto->mg_table[pc][sq] == pesto->mg_value[p] + pesto->mg_pesto_table[p][FLIP(sq)]);
+    //             REQUIRE(pesto->eg_table[pc][sq] == pesto->eg_value[p] + pesto->eg_pesto_table[p][FLIP(sq)]);
+    //             REQUIRE(pesto->mg_table[pc+1][sq] == pesto->mg_value[p] + pesto->mg_pesto_table[p][sq]);
+    //             REQUIRE(pesto->eg_table[pc+1][sq] == pesto->eg_value[p] + pesto->eg_pesto_table[p][sq]);
+    //             // cout<<"pc: "<<pc<<"sq: "<<sq<<", mg_table[pc][sq]: "<pesto-><mg_table[pc][sq]<<", eg_table[pc]: "<<eg_table[pc][sq]<<"\n";
+    //             // cout<<"pc + 1: "<<pc + 1<<", sq: "<<sq<<", mg_table[pc + 1][sq]: "<<mg_table[pc + 1][sq]<<", eg_table[pc + 1]: "<<eg_table[pc + 1][sq]<<"\n";
+    //         }
+    //     }
+    // }
+    SECTION("init_evaluation"){
+        PestoEvaluation* pesto = PestoEvaluation::get_instance(WHITE);
+        pesto->init_evaluate(WHITE);
+        REQUIRE(pesto->get_evaluation(WHITE, WHITE) == 0);
+        REQUIRE(pesto->gamePhase == 24);
+    }
+    SECTION("update_evaluation (basic)"){
+        PestoEvaluation* pesto = PestoEvaluation::get_instance(WHITE);
+        pesto->init_evaluate(WHITE);
+        REQUIRE(pesto->get_evaluation(WHITE, WHITE) == 0);
+        REQUIRE(pesto->gamePhase == 24);
+
+        unsigned int move1 = MoveUtils::create_move(e2, e4, WHITE, pPAWN, DOUBLE_PAWN_PUSH);
+        b->apply_move(move1);
+        pesto->update_evaluation(move1);
+        REQUIRE(pesto->get_evaluation(WHITE, WHITE) != 0);
+        REQUIRE(pesto->gamePhase == 24);
+        
+        b->reverse_move(move1);
+        pesto->update_evaluation(move1, 1);
+        REQUIRE(pesto->get_evaluation(WHITE, WHITE) == 0);
+        REQUIRE(pesto->gamePhase == 24);
+
+    }
+    delete b;
+    delete Bitboard::instanceptr;
+    delete BoardInfo::instanceptr;
+    delete PestoEvaluation::instanceptr;
+    b = nullptr;
+    Bitboard::instanceptr = nullptr;
+    BoardInfo::instanceptr = nullptr;
+    PestoEvaluation::instanceptr = nullptr;
+}
+
+TEST_CASE("Update evaluation for pesto evaluation", "[PestoEvaluation]"){
+    BoardSquares::init_files();
+    BoardSquares::init_ranks();
+    BoardSquares::init_squares();
+    MoveSet::set_attack_sets();
+    MoveSet::init_attack_masks();
+
+    Board* b = new Board();
+    string fen_path = "./positions/bratko-kopec/bk_2.txt";
+    b->parse_fen(fen_path);
+    b->get_bitboard()->display();
+
+
+    int expected_mg[2], expected_eg[2];
+    int expected_mg_phase = 10;
+    expected_mg[BLACK] = ((-27 - 4 - 4 + 24 + 38 - 12) + (82 * 6) + \
+                         (-1) + (337) +\
+                         (-17 + 17) + (477 * 2) +
+                         (-28));
+    expected_mg[WHITE] = ((-27 + 12 + 17 + 6 + 10 - 23) + (82 * 6) +\
+                         (-9) + (337) + \
+                         (1 - 16) + (477 * 2)+\
+                         (-16));
+    int expected_eg_phase = 14;
+    expected_eg[BLACK] = ((13 + 7 - 6 + 0 + 2 - 8) + (94 * 6) +\
+                            (-2) + (281) +\
+                            (-1 - 1) + (512 * 2) + \
+                            (-14));
+    expected_eg[WHITE] = ((13 - 7 - 7 - 8 + 3 + 17) + (94 * 6) +\
+                            (-3) + (281)+\
+                            (-5 + 3) + (512 * 2)+\
+                            (4));
+    SECTION("init_evaluation"){
+
+        PestoEvaluation* pesto = PestoEvaluation::get_instance(WHITE);
+        int actual_eval = pesto->init_evaluate(WHITE);
+        int expected_mg_score = -expected_mg[BLACK] + expected_mg[WHITE];
+        int expected_eg_score = -expected_eg[BLACK] + expected_eg[WHITE];
+        int expected_score = (expected_mg_score * expected_mg_phase) + (expected_eg_score * expected_eg_phase);
+        REQUIRE(pesto->gamePhase == expected_mg_phase);
+        REQUIRE(actual_eval == expected_score);
+        REQUIRE(actual_eval == pesto->get_evaluation(WHITE, WHITE));
+
+
+        unsigned int rook_capture = MoveUtils::create_move(c3, c6, WHITE, pROOK, ADDITIONAL_INFO::CAPTURE, pPAWN);
+        b->apply_move(rook_capture);
+        pesto->update_evaluation(rook_capture);
+        int new_eval = pesto->get_evaluation(WHITE, WHITE);
+
+        int expected_white_rook_mg_change = (26 - (-16));
+        int expected_white_rook_eg_change = (7 - (-5));
+        int expected_black_pawn_mg_change = (-(-4 + 82));
+        int expected_black_pawn_eg_change = (-(-6 + 94));
+        cout<<"expected_mg[WHITE]: "<<expected_mg[WHITE]<<"\n";
+        cout<<"expected_mg[BLACK]: "<<expected_mg[BLACK]<<"\n";
+        cout<<"expected_eg[WHITE]: "<<expected_eg[WHITE]<<"\n";
+        cout<<"expected_eg[BLACK]: "<<expected_eg[BLACK]<<"\n";
+        int expected_mg_after[2], expected_eg_after[2];
+        expected_mg_after[WHITE] = expected_mg[WHITE] + expected_white_rook_mg_change;
+        expected_mg_after[BLACK] = expected_mg[BLACK] + expected_black_pawn_mg_change;
+        expected_eg_after[WHITE] = expected_eg[WHITE] + expected_white_rook_eg_change;
+        expected_eg_after[BLACK] = expected_eg[BLACK] + expected_black_pawn_eg_change;
+
+        cout<<"expected_mg_after[WHITE]: "<<expected_mg_after[WHITE]<<"\n";
+        cout<<"expected_mg_after[BLACK]: "<<expected_mg_after[BLACK]<<"\n";
+        cout<<"expected_eg_after[WHITE]: "<<expected_eg_after[WHITE]<<"\n";
+        cout<<"expected_eg_after[BLACK]: "<<expected_eg_after[BLACK]<<"\n";
+        int expected_mg_score_after = -expected_mg_after[BLACK] + expected_mg_after[WHITE];
+        int expected_eg_score_after = -expected_eg_after[BLACK] + expected_eg_after[WHITE];
+        int expected_score_after = (expected_mg_score_after * expected_mg_phase) + (expected_eg_score_after * expected_eg_phase);
+        REQUIRE(new_eval == expected_score_after);
+
+        pesto->update_evaluation(rook_capture, 1);
+    }
+}
+
+TEST_CASE("Update value for pesto evaluation", "[PestoEvaluation]"){
+    BoardSquares::init_files();
+    BoardSquares::init_ranks();
+    BoardSquares::init_squares();
+    MoveSet::set_attack_sets();
+    MoveSet::init_attack_masks();
+
+    Board* b = new Board();
+    string fen_path = "./positions/starting_position.txt";
+    b->parse_fen(fen_path);
 }
 
 TEST_CASE("Only Captures","[MoveGen]"){
@@ -898,11 +1050,13 @@ TEST_CASE("Alpha beta pruning selected move", "[Search]"){
     delete TranspositionTable::instanceptr;
     delete Bitboard::instanceptr;
     delete BoardInfo::instanceptr;
+    delete PestoEvaluation::instanceptr;
     b = nullptr;
     s = nullptr;
     TranspositionTable::instanceptr = nullptr;
     Bitboard::instanceptr = nullptr;
     BoardInfo::instanceptr = nullptr;
+    PestoEvaluation::instanceptr = nullptr;
 }
 TEST_CASE("Alpha beta pruning selected move with transpositions", "[Search]"){
     BoardSquares::init_files();
@@ -935,14 +1089,11 @@ TEST_CASE("Alpha beta pruning selected move with transpositions", "[Search]"){
     delete TranspositionTable::instanceptr;
     delete Bitboard::instanceptr;
     delete BoardInfo::instanceptr;
+    delete PestoEvaluation::instanceptr;
     b = nullptr;
     s = nullptr;
     TranspositionTable::instanceptr = nullptr;
     Bitboard::instanceptr = nullptr;
     BoardInfo::instanceptr = nullptr;
-}
-TEST_CASE("Chebyshev Distance", "[Evaluation]"){
-    unsigned int from = a1;
-    unsigned int to = b3;
-    REQUIRE(Evaluation::get_chebyshev_distance(from, to) == 2);  
+    PestoEvaluation::instanceptr = nullptr;
 }

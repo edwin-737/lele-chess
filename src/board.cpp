@@ -2,6 +2,8 @@
 #include <string>
 #include "board.hpp"
 #include "board_squares.hpp"
+#include "const.hpp"
+#include "pesto.hpp"
 using namespace BoardSquares;
 void Board::apply_move(unsigned int move){
     unsigned int side = MoveUtils::get_side(move);
@@ -201,6 +203,7 @@ void Board::apply_move(unsigned int move){
     }
     eval->update_material(move, false);
     bb->all = bb->collective_piece_boards[WHITE] | bb->collective_piece_boards[BLACK];
+
     unsigned int next_castle_rights = bi->peek_castle_right();
     unsigned int next_ep_rights = bi->peek_ep_right();
     tt->update_hash_val_castle_rights(prev_castle_rights, next_castle_rights);
@@ -327,6 +330,7 @@ void Board::reverse_move(unsigned int move){
     eval->update_material(move, true);
     bb->all = bb->collective_piece_boards[WHITE] | bb->collective_piece_boards[BLACK];
     bi->remove_board_info();
+
     unsigned int next_castle_rights = bi->peek_castle_right();
     unsigned int next_ep_rights = bi->peek_ep_right();
     tt->update_hash_val_castle_rights(prev_castle_rights, next_castle_rights);
@@ -486,7 +490,11 @@ unsigned int Board::create_move_using_pgn(unsigned int from, unsigned int to, un
     return 0;
 }
 void Board::parse_fen(fs::path path){
-
+    for(unsigned int side = 0 ; side < NUM_SIDES ; side ++){
+        for(unsigned int piece = 0; piece < NUM_PIECE_TYPES ; piece ++){
+            bb->piece_boards[side][piece] = 0;
+        }
+    }
     std::ifstream file(path);
     unsigned int initial_side_to_move = WHITE;
     if(file.is_open()){
@@ -521,6 +529,7 @@ void Board::parse_fen(fs::path path){
                             bb->piece_boards[side][pQUEEN] |= square_bitboard;
                         } else if(piece_type == 'k'){
                             bb->piece_boards[side][pKING] |= square_bitboard;
+                            update_king_location(side, pos);
                         } else if(piece_type =='r'){
                             bb->piece_boards[side][pROOK] |= square_bitboard;
                         } 
@@ -574,6 +583,9 @@ void Board::parse_fen(fs::path path){
     bi->set_board_info(initial_castle_rights, initial_ep_rights);
     bb->update();
     eval->init_material();
+    // TODO: fix or implement this as it leads to seg fault in test
+    // eval->init_piece_locations();
+    init_piece_locations();
     tt->initialise_hash_val(side_to_move, bb, bi);
 }
 void Board::parse_pgn(fs::path path){
