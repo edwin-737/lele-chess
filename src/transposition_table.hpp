@@ -1,8 +1,9 @@
 #ifndef TRANSPOSITION_TABLE_H
 #define TRANSPOSITION_TABLE_H
 #include "const.hpp"
+#include "board_info.hpp"
 #include "board_squares.hpp"
-#include <map>
+#include <unordered_map>
 #define NUM_ZOBRIST_VALS 1600
 #define ZOBRIST_OFFSET_PIECE_ON_SQUARE 0
 #define ZOBRIST_OFFSET_SIDE_TO_MOVE 768
@@ -35,13 +36,13 @@ public:
     void update_hash_val_castle_rights(unsigned int prev_castle_right, unsigned int next_castle_right);
     void update_hash_val_ep_rights(unsigned int prev_ep_right, unsigned int next_ep_right);
     unsigned int get_value_perft(int depth);
-    int get_value_eval();
+    int get_value_eval(int depth);
     void found_value();
     void not_equal();
     void add_value_perft(int depth, unsigned int val);
-    void add_value_eval(int val);
-    map<uint64, unsigned int> perft_table[MAX_DEPTH];
-    map<uint64, int> eval_table;
+    void add_value_eval(int depth, int val);
+    unordered_map<uint64, unsigned int> perft_table[MAX_DEPTH];
+    unordered_map<uint64, int> eval_table[MAX_DEPTH];
     uint64 zobrist_vals[NUM_ZOBRIST_VALS];
     uint64 hash_val = 0;
 };

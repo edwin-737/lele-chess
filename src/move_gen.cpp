@@ -100,8 +100,6 @@ unsigned int MoveGen::get_special_move(){
     } else if(move_type == mEP_CAPTURE){
         move = get_ep_capture(side);
     }
-    // cout<<"special_move_type: "<<special_move_type<<"\n";
-    // cout<<"ep_from: "<<ep_from<<"\n";
     return move;
 }
 

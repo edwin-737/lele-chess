@@ -1,12 +1,13 @@
 
 #ifndef directionmap_h
 #define directionmap_h
-#include <map>
+// #include <map>
+#include <unordered_map>
 #include "direction.hpp"
 typedef unsigned long long uint64;
 using namespace std;
 namespace DirectionMap{
-    inline map<int,uint64> general = {
+    inline unordered_map<int,uint64> general = {
         {Direction::General::north_east, 9ULL},
         {Direction::General::north, 8ULL},
         {Direction::General::north_west, 7ULL},
@@ -16,7 +17,7 @@ namespace DirectionMap{
         {Direction::General::south, 8ULL},
         {Direction::General::south_east, 7ULL}
     };
-    inline map<int, uint64> knight = {
+    inline unordered_map<int, uint64> knight = {
         {Direction::Knight::north_left, 15ULL},
         {Direction::Knight::north_right, 17ULL},
         {Direction::Knight::west_up, 6ULL},

@@ -145,7 +145,7 @@ int main(int argc, char** argv)
 
         int alpha = -1e5;
         int beta = 1e5;
-        int score = s->alpha_beta(alpha, beta, depth, side, side, 0, principal_variation, false, true);
+        int score = s->alpha_beta(alpha, beta, depth, side, side, 0, principal_variation, transposition, true);
         // int score = s->alpha_beta(alpha, beta, depth, side, side, 0, principal_variation, transposition);
 
         free(principal_variation);

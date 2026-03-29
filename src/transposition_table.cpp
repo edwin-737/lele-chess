@@ -156,9 +156,9 @@ unsigned int TranspositionTable::get_value_perft(int depth_searched){
     }
     return 0;
 }
-int TranspositionTable::get_value_eval(){
-    auto val = eval_table.find(hash_val);
-    if(val != eval_table.end()){
+int TranspositionTable::get_value_eval(int depth_searched){
+    auto val = eval_table[depth_searched].find(hash_val);
+    if(val != eval_table[depth_searched].end()){
         found_value();
         return val->second;
     }
@@ -170,7 +170,7 @@ void TranspositionTable::found_value(){
 void TranspositionTable::add_value_perft(int depth_searched, unsigned int val){
     perft_table[depth_searched].insert({hash_val, val});
 }
-void TranspositionTable::add_value_eval(int val){
-    eval_table.insert({hash_val, val});
+void TranspositionTable::add_value_eval(int depth_searched, int val){
+    eval_table[depth_searched].insert({hash_val, val});
 }
 

@@ -128,11 +128,6 @@ TEST_CASE("Piece locations for starting position", "[Parsing FEN]"){
 
 TEST_CASE("Piece locations for fen test position", "[Parsing FEN]"){
 
-    BoardSquares::init_files();
-    BoardSquares::init_ranks();
-    BoardSquares::init_squares();
-    MoveSet::set_attack_sets();
-    MoveSet::init_attack_masks();
 
     Board* b = new Board();
     const char* fen_path = "./positions/fen_test_position.txt";
@@ -197,11 +192,6 @@ TEST_CASE("Piece locations for fen test position", "[Parsing FEN]"){
 
 TEST_CASE("En Passant Rights Updated", "[En Passant]"){
 
-    BoardSquares::init_files();
-    BoardSquares::init_ranks();
-    BoardSquares::init_squares();
-    MoveSet::set_attack_sets();
-    MoveSet::init_attack_masks();
 
     Board* b = new Board();    
     const char* fen_path = "./positions/starting_position.txt";
@@ -241,11 +231,6 @@ TEST_CASE("En Passant Rights Updated", "[En Passant]"){
 
 TEST_CASE("En Passant Move Generated", "[En Passant]"){
 
-    BoardSquares::init_files();
-    BoardSquares::init_ranks();
-    BoardSquares::init_squares();
-    MoveSet::set_attack_sets();
-    MoveSet::init_attack_masks();
 
     Board* b = new Board();    
     const char* fen_path = "./positions/starting_position.txt";
@@ -368,11 +353,6 @@ TEST_CASE("En Passant Move Generated", "[En Passant]"){
 }
 
 TEST_CASE("Initial value for pesto evaluation", "[PestoEvaluation]"){
-    BoardSquares::init_files();
-    BoardSquares::init_ranks();
-    BoardSquares::init_squares();
-    MoveSet::set_attack_sets();
-    MoveSet::init_attack_masks();
 
     Board* b = new Board();
     string fen_path = "./positions/starting_position.txt";
@@ -431,11 +411,6 @@ TEST_CASE("Initial value for pesto evaluation", "[PestoEvaluation]"){
 }
 
 TEST_CASE("Update evaluation for pesto evaluation", "[PestoEvaluation]"){
-    BoardSquares::init_files();
-    BoardSquares::init_ranks();
-    BoardSquares::init_squares();
-    MoveSet::set_attack_sets();
-    MoveSet::init_attack_masks();
 
     Board* b = new Board();
     string fen_path = "./positions/bratko-kopec/bk_2.txt";
@@ -507,11 +482,6 @@ TEST_CASE("Update evaluation for pesto evaluation", "[PestoEvaluation]"){
 }
 
 TEST_CASE("Update value for pesto evaluation", "[PestoEvaluation]"){
-    BoardSquares::init_files();
-    BoardSquares::init_ranks();
-    BoardSquares::init_squares();
-    MoveSet::set_attack_sets();
-    MoveSet::init_attack_masks();
 
     Board* b = new Board();
     string fen_path = "./positions/starting_position.txt";
@@ -520,11 +490,6 @@ TEST_CASE("Update value for pesto evaluation", "[PestoEvaluation]"){
 
 TEST_CASE("Only Captures","[MoveGen]"){
 
-    BoardSquares::init_files();
-    BoardSquares::init_ranks();
-    BoardSquares::init_squares();
-    MoveSet::set_attack_sets();
-    MoveSet::init_attack_masks();
 
     Board* b = new Board();
     const char* fen_path = "./positions/starting_position.txt";
@@ -590,14 +555,54 @@ TEST_CASE("Only Captures","[MoveGen]"){
     BoardInfo::instanceptr = nullptr;
 
 }
+
+TEST_CASE("Move generation total","[MoveGen]"){
+
+
+    Board* b = new Board();
+    const char* queen_trade_path = "./positions/queen_trade.txt";
+    b->parse_fen(queen_trade_path);
+
+    MoveGen mg_captures = MoveGen(BLACK);
+    MoveGen mg_quiet = MoveGen(BLACK);
+    MoveGen mg = MoveGen(BLACK);
+    mg_captures.set_gen_type(ONLY_CAPTURES);
+    mg_quiet.set_gen_type(ONLY_QUIET);
+    SECTION("num_captures + num_quiet == num_moves"){
+        unsigned int move = 0;
+        int num_captures = 0;
+        int num_quiet = 0;
+        int num_total = 0;
+        while((move = mg_captures.get_move()) != NO_MOVES_LEFT){
+            if(move == INCREMENTING_MOVE_TYPE)
+                continue;
+            num_captures++;
+        }
+        while((move = mg_quiet.get_move()) != NO_MOVES_LEFT){
+            if(move == INCREMENTING_MOVE_TYPE)
+                continue;
+            num_quiet ++;
+        }
+        while((move = mg.get_move()) != NO_MOVES_LEFT){
+            if(move == INCREMENTING_MOVE_TYPE)
+                continue;
+            num_total ++;
+        }
+        cout<<endl;
+        REQUIRE(num_captures == 2);
+        REQUIRE(num_captures + num_quiet == num_total);
+    }
+    delete b;
+    delete Bitboard::instanceptr;
+    delete BoardInfo::instanceptr;
+    b = nullptr;
+    Bitboard::instanceptr = nullptr;
+    BoardInfo::instanceptr = nullptr;
+
+}
 TEST_CASE("Number of nodes during search","[MoveGen]"){
 
 
-    BoardSquares::init_files();
-    BoardSquares::init_ranks();
-    BoardSquares::init_squares();
-    MoveSet::set_attack_sets();
-    MoveSet::init_attack_masks();
 
     Board* b = new Board();
     const char* fen_path = "./positions/starting_position.txt";
@@ -627,11 +632,6 @@ TEST_CASE("Number of nodes during search","[MoveGen]"){
 TEST_CASE("Number of nodes during search depth 4","[MoveGen]"){
 
 
-    BoardSquares::init_files();
-    BoardSquares::init_ranks();
-    BoardSquares::init_squares();
-    MoveSet::set_attack_sets();
-    MoveSet::init_attack_masks();
 
     Board* b = new Board();
     const char* fen_path = "./positions/starting_position.txt";
@@ -652,11 +652,6 @@ TEST_CASE("Number of nodes during search depth 4","[MoveGen]"){
 }
 TEST_CASE("Number of nodes during search depth 5","[MoveGen]"){
 
-    BoardSquares::init_files();
-    BoardSquares::init_ranks();
-    BoardSquares::init_squares();
-    MoveSet::set_attack_sets();
-    MoveSet::init_attack_masks();
 
     Board* b = new Board();
     const char* fen_path = "./positions/starting_position.txt";
@@ -675,11 +670,6 @@ TEST_CASE("Number of nodes during search depth 5","[MoveGen]"){
     TranspositionTable::instanceptr = nullptr;
 }
 TEST_CASE("promotions during search", "[MoveGen]"){
-    BoardSquares::init_files();
-    BoardSquares::init_ranks();
-    BoardSquares::init_squares();
-    MoveSet::set_attack_sets();
-    MoveSet::init_attack_masks();
 
     Board* b = new Board();
     string fen_path = "./positions/ep_fen.txt";
@@ -704,11 +694,6 @@ TEST_CASE("promotions during search", "[MoveGen]"){
 }
 TEST_CASE("castles during search", "[MoveGen]"){
 
-    BoardSquares::init_files();
-    BoardSquares::init_ranks();
-    BoardSquares::init_squares();
-    MoveSet::set_attack_sets();
-    MoveSet::init_attack_masks();
 
     Board* b = new Board();
     string fen_path = "./positions/castle_fen.txt";
@@ -733,11 +718,6 @@ TEST_CASE("castles during search", "[MoveGen]"){
 
 }
 TEST_CASE("Unique Zobrist Hash vals", "[TranspositionTable]"){
-    BoardSquares::init_files();
-    BoardSquares::init_ranks();
-    BoardSquares::init_squares();
-    MoveSet::set_attack_sets();
-    MoveSet::init_attack_masks();
 
     Board* b = new Board();
     string fen_path = "./positions/starting_position.txt";
@@ -762,11 +742,6 @@ TEST_CASE("Unique Zobrist Hash vals", "[TranspositionTable]"){
     TranspositionTable::instanceptr = nullptr;
 }
 TEST_CASE("Updating hash val", "[TranspositionTable]"){
-    BoardSquares::init_files();
-    BoardSquares::init_ranks();
-    BoardSquares::init_squares();
-    MoveSet::set_attack_sets();
-    MoveSet::init_attack_masks();
 
     Board* b = new Board();
     string fen_path = "./positions/starting_position.txt";
@@ -884,11 +859,6 @@ TEST_CASE("Updating hash val", "[TranspositionTable]"){
     BoardInfo::instanceptr = nullptr;
 }
 TEST_CASE("Updating hash val en passant", "[TranspositionTable]"){
-    BoardSquares::init_files();
-    BoardSquares::init_ranks();
-    BoardSquares::init_squares();
-    MoveSet::set_attack_sets();
-    MoveSet::init_attack_masks();
 
     Board* b = new Board();
     string fen_path = "./positions/starting_position.txt";
@@ -959,139 +929,118 @@ TEST_CASE("Updating hash val en passant", "[TranspositionTable]"){
     BoardInfo::instanceptr = nullptr;
 }
 TEST_CASE("Transposition Table cach matches (simple)", "[TranspositionTable]"){
-    BoardSquares::init_files();
-    BoardSquares::init_ranks();
-    BoardSquares::init_squares();
-    MoveSet::set_attack_sets();
-    MoveSet::init_attack_masks();
 
     Board* b = new Board();
     string fen_path = "./positions/transposition_test.txt";
     b->parse_fen(fen_path);
-    Search* s = new Search(b);
-    cout<<"before search tt_found_count[3]: "<<s->tt_found_count[3]<<endl;
-    s->perft(5,5, WHITE, 0, true);
+    Search s = Search(b);
+    cout<<"before search tt_found_count[3]: "<<s.tt_found_count[3]<<endl;
+    unsigned int nodes = s.perft(4,4, WHITE, 0, true);
     SECTION("Depth = 4, tt_found_count == tt_match_count"){
-        REQUIRE(s->tt_found_count[1] == 0);
-        REQUIRE(s->tt_found_count[2] == 28);
-        REQUIRE(s->tt_found_count[3] == 520);
+
+        cout<<"after search tt_found_count[2]: "<<s.tt_found_count[2]<<endl;
+        cout<<"after search tt_found_count[3]: "<<s.tt_found_count[3]<<endl;
+        cout<<"after search tt_found_count[4]: "<<s.tt_found_count[4]<<endl;
+        cout<<"nodes searched: "<<nodes<<endl;
+        REQUIRE(s.tt_found_count[1] == 0);
+        REQUIRE(s.tt_found_count[2] == 28);
+        REQUIRE(s.tt_found_count[3] == 520);
     }
 
     delete b;
-    delete s;
     delete TranspositionTable::instanceptr;
     delete Bitboard::instanceptr;
     delete BoardInfo::instanceptr;
     b = nullptr;
-    s = nullptr;
     TranspositionTable::instanceptr = nullptr;
     Bitboard::instanceptr = nullptr;
     BoardInfo::instanceptr = nullptr;
 }
 TEST_CASE("Transposition Table cache matches", "[TranspositionTable]"){
-    BoardSquares::init_files();
-    BoardSquares::init_ranks();
-    BoardSquares::init_squares();
-    MoveSet::set_attack_sets();
-    MoveSet::init_attack_masks();
 
     Board* b = new Board();
     string fen_path = "./positions/starting_position.txt";
     b->parse_fen(fen_path);
-    Search* s = new Search(b);
-    cout<<"before search tt_found_count[3]: "<<s->tt_found_count[3]<<endl;
-    unsigned int nodes = s->perft(6, 6, WHITE, 0, true);
+    Search s = Search(b);
+    cout<<"before search tt_found_count[3]: "<<s.tt_found_count[3]<<endl;
+    unsigned int nodes = s.perft(6, 6, WHITE, 0, true);
     SECTION("Depth = 6, tt_found_count == tt_match_count"){
-        REQUIRE(s->tt_found_count[2] == 1300);
-        REQUIRE(s->tt_found_count[3] == 67152);
-        REQUIRE(s->tt_found_count[4] == 1284092);
-        REQUIRE(s->tt_found_count[5] == 16699235);
+        REQUIRE(s.tt_found_count[2] == 1300);
+        REQUIRE(s.tt_found_count[3] == 67152);
+        REQUIRE(s.tt_found_count[4] == 1284092);
+        REQUIRE(s.tt_found_count[5] == 16699235);
         REQUIRE(nodes == 119060324);
     }
     delete b;
-    delete s;
+    // delete s;
     delete TranspositionTable::instanceptr;
     delete Bitboard::instanceptr;
     delete BoardInfo::instanceptr;
     b = nullptr;
-    s = nullptr;
+    // s = nullptr;
     TranspositionTable::instanceptr = nullptr;
     Bitboard::instanceptr = nullptr;
     BoardInfo::instanceptr = nullptr;
 }
 TEST_CASE("Alpha beta pruning selected move", "[Search]"){
-    BoardSquares::init_files();
-    BoardSquares::init_ranks();
-    BoardSquares::init_squares();
-    MoveSet::set_attack_sets();
-    MoveSet::init_attack_masks();
 
     Board* b = new Board();
     string fen_path = "./positions/bratko-kopec/bk_1.txt";
     b->parse_fen(fen_path);
-    Search* s = new Search(b);
+    Search s = Search(b);
 
     SECTION("bk 1"){
         pv_t* principal_var = (pv_t*) calloc(1, sizeof(pv_t));
         principal_var->len = 0;
 
-        s->max_depth = 6;
+        s.max_depth = 6;
         int alpha = -1e5;
         int beta = 1e5;
-        s->alpha_beta(alpha, beta, 6, BLACK, BLACK, 0, principal_var);
+        s.alpha_beta(alpha, beta, 6, BLACK, BLACK, 0, principal_var);
 
         free(principal_var);
 
-        MoveUtils::display(s->selected_move);
-        REQUIRE(s->selected_move == MoveUtils::create_move(d6, d1, BLACK, pQUEEN));
+        MoveUtils::display(s.selected_move);
+        REQUIRE(s.selected_move == MoveUtils::create_move(d6, d1, BLACK, pQUEEN));
     }
     delete b;
-    delete s;
     delete TranspositionTable::instanceptr;
     delete Bitboard::instanceptr;
     delete BoardInfo::instanceptr;
     delete PestoEvaluation::instanceptr;
     b = nullptr;
-    s = nullptr;
     TranspositionTable::instanceptr = nullptr;
     Bitboard::instanceptr = nullptr;
     BoardInfo::instanceptr = nullptr;
     PestoEvaluation::instanceptr = nullptr;
 }
 TEST_CASE("Alpha beta pruning selected move with transpositions", "[Search]"){
-    BoardSquares::init_files();
-    BoardSquares::init_ranks();
-    BoardSquares::init_squares();
-    MoveSet::set_attack_sets();
-    MoveSet::init_attack_masks();
 
     Board* b = new Board();
     string fen_path = "./positions/bratko-kopec/bk_1.txt";
     b->parse_fen(fen_path);
-    Search* s = new Search(b);
+    Search s = Search(b);
 
     SECTION("bk 1"){
         pv_t* principal_var = (pv_t*) calloc(1, sizeof(pv_t));
         principal_var->len = 0;
 
-        s->max_depth = 6;
+        s.max_depth = 6;
         int alpha = -1e5;
         int beta = 1e5;
-        s->alpha_beta(alpha, beta, 6, BLACK, BLACK, 0, principal_var, true);
+        s.alpha_beta(alpha, beta, 6, BLACK, BLACK, 0, principal_var, true);
 
         free(principal_var);
 
-        MoveUtils::display(s->selected_move);
-        REQUIRE(s->selected_move == MoveUtils::create_move(d6, d1, BLACK, pQUEEN));
+        MoveUtils::display(s.selected_move);
+        REQUIRE(s.selected_move == MoveUtils::create_move(d6, d1, BLACK, pQUEEN));
     }
     delete b;
-    delete s;
     delete TranspositionTable::instanceptr;
     delete Bitboard::instanceptr;
     delete BoardInfo::instanceptr;
     delete PestoEvaluation::instanceptr;
     b = nullptr;
-    s = nullptr;
     TranspositionTable::instanceptr = nullptr;
     Bitboard::instanceptr = nullptr;
     BoardInfo::instanceptr = nullptr;

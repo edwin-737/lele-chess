@@ -257,6 +257,7 @@ int PestoEvaluation::get_evaluation(unsigned int starting_side, unsigned int sid
     // cout<<"[get_evaluation]: eg[WHITE] "<<eg[WHITE]<<"\n";
     // cout<<"[get_evaluation]: eg[BLACK] "<<eg[BLACK]<<"\n";
     // return this->evaluation[WHITE];
+    // return this->evaluation[starting_side];
     return side == starting_side ? evaluation[WHITE] : -evaluation[WHITE];
     // return evaluation;
     // return evaluation;
