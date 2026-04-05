@@ -23,6 +23,7 @@ public:
     void set_gen_type(int _gen_type);
     void set_move_type(int _move_type);
     int get_special_move_type();
+    void bp_e4d5();
     unsigned int get_move();
     unsigned int get_special_move();
     unsigned int get_capture();

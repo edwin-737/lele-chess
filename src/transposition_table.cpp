@@ -171,6 +171,6 @@ void TranspositionTable::add_value_perft(int depth_searched, unsigned int val){
     perft_table[depth_searched].insert({hash_val, val});
 }
 void TranspositionTable::add_value_eval(int depth_searched, int val){
-    eval_table[depth_searched].insert({hash_val, val});
+    eval_table[depth_searched].try_emplace(hash_val & 0xFFFFFFULL, val);
 }
 

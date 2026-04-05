@@ -68,6 +68,7 @@ namespace MoveUtils{
     void display(unsigned int move);
     unsigned int square_as_uint(string square);
     unsigned int promoted_piece_as_uint(string piece);
+    string move_type_as_string(unsigned int move_type);
     string piece_as_string(unsigned int piece);
     string side_as_string(unsigned int side);
     string move_as_string(unsigned int move);

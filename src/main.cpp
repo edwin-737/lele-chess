@@ -1,3 +1,4 @@
+#include "pesto.hpp"
 #include <chrono>
 #include <stdlib.h>
 #include <vector>
@@ -25,7 +26,8 @@ typedef enum ArgState{
     DEPTH,
     SIDE,
     TASK,
-    TRANSPOSITION
+    TRANSPOSITION,
+    ITERATIVE_DEEPEN
 } ArgState;
 Bitboard* Bitboard::instanceptr=nullptr;
 BoardInfo* BoardInfo::instanceptr=nullptr;
@@ -41,6 +43,7 @@ int main(int argc, char** argv)
     int side = WHITE;
     int task = PERFT;
     bool transposition = false;
+    bool iterative_deepen = false;
     for(int i = 0 ; i < argc ; i ++){
         if(arg_state == ARG_TYPE){
             if(arg_list[i] == "-f"){
@@ -57,6 +60,8 @@ int main(int argc, char** argv)
                 arg_state = TASK;
             } else if(arg_list[i] == "-t"){
                 arg_state = TRANSPOSITION;
+            } else if(arg_list[i] == "-i"){
+                arg_state = ITERATIVE_DEEPEN;
             }
         } else if(arg_state == FEN){
             fen_path = arg_list[i];
@@ -82,6 +87,10 @@ int main(int argc, char** argv)
             transposition = arg_list[i] == "1";
             cout<<"transposition: "<<transposition<<endl;
             arg_state = ARG_TYPE;
+        } else if(arg_state == ITERATIVE_DEEPEN){
+            iterative_deepen = arg_list[i] == "1";
+            cout<<"iterative_deepen: "<<iterative_deepen<<endl;
+            arg_state = ARG_TYPE;
         }
     }
     BoardSquares::init_files();
@@ -101,10 +110,6 @@ int main(int argc, char** argv)
         b->parse_pgn(pgn_path);
     }
     b->get_bitboard()->display();
-
-    // BoardInfo::set_castle_rights(b->get_initial_castle_rights());
-    // BoardInfo::set_ep_rights(b->get_initial_ep_rights());
-    // BoardInfo::set_board_info(b->get_initial_castle_rights(), b->get_initial_ep_rights());
 
     Search* s = new Search(b, depth);
     auto start = high_resolution_clock::now();
@@ -142,18 +147,39 @@ int main(int argc, char** argv)
 
         pv_t* principal_variation = (pv_t*) calloc(1, sizeof(pv_t));
         principal_variation->len = 0;
-
-        int alpha = -1e5;
-        int beta = 1e5;
-        int score = s->alpha_beta(alpha, beta, depth, side, side, 0, principal_variation, transposition, true);
-        // int score = s->alpha_beta(alpha, beta, depth, side, side, 0, principal_variation, transposition);
-
+        pv_node_t* principal_variation_node = (pv_node_t*) calloc(1, sizeof(pv_node_t));
+        principal_variation_node->move = 0;
+        int alpha = -1e7;
+        int beta = 1e7;
+        if(iterative_deepen){
+            int score = s->iterative_deepening(depth, side, side);
+        } else {
+            uint64 black_pawn_board = b->get_bitboard()->piece_boards[BLACK][pPAWN];
+            uint64 white_pawn_board = b->get_bitboard()->piece_boards[WHITE][pPAWN];
+            cout<<"white pawn board\n";
+            b->get_bitboard()->display_bitboard(white_pawn_board);
+            cout<<"black pawn board\n";
+            b->get_bitboard()->display_bitboard(black_pawn_board);
+            cout<<"white e4 pawn attack \n";
+            b->get_bitboard()->display_bitboard(MoveSet::get_pawn_attack_set(b->get_bitboard(), e4, WHITE));
+            int score = s->alpha_beta(alpha, beta, depth, side, side, 0, principal_variation, transposition, true);
+            if(s->searched_move_found){
+                cout<<"-----------------\n";
+                cout<<"searched_move: ";
+                MoveUtils::display(s->searched_move);
+                cout<<"searched_move_eval: "<<s->searched_move_eval<<"\n";
+                cout<<"searched_move_depth: "<<s->searched_move_depth<<"\n";
+                cout<<"-----------------\n";
+            }
+        }
+        
         free(principal_variation);
+        free(principal_variation_node);
         #ifdef ENABLE_PROFILER
             ProfilerStop();
         #endif
-        auto stop = high_resolution_clock::now();
-        duration<double> elapsed = stop - start;  // seconds as double (fractional)
+        // auto stop = high_resolution_clock::now();
+        duration<double> elapsed = s->stop - s->start;  // seconds as double (fractional)
         cout<<"depth = "<<depth<<endl;
         cout<<"time = "<<elapsed.count()<<endl;
         cout<<"nodes = "<<s->num_nodes<<endl;

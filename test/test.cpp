@@ -358,33 +358,15 @@ TEST_CASE("Initial value for pesto evaluation", "[PestoEvaluation]"){
     string fen_path = "./positions/starting_position.txt";
     b->parse_fen(fen_path);
 
-    // SECTION("init_table"){
-    //     PestoEvaluation* pesto = PestoEvaluation::get_instance(WHITE);
-    //     int p, pc;
-    //     for (p = PAWN, pc = WHITE_PAWN; p <= KING; pc += 2, p++) {
-    //         for (int sq = 0; sq < 64; sq++) {
-    //             // mg_table[pc]  [sq] = mg_value[p] + mg_pesto_table[p][sq];
-    //             // eg_table[pc]  [sq] = eg_value[p] + eg_pesto_table[p][sq];
-    //             // mg_table[pc+1][sq] = mg_value[p] + mg_pesto_table[p][FLIP(sq)];
-    //             // eg_table[pc+1][sq] = eg_value[p] + eg_pesto_table[p][FLIP(sq)];
-    //             REQUIRE(pesto->mg_table[pc][sq] == pesto->mg_value[p] + pesto->mg_pesto_table[p][FLIP(sq)]);
-    //             REQUIRE(pesto->eg_table[pc][sq] == pesto->eg_value[p] + pesto->eg_pesto_table[p][FLIP(sq)]);
-    //             REQUIRE(pesto->mg_table[pc+1][sq] == pesto->mg_value[p] + pesto->mg_pesto_table[p][sq]);
-    //             REQUIRE(pesto->eg_table[pc+1][sq] == pesto->eg_value[p] + pesto->eg_pesto_table[p][sq]);
-    //             // cout<<"pc: "<<pc<<"sq: "<<sq<<", mg_table[pc][sq]: "<pesto-><mg_table[pc][sq]<<", eg_table[pc]: "<<eg_table[pc][sq]<<"\n";
-    //             // cout<<"pc + 1: "<<pc + 1<<", sq: "<<sq<<", mg_table[pc + 1][sq]: "<<mg_table[pc + 1][sq]<<", eg_table[pc + 1]: "<<eg_table[pc + 1][sq]<<"\n";
-    //         }
-    //     }
-    // }
     SECTION("init_evaluation"){
         PestoEvaluation* pesto = PestoEvaluation::get_instance(WHITE);
-        pesto->init_evaluate(WHITE);
+        pesto->init_evaluate();
         REQUIRE(pesto->get_evaluation(WHITE, WHITE) == 0);
         REQUIRE(pesto->gamePhase == 24);
     }
     SECTION("update_evaluation (basic)"){
         PestoEvaluation* pesto = PestoEvaluation::get_instance(WHITE);
-        pesto->init_evaluate(WHITE);
+        pesto->init_evaluate();
         REQUIRE(pesto->get_evaluation(WHITE, WHITE) == 0);
         REQUIRE(pesto->gamePhase == 24);
 
@@ -437,10 +419,10 @@ TEST_CASE("Update evaluation for pesto evaluation", "[PestoEvaluation]"){
                             (-3) + (281)+\
                             (-5 + 3) + (512 * 2)+\
                             (4));
-    SECTION("init_evaluation"){
+    SECTION("update_evaluation"){
 
         PestoEvaluation* pesto = PestoEvaluation::get_instance(WHITE);
-        int actual_eval = pesto->init_evaluate(WHITE);
+        int actual_eval = pesto->init_evaluate();
         int expected_mg_score = -expected_mg[BLACK] + expected_mg[WHITE];
         int expected_eg_score = -expected_eg[BLACK] + expected_eg[WHITE];
         int expected_score = (expected_mg_score * expected_mg_phase) + (expected_eg_score * expected_eg_phase);
@@ -481,6 +463,37 @@ TEST_CASE("Update evaluation for pesto evaluation", "[PestoEvaluation]"){
     }
 }
 
+TEST_CASE("Update and reverse evaluation for pesto evaluation", "[PestoEvaluation]"){
+
+    Board* b = new Board();
+    string fen_path = "./positions/test_position_real.txt";
+    b->parse_fen(fen_path);
+    b->get_bitboard()->display();
+
+    SECTION("update_evaluation with reverse"){
+        PestoEvaluation* pesto = PestoEvaluation::get_instance(WHITE);
+        int original_eval = pesto->init_evaluate();
+        unsigned int move_list[] = {
+            MoveUtils::create_move(f6, d5, BLACK, pKNIGHT, CAPTURE),
+            MoveUtils::create_move(b2, b4, WHITE, pPAWN, DOUBLE_PAWN_PUSH),
+            MoveUtils::create_move(c5, b6, BLACK, pBISHOP, QUIET_MOVE),
+            MoveUtils::create_move(d3, e4, WHITE, pKNIGHT, CAPTURE, pPAWN)
+        };
+        for(int i = 0 ; i < 5 ; i ++){
+            b->apply_move(move_list[i]);
+            pesto->update_evaluation(move_list[i], 0);
+        }
+        cout<<"[final evaluation]: "<<pesto->get_evaluation(WHITE, WHITE)<<"\n";
+        for(int i = 4 ; i >= 0; i --){
+            b->reverse_move(move_list[i]);
+            pesto->update_evaluation(move_list[i], 1);
+        }
+        int reverted_expected_eval = pesto->calculate_evaluation();
+        int reverted_actual_eval = pesto->get_evaluation(WHITE, WHITE);
+        REQUIRE(reverted_expected_eval == original_eval);
+        REQUIRE(reverted_actual_eval == original_eval);
+    }
+}
 TEST_CASE("Update value for pesto evaluation", "[PestoEvaluation]"){
 
     Board* b = new Board();
@@ -994,8 +1007,8 @@ TEST_CASE("Alpha beta pruning selected move", "[Search]"){
         principal_var->len = 0;
 
         s.max_depth = 6;
-        int alpha = -1e5;
-        int beta = 1e5;
+        int alpha = -1e7;
+        int beta = 1e7;
         s.alpha_beta(alpha, beta, 6, BLACK, BLACK, 0, principal_var);
 
         free(principal_var);
@@ -1026,8 +1039,8 @@ TEST_CASE("Alpha beta pruning selected move with transpositions", "[Search]"){
         principal_var->len = 0;
 
         s.max_depth = 6;
-        int alpha = -1e5;
-        int beta = 1e5;
+        int alpha = -1e7;
+        int beta = 1e7;
         s.alpha_beta(alpha, beta, 6, BLACK, BLACK, 0, principal_var, true);
 
         free(principal_var);

@@ -148,12 +148,12 @@ void MoveSet::set_attack_sets()
 uint64 MoveSet::get_white_pawn_attack_set(Bitboard* bb, int sq)
 {
     // return get_white_pawn_attack_mask(sq) & bb->black;
-    return get_white_pawn_attack_mask(sq) & bb->collective_piece_boards[BLACK];
+    return get_white_pawn_attack_mask(sq);
 }
 uint64 MoveSet::get_black_pawn_attack_set(Bitboard* bb,int sq)
 {
     // return get_black_pawn_attack_mask(sq) & bb->white;
-    return get_black_pawn_attack_mask(sq) & bb->collective_piece_boards[WHITE];
+    return get_black_pawn_attack_mask(sq);
 }
 uint64 MoveSet::get_pawn_attack_set(Bitboard* bb, int sq, int side)
 {
@@ -220,6 +220,7 @@ uint64 MoveSet::get_capture_move_set(Bitboard* bb, int piece, int sq, int side)
 {
     switch(piece){
         case Piece::pPAWN:
+            // return get_pawn_attack_set(bb, sq, side) & bb->collective_piece_boards[side ^ 1];
             return get_pawn_attack_set(bb, sq, side) & bb->collective_piece_boards[side ^ 1];
         case Piece::pBISHOP:
             return get_bishop_attack_set(bb, sq, side) & bb->collective_piece_boards[side ^ 1];

@@ -1,3 +1,4 @@
+#include <cassert>
 #include <iostream>
 #include <string>
 #include "board.hpp"
@@ -201,9 +202,10 @@ void Board::apply_move(unsigned int move){
         }
         bi->add_board_info(castle_rights, NO_EP_RIGHTS);
     }
-    eval->update_material(move, false);
+    // eval->update_material(move, false);
     bb->all = bb->collective_piece_boards[WHITE] | bb->collective_piece_boards[BLACK];
 
+    // bb->update();
     unsigned int next_castle_rights = bi->peek_castle_right();
     unsigned int next_ep_rights = bi->peek_ep_right();
     tt->update_hash_val_castle_rights(prev_castle_rights, next_castle_rights);
@@ -327,8 +329,9 @@ void Board::reverse_move(unsigned int move){
         }
     }
 
-    eval->update_material(move, true);
+    // eval->update_material(move, true);
     bb->all = bb->collective_piece_boards[WHITE] | bb->collective_piece_boards[BLACK];
+    // bb->update();
     bi->remove_board_info();
 
     unsigned int next_castle_rights = bi->peek_castle_right();

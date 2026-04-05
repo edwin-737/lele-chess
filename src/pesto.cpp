@@ -29,7 +29,42 @@ void PestoEvaluation::init_tables(){
         }
     }
 }
-int PestoEvaluation::init_evaluate(unsigned int side_to_move){
+int PestoEvaluation::calculate_evaluation(){
+    int _mg[2], _eg[2], _gamePhase=0;
+    _mg[WHITE] = 0;
+    _mg[BLACK] = 0;
+    _eg[WHITE] = 0;
+    _eg[BLACK] = 0;
+
+    for(int side = 0 ; side < NUM_SIDES ; side ++){
+        for(int piece = 0 ; piece < NUM_PIECE_TYPES ; piece ++){
+            uint64 b = bb->piece_boards[side][piece];
+            for(int sq = 0 ; sq < NUM_SQUARES ; sq ++){
+                uint64 sq_bb = get_square_bitboard(sq);
+                if(sq_bb & b){
+                    unsigned int piece_with_side = PIECE_WITH_SIDE(piece, side);
+                    _mg[side] += mg_table[piece_with_side][sq];
+                    _eg[side] += eg_table[piece_with_side][sq];
+                    _gamePhase += gamephaseInc[piece_with_side];
+                }
+            }
+
+        }
+    }
+    
+    // cout<<"[init_evaluation] init_evaluate mg: "<<mg[WHITE]<<" "<<mg[BLACK]<<"\n";
+    // cout<<"[init_evaluation] init_evaluate eg: "<<eg[WHITE]<<" "<<eg[BLACK]<<"\n";
+    /* tapered eval */
+    int mgScore = _mg[WHITE] - _mg[BLACK];
+    int egScore = _eg[WHITE] - _eg[BLACK];
+    int mgPhase = _gamePhase;
+    if (mgPhase > 24) mgPhase = 24; /* in case of early promotion */
+    int egPhase = 24 - mgPhase;
+    // cout<<"[init_evaluation] "<<"mgPhase: "<<mgPhase<<" egPhase: "<<egPhase<<"\n";
+    int initial_eval = ((mgScore * mgPhase) + (egScore * egPhase));
+    return initial_eval;
+}
+int PestoEvaluation::init_evaluate(){
 
     mg[WHITE] = 0;
     mg[BLACK] = 0;
@@ -55,8 +90,13 @@ int PestoEvaluation::init_evaluate(unsigned int side_to_move){
     // cout<<"[init_evaluation] init_evaluate mg: "<<mg[WHITE]<<" "<<mg[BLACK]<<"\n";
     // cout<<"[init_evaluation] init_evaluate eg: "<<eg[WHITE]<<" "<<eg[BLACK]<<"\n";
     /* tapered eval */
+
     int mgScore = mg[WHITE] - mg[BLACK];
     int egScore = eg[WHITE] - eg[BLACK];
+    // if(side_to_move == BLACK){
+    //     mgScore = mg[BLACK] - mg[WHITE];
+    //     egScore = eg[BLACK] - eg[WHITE];
+    // } 
     int mgPhase = gamePhase;
     if (mgPhase > 24) mgPhase = 24; /* in case of early promotion */
     int egPhase = 24 - mgPhase;
@@ -237,20 +277,22 @@ int PestoEvaluation::update_evaluation(unsigned int move, int reverse)
     }
 
     /* tapered eval */
-    // int mgScore = mg[other_side] - mg[side];
-    // int egScore = eg[other_side] - eg[side];
     int mgScore = mg[WHITE] - mg[BLACK];
     int egScore = eg[WHITE] - eg[BLACK];
+    if(side_to_move == BLACK){
+        mgScore = mg[BLACK] - mg[WHITE];
+        egScore = eg[BLACK] - eg[WHITE];
+    } 
     int mgPhase = gamePhase;
     if (mgPhase > 24) mgPhase = 24; /* in case of early promotion */
     int egPhase = 24 - mgPhase;
     // cout<<"[update_evaluation] "<<"mgPhase: "<<mgPhase<<"\n";
     // cout<<"[update_evaluation] "<<"egPhase: "<<egPhase<<"\n";
-    this->evaluation[WHITE] = (mgScore * mgPhase + egScore * egPhase);
-    return this->evaluation[WHITE];
+    this->evaluation[side_to_move] = (mgScore * mgPhase + egScore * egPhase);
+    this->evaluation[side_to_move ^ 1] = -this->evaluation[side_to_move];
+    return this->evaluation[side_to_move];
 }
 int PestoEvaluation::get_evaluation(unsigned int starting_side, unsigned int side){
-    // return evaluation;
 
     // cout<<"[get_evaluation]: mg[WHITE] "<<mg[WHITE]<<"\n";
     // cout<<"[get_evaluation]: mg[BLACK] "<<mg[BLACK]<<"\n";
@@ -258,7 +300,12 @@ int PestoEvaluation::get_evaluation(unsigned int starting_side, unsigned int sid
     // cout<<"[get_evaluation]: eg[BLACK] "<<eg[BLACK]<<"\n";
     // return this->evaluation[WHITE];
     // return this->evaluation[starting_side];
-    return side == starting_side ? evaluation[WHITE] : -evaluation[WHITE];
+    return side == WHITE ? evaluation[WHITE] : -evaluation[WHITE];
+    // return side == starting_side ? evaluation[side] : -evaluation[side];
+    // return evaluation[side];
     // return evaluation;
     // return evaluation;
+}
+void PestoEvaluation::set_evaluation(int val){
+    evaluation[WHITE] = val;
 }

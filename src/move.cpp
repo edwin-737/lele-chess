@@ -96,8 +96,9 @@ namespace MoveUtils{
         string from = square_as_string(get_from(move));
         string to = square_as_string(get_to(move));
         string piece = piece_as_string(get_piece(move));
+        string move_type = move_type_as_string(get_additional_info(move));
         // if(is_promotion(move) || is_capture_promotion(move)){}
-        cout<<side<<" "<<piece<<" "<<from<<" "<<to<<" "<<endl;
+        cout<<"["<<move_type<<"] "<<side<<" "<<piece<<" "<<from<<" "<<to<<" "<<endl;
 
     }
 
@@ -121,6 +122,22 @@ namespace MoveUtils{
             return pKNIGHT;
         }
         return 0;
+    }
+    string move_type_as_string(unsigned int move_type){
+        if(move_type == QUIET_MOVE)
+            return "quiet";
+        else if(move_type == CAPTURE)
+            return "capture";
+        else if(move_type == EP_CAPTURE)
+            return "en passant";
+        else if(move_type == KING_CASTLE)
+            return "king castle";
+        else if(move_type == QUEEN_CASTLE)
+            return "queen castle";
+        else if(move_type == QUEEN_PROMOTION)
+            return "queen promotion";
+        return "unknown";
+        
     }
     string side_as_string(unsigned int side){
         if(side == WHITE){

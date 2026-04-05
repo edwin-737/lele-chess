@@ -72,9 +72,14 @@ unsigned int MoveGen::get_move(){
         }
     }
     unsigned int move = MoveUtils::create_move(from, to, side, piece, additional_info, captured_piece);
+    if(MoveUtils::get_piece(move) == pPAWN && MoveUtils::get_side(move) == WHITE && MoveUtils::get_from(move) == e4){
+        bp_e4d5();
+    }
     return move;
 }
+void MoveGen::bp_e4d5(){
 
+}
 unsigned int MoveGen::get_special_move(){
     unsigned int move = 0;
     if(move_type == mQUIET){

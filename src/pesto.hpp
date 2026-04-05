@@ -33,7 +33,7 @@
 #define PCOLOR(p) ((p)&1)
 class PestoEvaluation {
 private:
-    PestoEvaluation(unsigned int side_to_move=WHITE){
+    PestoEvaluation(unsigned int _side_to_move=WHITE): side_to_move(_side_to_move){
         init_tables();
     }
 public:
@@ -42,13 +42,14 @@ public:
     PestoEvaluation(const PestoEvaluation& obj) = delete;
     static PestoEvaluation* get_instance(unsigned int side_to_move=WHITE);
     void init_tables();
-    int init_evaluate(unsigned int side_to_move);
+    int init_evaluate();
+    int calculate_evaluation();
     int update_evaluation(unsigned int move, int reverse=0);
     int get_evaluation(unsigned int starting_side, unsigned int side);
-
-
+    void set_evaluation(int val);
     int mg_value[6] = { 82, 337, 365, 477, 1025,  0};
     int eg_value[6] = { 94, 281, 297, 512,  936,  0};
+
 
     /* piece/sq tables */
     /* values from Rofchade: http://www.talkchess.com/forum3/viewtopic.php?f=2&t=68311&start=19 */
@@ -213,6 +214,7 @@ public:
     int eg[2];
     int gamePhase = 0;
     int evaluation[2] = {0, 0};
+    int side_to_move = WHITE;
     Evaluation* e = Evaluation::get_instance();
     Bitboard* bb = Bitboard::get_instance();
 
