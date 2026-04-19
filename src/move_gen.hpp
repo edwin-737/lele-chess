@@ -1,7 +1,5 @@
 #ifndef movegen_h
 #define movegen_h
-#include <stack>
-#include <map>
 #include "const.hpp"
 #include "move.hpp"
 #include "bitboard.hpp"

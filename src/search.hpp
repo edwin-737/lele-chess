@@ -19,6 +19,7 @@ public:
     }
 
     unsigned int perft(int original_depth,int depth_left, unsigned int side, unsigned int root_move = 0ULL, bool transposition = false);
+    unsigned int perft_ordered(int original_depth,int depth_left, unsigned int side, unsigned int root_move = 0ULL, bool transposition = false);
     int alpha_beta(int alpha, int beta, int depth_left, unsigned int side, unsigned int starting_side, unsigned int root_move=0, pv_t* pv = nullptr, bool transposition = false, bool use_pesto = false);
     int quiesce(int alpha, int beta, int depth, unsigned int side, unsigned int starting_side, pv_t* pv = nullptr, bool transposition=false, bool use_pesto=false);
     int evaluate(bool use_pesto=false);

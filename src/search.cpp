@@ -59,7 +59,94 @@ unsigned int Search::perft(int original_depth, int depth_left, unsigned int side
     }
     return ans;
 }
-
+unsigned int Search::perft_ordered(int original_depth, int depth_left, unsigned int side, unsigned int root_move, bool transposition){
+    if(depth_left == 0){
+        if(MoveUtils::is_ep_capture(root_move)){
+            num_captures ++;
+            num_ep_captures ++;
+        } else if(MoveUtils::is_capture(root_move)){
+            num_captures ++;
+        } else if(MoveUtils::is_castle(root_move)){
+            num_castles ++;
+        } else if(MoveUtils::is_promotion(root_move)){
+            num_promotions ++;
+        } else if(MoveUtils::is_capture_promotion(root_move)){
+            num_capture_promotions ++;
+        }
+        if(b->get_bitboard()->attacked(side, b->get_king_location(side))){
+            num_checks ++;
+        } 
+        return 1ULL;
+    } 
+    else if(depth_left == original_depth - 1){
+        cout<<MoveUtils::move_as_string(root_move)<<": ";
+    }
+    MoveGen mg_captures = MoveGen(side);
+    MoveGen mg_quiet = MoveGen(side);
+    mg_captures.set_gen_type(ONLY_CAPTURES);
+    mg_quiet.set_gen_type(ONLY_QUIET);
+    unsigned int move = 0;
+    int num_legal_moves = 0;
+    unsigned int ans = 0;
+    while((move = mg_captures.get_move()) != NO_MOVES_LEFT){
+        if(move == INCREMENTING_MOVE_TYPE)
+            continue;
+        if(b->apply_move_if_legal(move)){
+            if(original_depth == 1){
+                cout<<MoveUtils::move_as_string(move)<<": 1\n";
+            }
+            int depth_searched = original_depth - depth_left;
+            if(!transposition){
+                unsigned int perft_val = perft(original_depth, depth_left - 1, side ^ 1, move);
+                ans += perft_val;
+            } else {
+                unsigned int tt_val = tt->get_value_perft(depth_searched);
+                if(!tt_val){
+                    unsigned int perft_val = perft(original_depth, depth_left - 1, side ^ 1, move, true);
+                    ans += perft_val;
+                    tt->add_value_perft(depth_searched, perft_val);
+                    tt_not_found_count[depth_searched] ++;
+                }
+                else{
+                    ans += tt_val;
+                    tt_found_count[depth_searched] ++;
+                }
+            }
+            b->reverse_move(move);
+        } 
+    }
+    while((move = mg_quiet.get_move()) != NO_MOVES_LEFT){
+        if(move == INCREMENTING_MOVE_TYPE)
+            continue;
+        if(b->apply_move_if_legal(move)){
+            if(original_depth == 1){
+                cout<<MoveUtils::move_as_string(move)<<": 1\n";
+            }
+            int depth_searched = original_depth - depth_left;
+            if(!transposition){
+                unsigned int perft_val = perft(original_depth, depth_left - 1, side ^ 1, move);
+                ans += perft_val;
+            } else {
+                unsigned int tt_val = tt->get_value_perft(depth_searched);
+                if(!tt_val){
+                    unsigned int perft_val = perft(original_depth, depth_left - 1, side ^ 1, move, true);
+                    ans += perft_val;
+                    tt->add_value_perft(depth_searched, perft_val);
+                    tt_not_found_count[depth_searched] ++;
+                }
+                else{
+                    ans += tt_val;
+                    tt_found_count[depth_searched] ++;
+                }
+            }
+            b->reverse_move(move);
+        } 
+    }
+    if(depth_left == original_depth - 1){
+        cout<<ans<<endl;
+    }
+    return ans;
+}
 int Search::alpha_beta(int alpha, int beta, int depth_left, unsigned int side, unsigned int starting_side, unsigned int root_move, pv_t* principal_variation, bool transposition, bool use_pesto){
     pv_t line;
     line.len = 0;

@@ -21,7 +21,7 @@ unsigned int MoveGen::get_move(){
     } else if(!update_to()){
         if(!update_from()){
             if(!update_piece()){
-                if(gen_type == ALL_MOVES)
+                if(gen_type == ALL_MOVES) 
                     return get_special_move();
                 /*TODO: account for ep capture when gen_type == ONLY_CAPTURES
                         account for king and queen side castle when gen_type == ONLY_QUIET
@@ -40,7 +40,6 @@ unsigned int MoveGen::get_move(){
         additional_info = DOUBLE_PAWN_PUSH;
     } 
     if(piece == pPAWN && MoveUtils::is_final_rank(to)){
-        // cout<<"is final rank to: "<<MoveUtils::square_as_string(to)<<endl;
         if(captured_piece != NO_PIECE && captured_piece != pKING){
             if(promoted_piece == pKNIGHT)
                 additional_info = KNIGHT_CAPTURE_PROMOTION;
@@ -82,9 +81,7 @@ unsigned int MoveGen::get_special_move(){
         move_type ++;
     }
     else if(move_type == mKING_CASTLE){
-        // cout<<"move_type is mKING_CASTLE\n";
         if(can_castle_kingside(side)){
-            // cout<<"getting king castle move\n";
             move = side == WHITE ? MoveUtils::create_move(e1, g1, side, pKING, KING_CASTLE) : MoveUtils::create_move(e8, g8, side, pKING, KING_CASTLE);
         } else {
             move = INCREMENTING_MOVE_TYPE;
@@ -122,6 +119,8 @@ bool MoveGen::initialise_piece(){
             found_piece = update_from();
             if(found_piece){
                 initialised = true;
+                // if(gen_type==ONLY_CAPTURES)
+                //      cout<<"[MoveGen] ONLY_CAPTURES initialised piece: "<<piece<<"\n";
                 return true;
             }
         }
@@ -150,28 +149,53 @@ bool MoveGen::update_from(){
 
     bool found_from = false;
     int counter = 0;
-    while(!found_from && counter < 7){
+    while(!found_from && counter < 8){
+    // while(!found_from && counter < 7){
         int next_from = bit_scan_forward(piece_board);
         if(next_from == -1){
+            // if(gen_type==ONLY_CAPTURES)
+            //     cout<<"[MoveGen] ONLY_CAPTURES next_from not found for: "<<MoveUtils::piece_as_string(piece)<<"\n";
             return false;
         }
+        // cout<<"[MoveGen] ONLY_CAPTURES piece_board before xor next_from\n";
+        // bb->display_bitboard(piece_board);
         piece_board ^= get_square_bitboard(next_from);
+
+        // cout<<"[MoveGen] ONLY_CAPTURES piece_board after xor next_from\n";
+        // bb->display_bitboard(piece_board);
         from = next_from;
 
         if(gen_type == ALL_MOVES){
             move_set = MoveSet::get_all_move_set(bb, piece, from, side);
         } else if(gen_type == ONLY_CAPTURES) {
             move_set = MoveSet::get_capture_move_set(bb, piece, from, side);
+            // cout<<"[MoveGen] ONLY_CAPTURES move_set for: "<<MoveUtils::piece_as_string(piece)<<"\n";
+            // cout<<"[MoveGen] ONLY_CAPTURES piece: "<<MoveUtils::piece_as_string(piece)<<"\n";
+            // cout<<"[MoveGen] ONLY_CAPTURES from: "<<MoveUtils::square_as_string(from)<<"\n";
+            if(move_set>0){
+                // cout<<"[MoveGen] ONLY_CAPTURES move_set not empty \n";
+            }
+            if(move_set==0){
+                // cout<<"[MoveGen] ONLY_CAPTURES move_set empty \n";
+            }
         } else if(gen_type == ONLY_QUIET) {
             move_set = MoveSet::get_quiet_move_set(bb, piece, from, side);
         }
 
         found_from = move_set > 0;
         if(found_from){
+            if(gen_type==ONLY_CAPTURES){
+                // cout<<"[MoveGen] ONLY_CAPTURES found_from for: "<<MoveUtils::piece_as_string(piece)<<"\n";
+                // cout<<"[MoveGen] ONLY_CAPTURES move_set for: \n";
+                // bb->display_bitboard(move_set);
+            }
             return update_to();
         }
         counter += 1;
     }
+
+    // if(gen_type==ONLY_CAPTURES)
+    //     cout<<"[MoveGen] ONLY_CAPTURES ending next_from not found for: "<<MoveUtils::piece_as_string(piece)<<"\n";
     return false;
 
 }

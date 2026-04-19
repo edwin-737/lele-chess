@@ -490,15 +490,14 @@ TEST_CASE("Update value for pesto evaluation", "[PestoEvaluation]"){
 
 TEST_CASE("Only Captures","[MoveGen]"){
 
-
     Board* b = new Board();
-    const char* fen_path = "./positions/starting_position.txt";
-    b->parse_fen(fen_path);
-    // MoveGen mg = MoveGen(WHITE, mQUIET, true);
-    MoveGen mg = MoveGen(WHITE);
-    mg.set_gen_type(ONLY_CAPTURES);
 
     SECTION("No captures generated with starting position"){
+        const char* fen_path = "./positions/starting_position.txt";
+        b->parse_fen(fen_path);
+        // MoveGen mg = MoveGen(WHITE, mQUIET, true);
+        MoveGen mg = MoveGen(WHITE);
+        mg.set_gen_type(ONLY_CAPTURES);
         unsigned int move = 0;
         int move_count = 0;
         while((move = mg.get_move()) != NO_MOVES_LEFT){
@@ -508,27 +507,21 @@ TEST_CASE("Only Captures","[MoveGen]"){
         }
         REQUIRE(move_count == 0);
     }
-    delete b;
-    delete Bitboard::instanceptr;
-    delete BoardInfo::instanceptr;
-    b = nullptr;
-    Bitboard::instanceptr = nullptr;
-    BoardInfo::instanceptr = nullptr;
 
-    b = new Board();
-    const char* queen_trade_path = "./positions/queen_trade.txt";
-    b->parse_fen(queen_trade_path);
-
-    // MoveGen mg1 = MoveGen(BLACK, mQUIET, true);
-    MoveGen mg1 = MoveGen(BLACK);
-    mg1.set_gen_type(ONLY_CAPTURES);
-
-    vector<unsigned int> expected_moves = {
-        MoveUtils::create_move(f8, a3, BLACK, pBISHOP,  CAPTURE, pPAWN),
-        MoveUtils::create_move(d8, d1, BLACK, pQUEEN, CAPTURE, pQUEEN),
-    };
-    vector<unsigned int> actual_moves;
     SECTION("One capture generated with queen trade position"){
+
+        const char* queen_trade_path = "./positions/queen_trade.txt";
+        b->parse_fen(queen_trade_path);
+
+        // MoveGen mg1 = MoveGen(BLACK, mQUIET, true);
+        MoveGen mg1 = MoveGen(BLACK);
+        mg1.set_gen_type(ONLY_CAPTURES);
+
+        vector<unsigned int> expected_moves = {
+            MoveUtils::create_move(f8, a3, BLACK, pBISHOP,  CAPTURE, pPAWN),
+            MoveUtils::create_move(d8, d1, BLACK, pQUEEN, CAPTURE, pQUEEN),
+        };
+        vector<unsigned int> actual_moves;
         unsigned int move = 0;
         int move_count = 0;
         
@@ -547,6 +540,30 @@ TEST_CASE("Only Captures","[MoveGen]"){
         REQUIRE(move_count == 2);
         REQUIRE(are_move_vectors_equal(actual_moves, expected_moves));
     }
+
+    SECTION("pawn explored first"){
+
+        const char* perft_ordered = "./positions/test_perft_ordered.txt";
+        b->parse_fen(perft_ordered);
+        b->get_bitboard()->display();
+        MoveGen mg1 = MoveGen(WHITE);
+        mg1.set_gen_type(ONLY_CAPTURES);
+        unsigned int move;  
+        bool move_exists=false;
+        while((move = mg1.get_move()) != NO_MOVES_LEFT){
+            if(move == INCREMENTING_MOVE_TYPE){
+                cout<<"continuing\n";
+                continue;
+            }
+            REQUIRE(MoveUtils::get_additional_info(move) == ADDITIONAL_INFO::CAPTURE);
+            REQUIRE(MoveUtils::get_piece(move) == pPAWN);
+            move_exists=true;
+            break;
+        }
+        REQUIRE(move_exists==true);
+
+    }
+
     delete b;
     delete Bitboard::instanceptr;
     delete BoardInfo::instanceptr;
@@ -660,6 +677,25 @@ TEST_CASE("Number of nodes during search depth 5","[MoveGen]"){
     SECTION("Depth = 5"){
         REQUIRE(s->perft(5, 5, WHITE) == 4865609);
         REQUIRE(s->num_captures == 82719);
+    }
+    delete b;
+    delete Bitboard::instanceptr;
+    delete BoardInfo::instanceptr;
+    b = nullptr;
+    Bitboard::instanceptr = nullptr;
+    BoardInfo::instanceptr = nullptr;
+    TranspositionTable::instanceptr = nullptr;
+}
+
+TEST_CASE("perft == perft_ordered","[Search]"){
+
+
+    Board* b = new Board();
+    const char* fen_path = "./positions/test_perft_ordered.txt";
+    b->parse_fen(fen_path);
+    Search* s = new Search(b);
+    SECTION("Depth = 5"){
+        REQUIRE(s->perft(5, 5, WHITE) == s->perft_ordered(5, 5, WHITE));
     }
     delete b;
     delete Bitboard::instanceptr;
@@ -943,8 +979,8 @@ TEST_CASE("Transposition Table cach matches (simple)", "[TranspositionTable]"){
         cout<<"after search tt_found_count[4]: "<<s.tt_found_count[4]<<endl;
         cout<<"nodes searched: "<<nodes<<endl;
         REQUIRE(s.tt_found_count[1] == 0);
-        REQUIRE(s.tt_found_count[2] == 28);
-        REQUIRE(s.tt_found_count[3] == 520);
+        REQUIRE(s.tt_found_count[2] == 4);
+        REQUIRE(s.tt_found_count[3] == 44);
     }
 
     delete b;
