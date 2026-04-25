@@ -56,6 +56,11 @@ add_executable(test_engine ${TEST_FILES})
 target_link_libraries(test_engine PRIVATE Catch2::Catch2WithMain)
 target_include_directories(test_engine PRIVATE ${SRC_DIR})
 
+# Define a default value if the user doesn't provide one
+set(ENABLE_PERFT 1 CACHE STRING "Enable perft")
+
+# Pass it to the test executable
+target_compile_definitions(test_engine PRIVATE ENABLE_PERFT=${ENABLE_PERFT})
 # --------------------------
 # Link gperftools to engine if enabled
 # --------------------------
