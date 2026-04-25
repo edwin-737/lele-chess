@@ -7,11 +7,9 @@
 #include <gperftools/profiler.h>
 #endif
 #include "move.hpp"
-// #include "evaluation.hpp"
 #include "board_squares.hpp"
 #include "search.hpp"
 #include "bitboard.hpp"
-#include "board_info.hpp"
 #include "move_set.hpp"
 using namespace std::chrono;
 typedef enum Task{
@@ -29,8 +27,6 @@ typedef enum ArgState{
     TRANSPOSITION,
     ITERATIVE_DEEPEN
 } ArgState;
-Bitboard* Bitboard::instanceptr=nullptr;
-BoardInfo* BoardInfo::instanceptr=nullptr;
 
 int main(int argc, char** argv)
 {
@@ -99,19 +95,16 @@ int main(int argc, char** argv)
     MoveSet::set_attack_sets();
     MoveSet::init_attack_masks();
 
-    Bitboard::get_instance();
 
     cout << "Making objects \n";
-    Board* b = new Board();
-    if(include_fen){
-        b->parse_fen(fen_path);
-    } else if(include_pgn){
-        b->parse_fen("./positions/starting_position.txt");
-        b->parse_pgn(pgn_path);
-    }
-    b->get_bitboard()->display();
+    Bitboard _bb = Bitboard();
+    BoardInfo _bi = BoardInfo();
+    Board b = Board(fen_path, &_bb, &_bi);
 
-    Search* s = new Search(b, depth);
+    b.get_bitboard()->display();
+    PestoEvaluation pesto = PestoEvaluation(&b);
+
+    Search s = Search(&b, &pesto, depth);
     auto start = high_resolution_clock::now();
 
     if (task == PERFT) {
@@ -119,7 +112,7 @@ int main(int argc, char** argv)
         #ifdef ENABLE_PROFILER
             ProfilerStart("perf-profile.prof");
         #endif
-        unsigned int num_nodes = s->perft(depth, depth, b->get_side_to_move(), transposition);
+        unsigned int num_nodes = s.perft(depth, depth, b.get_side_to_move(), transposition);
         
         #ifdef ENABLE_PROFILER
             ProfilerStop();
@@ -130,16 +123,16 @@ int main(int argc, char** argv)
         cout<<"time = "<<elapsed.count()<<endl;
         cout << "nodes per second = " << num_nodes  /  elapsed.count()<< endl;
         cout<<"nodes = "<<num_nodes<<endl;
-        cout<<"captures = "<<s->num_captures<<endl;
-        cout<<"ep_captures = "<<s->num_ep_captures<<endl;
-        cout<<"checks = "<<s->num_checks<<endl;
-        cout<<"checkmates = "<<s->num_checkmates<<endl;
-        cout<<"castles = "<<s->num_castles<<endl;
-        cout<<"promotions = "<<s->num_promotions<<endl;
-        cout<<"capture promotions = "<<s->num_capture_promotions<<endl;
+        cout<<"captures = "<<s.num_captures<<endl;
+        cout<<"ep_captures = "<<s.num_ep_captures<<endl;
+        cout<<"checks = "<<s.num_checks<<endl;
+        cout<<"checkmates = "<<s.num_checkmates<<endl;
+        cout<<"castles = "<<s.num_castles<<endl;
+        cout<<"promotions = "<<s.num_promotions<<endl;
+        cout<<"capture promotions = "<<s.num_capture_promotions<<endl;
     } else {
         cout<<"side = "<<MoveUtils::side_as_string(side)<<endl;
-        s->max_depth = depth;
+        s.max_depth = depth;
 
         #ifdef ENABLE_PROFILER
             ProfilerStart("alphabeta-profile.prof");
@@ -152,15 +145,15 @@ int main(int argc, char** argv)
         int alpha = -1e7;
         int beta = 1e7;
         if(iterative_deepen){
-            int score = s->iterative_deepening(depth, side, side);
+            int score = s.iterative_deepening(depth, side, side);
         } else {
-            int score = s->alpha_beta(alpha, beta, depth, side, side, 0, principal_variation, transposition, true);
-            if(s->searched_move_found){
+            int score = s.alpha_beta(alpha, beta, depth, side, side, 0, principal_variation, transposition, true);
+            if(s.searched_move_found){
                 cout<<"-----------------\n";
                 cout<<"searched_move: ";
-                MoveUtils::display(s->searched_move);
-                cout<<"searched_move_eval: "<<s->searched_move_eval<<"\n";
-                cout<<"searched_move_depth: "<<s->searched_move_depth<<"\n";
+                MoveUtils::display(s.searched_move);
+                cout<<"searched_move_eval: "<<s.searched_move_eval<<"\n";
+                cout<<"searched_move_depth: "<<s.searched_move_depth<<"\n";
                 cout<<"-----------------\n";
             }
         }
@@ -171,10 +164,10 @@ int main(int argc, char** argv)
             ProfilerStop();
         #endif
         // auto stop = high_resolution_clock::now();
-        duration<double> elapsed = s->stop - s->start;  // seconds as double (fractional)
+        duration<double> elapsed = s.stop - s.start;  // seconds as double (fractional)
         cout<<"depth = "<<depth<<endl;
         cout<<"time = "<<elapsed.count()<<endl;
-        cout<<"nodes = "<<s->num_nodes<<endl;
+        cout<<"nodes = "<<s.num_nodes<<endl;
 
     }
 }

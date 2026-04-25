@@ -201,7 +201,6 @@ void Board::apply_move(unsigned int move){
         }
         bi->add_board_info(castle_rights, NO_EP_RIGHTS);
     }
-    eval->update_material(move, false);
     bb->all = bb->collective_piece_boards[WHITE] | bb->collective_piece_boards[BLACK];
 
     unsigned int next_castle_rights = bi->peek_castle_right();
@@ -327,7 +326,6 @@ void Board::reverse_move(unsigned int move){
         }
     }
 
-    eval->update_material(move, true);
     bb->all = bb->collective_piece_boards[WHITE] | bb->collective_piece_boards[BLACK];
     bi->remove_board_info();
 
@@ -582,9 +580,6 @@ void Board::parse_fen(fs::path path){
     }
     bi->set_board_info(initial_castle_rights, initial_ep_rights);
     bb->update();
-    eval->init_material();
-    // TODO: fix or implement this as it leads to seg fault in test
-    // eval->init_piece_locations();
     init_piece_locations();
     tt->initialise_hash_val(side_to_move, bb, bi);
 }
@@ -592,7 +587,6 @@ void Board::parse_pgn(fs::path path){
 
     bi->set_board_info(initial_castle_rights, initial_ep_rights);
     bb->update();
-    eval->init_material();
 
     std::ifstream file(path);
     if(file.is_open()){

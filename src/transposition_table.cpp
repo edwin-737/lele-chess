@@ -164,6 +164,13 @@ int TranspositionTable::get_value_eval(int depth_searched){
     }
     return DEFAULT_EVAL;
 }
+unsigned int TranspositionTable::get_value_threefold(){
+    auto val = threefold_table.find(hash_val);
+    if(val != threefold_table.end()){
+        return val->second;
+    }
+    return 0;
+}
 void TranspositionTable::found_value(){
     return;
 }
@@ -173,4 +180,12 @@ void TranspositionTable::add_value_perft(int depth_searched, unsigned int val){
 void TranspositionTable::add_value_eval(int depth_searched, int val){
     eval_table[depth_searched].insert({hash_val, val});
 }
-
+void TranspositionTable::add_value_threefold(int val){
+    threefold_table.insert({hash_val, val});
+}
+void TranspositionTable::increment_value_threefold(){
+    threefold_table[hash_val] ++;
+}
+void TranspositionTable::decrement_value_threefold(){
+    threefold_table[hash_val] --;
+}

@@ -4,7 +4,6 @@
 
 #include "board.hpp"
 #include "const.hpp"
-#include "evaluation.hpp"
 #include "transposition_table.hpp"
 #include "pesto.hpp"
 
@@ -24,15 +23,14 @@ typedef struct pv_node {
 
 class Search{
 public:
-    Search(Board* _b, int _max_depth=5): b(_b), max_depth(_max_depth){
-        pesto = PestoEvaluation::get_instance(b->get_side_to_move());
+    Search(Board* _b, PestoEvaluation* _pesto, int _max_depth=5): b(_b), pesto(_pesto),max_depth(_max_depth){
         pesto->init_evaluate();
     }
 
     unsigned int perft(int original_depth,int depth_left, unsigned int side, unsigned int root_move = 0ULL, bool transposition = false);
     unsigned int perft_ordered(int original_depth, int depth_left, unsigned int side, unsigned int root_move = 0ULL, bool transposition = false);
-    int alpha_beta(int alpha, int beta, int depth_left, unsigned int side, unsigned int starting_side, unsigned int root_move=0, pv_t* pv = nullptr, bool transposition = false, bool use_pesto = false, pv_t* prev_variation = nullptr);
-    int quiesce(int alpha, int beta, int depth, unsigned int side, unsigned int starting_side, pv_t* pv = nullptr, bool transposition=false, bool use_pesto=false);
+    int alpha_beta(int alpha, int beta, int depth_left, unsigned int side, unsigned int starting_side, unsigned int root_move=0, pv_t* pv=nullptr, bool transposition = false, bool use_pesto=true, pv_t* prev_variation=nullptr);
+    int quiesce(int alpha, int beta, int depth, unsigned int side, unsigned int starting_side, pv_t* pv=nullptr, bool transposition=false, bool use_pesto=true);
     int evaluate(bool use_pesto=false);
     int static_exchange_evaluation(unsigned int side, int square);
     int static_exchange_evaluation(int move);
@@ -52,9 +50,8 @@ public:
     unsigned int searched_move=MoveUtils::create_move(e4, d5, WHITE, pPAWN, CAPTURE);
 private:
     Board* b;
-    Evaluation* eval = Evaluation::get_instance();
-    TranspositionTable* tt = TranspositionTable::get_instance();
     PestoEvaluation* pesto;
+    TranspositionTable* tt = TranspositionTable::get_instance();
     vector<unsigned int> selected_moves[DEPTH_LIMIT];
     int material = 0;
 

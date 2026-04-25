@@ -6,8 +6,9 @@ CMakeFiles/
 CMakeCache.txt
 _deps/
 *.cmake
-test_engine
-engine
+*engine
+alpha_beta_output/
+.cache/
 
 # profiles
 *.prof

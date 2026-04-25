@@ -5,11 +5,7 @@
 #include "const.hpp"
 #include "move_set.hpp"
 using namespace BoardSquares;
-Bitboard* Bitboard::get_instance(){
-    if(instanceptr == nullptr)
-        instanceptr = new Bitboard();
-    return instanceptr;
-}
+
 void Bitboard::reset(){
     init_piece_boards();
     update();

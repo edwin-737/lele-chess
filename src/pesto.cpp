@@ -3,15 +3,8 @@
 #include "move.hpp"
 #include "board_squares.hpp"
 #include "utils.hpp"
-using namespace BoardSquares;
-PestoEvaluation* PestoEvaluation::instanceptr=nullptr;
-
 /*PeSTO adopted from https://www.chessprogramming.org/PeSTO%27s_Evaluation_Function*/
-PestoEvaluation* PestoEvaluation::get_instance(unsigned int side_to_move){
-    if(instanceptr == nullptr)
-        instanceptr = new PestoEvaluation(side_to_move);
-    return instanceptr;
-}
+
 void PestoEvaluation::init_tables(){
     int pc, p, sq;
     for (p = PAWN; p <= KING; p++) {
@@ -38,10 +31,10 @@ int PestoEvaluation::calculate_evaluation(){
 
     for(int side = 0 ; side < NUM_SIDES ; side ++){
         for(int piece = 0 ; piece < NUM_PIECE_TYPES ; piece ++){
-            uint64 b = bb->piece_boards[side][piece];
+            uint64 _b = b->get_bitboard()->piece_boards[side][piece];
             for(int sq = 0 ; sq < NUM_SQUARES ; sq ++){
                 uint64 sq_bb = get_square_bitboard(sq);
-                if(sq_bb & b){
+                if(sq_bb & _b){
                     unsigned int piece_with_side = PIECE_WITH_SIDE(piece, side);
                     _mg[side] += mg_table[piece_with_side][sq];
                     _eg[side] += eg_table[piece_with_side][sq];
@@ -73,10 +66,10 @@ int PestoEvaluation::init_evaluate(){
 
     for(int side = 0 ; side < NUM_SIDES ; side ++){
         for(int piece = 0 ; piece < NUM_PIECE_TYPES ; piece ++){
-            uint64 b = bb->piece_boards[side][piece];
+            uint64 _b = b->get_bitboard()->piece_boards[side][piece];
             for(int sq = 0 ; sq < NUM_SQUARES ; sq ++){
                 uint64 sq_bb = get_square_bitboard(sq);
-                if(sq_bb & b){
+                if(sq_bb & _b){
                     unsigned int piece_with_side = PIECE_WITH_SIDE(piece, side);
                     mg[side] += mg_table[piece_with_side][sq];
                     eg[side] += eg_table[piece_with_side][sq];

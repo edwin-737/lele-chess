@@ -1,8 +1,7 @@
 
 #ifndef PESTO_H
 #define PESTO_H
-#include "bitboard.hpp"
-#include "evaluation.hpp"
+#include "board.hpp"
 #define FLIP(sq) ((sq)^56)
 #define OTHER(side) ((side)^ 1)
 
@@ -33,14 +32,11 @@
 #define PCOLOR(p) ((p)&1)
 class PestoEvaluation {
 private:
-    PestoEvaluation(unsigned int _side_to_move=WHITE): side_to_move(_side_to_move){
-        init_tables();
-    }
 public:
 
-    static PestoEvaluation* instanceptr;
-    PestoEvaluation(const PestoEvaluation& obj) = delete;
-    static PestoEvaluation* get_instance(unsigned int side_to_move=WHITE);
+    PestoEvaluation(Board* _b, unsigned int _side_to_move=WHITE): b(_b), side_to_move(_side_to_move){
+        init_tables();
+    }
     void init_tables();
     int init_evaluate();
     int calculate_evaluation();
@@ -215,8 +211,6 @@ public:
     int gamePhase = 0;
     int evaluation[2] = {0, 0};
     int side_to_move = WHITE;
-    Evaluation* e = Evaluation::get_instance();
-    Bitboard* bb = Bitboard::get_instance();
-
+    Board* b;
 };
 #endif

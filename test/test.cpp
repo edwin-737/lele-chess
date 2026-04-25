@@ -21,8 +21,6 @@ using namespace std;
 #define NONE 0
 #define FEN 1
 #define DEPTH 2
-Bitboard* Bitboard::instanceptr=nullptr;
-BoardInfo* BoardInfo::instanceptr=nullptr;
 
 bool are_pieces_in_correct_locations(Board* b, vector<vector<int>> expected_piece_locations, int piece){
 
@@ -67,9 +65,15 @@ TEST_CASE("Piece locations for starting position", "[Parsing FEN]"){
     MoveSet::init_attack_masks();
 
 
-    Board* b = new Board();
     const char* fen_path = "./positions/starting_position.txt";
-    b->parse_fen(fen_path);
+    Bitboard _bb = Bitboard();
+    BoardInfo _bi = BoardInfo();
+    Bitboard* bb = &_bb;
+    BoardInfo* bi = &_bi;
+    Board _b = Board(fen_path, bb, bi);
+    Board* b = &_b;
+    b->get_bitboard()->display();
+
     SECTION("Pawn locations"){
         vector<vector<int>> expected_pawn_locations = {
             {a2, b2, c2, d2, e2, f2, g2, h2},
@@ -118,20 +122,18 @@ TEST_CASE("Piece locations for starting position", "[Parsing FEN]"){
         bool correct_piece_locations = are_pieces_in_correct_locations(b, expected_king_locations, pKING);
         REQUIRE(correct_piece_locations);
     }
-    delete b;
-    delete Bitboard::instanceptr;
-    delete BoardInfo::instanceptr;
-    b = nullptr;
-    Bitboard::instanceptr = nullptr;
-    BoardInfo::instanceptr = nullptr;
 }
 
 TEST_CASE("Piece locations for fen test position", "[Parsing FEN]"){
 
 
-    Board* b = new Board();
     const char* fen_path = "./positions/fen_test_position.txt";
-    b->parse_fen(fen_path);
+    Bitboard _bb = Bitboard();
+    BoardInfo _bi = BoardInfo();
+    Bitboard* bb = &_bb;
+    BoardInfo* bi = &_bi;
+    Board _b = Board(fen_path, bb, bi);
+    Board* b = &_b;
     SECTION("Pawn locations"){
         vector<vector<int>> expected_pawn_locations = {
             {a2, c2, d3, e5, g4, h5},
@@ -182,20 +184,18 @@ TEST_CASE("Piece locations for fen test position", "[Parsing FEN]"){
         bool correct_piece_locations = are_pieces_in_correct_locations(b, expected_king_locations, pKING);
         REQUIRE(correct_piece_locations);
     }
-    delete b;
-    delete Bitboard::instanceptr;
-    delete BoardInfo::instanceptr;
-    b = nullptr;
-    Bitboard::instanceptr = nullptr;
-    BoardInfo::instanceptr = nullptr;
 }
 
 TEST_CASE("En Passant Rights Updated", "[En Passant]"){
 
 
-    Board* b = new Board();    
     const char* fen_path = "./positions/starting_position.txt";
-    b->parse_fen(fen_path);
+    Bitboard _bb = Bitboard();
+    BoardInfo _bi = BoardInfo();
+    Bitboard* bb = &_bb;
+    BoardInfo* bi = &_bi;
+    Board _b = Board(fen_path, bb, bi);
+    Board* b = &_b;
     vector<unsigned int> move_list = {
         MoveUtils::create_move(e2, e4, WHITE, pPAWN, DOUBLE_PAWN_PUSH),
         MoveUtils::create_move(f7, f5, BLACK, pPAWN, DOUBLE_PAWN_PUSH),
@@ -221,27 +221,25 @@ TEST_CASE("En Passant Rights Updated", "[En Passant]"){
         b->reverse_move(move_list[2]);
         REQUIRE(b->get_board_info()->peek_ep_right() == (f5 - a5));
     }
-    delete b;
-    delete Bitboard::instanceptr;
-    delete BoardInfo::instanceptr;
-    b = nullptr;
-    Bitboard::instanceptr = nullptr;
-    BoardInfo::instanceptr = nullptr;
 }
 
 TEST_CASE("En Passant Move Generated", "[En Passant]"){
 
 
-    Board* b = new Board();    
     const char* fen_path = "./positions/starting_position.txt";
-    b->parse_fen(fen_path);
+    Bitboard _bb = Bitboard();
+    BoardInfo _bi = BoardInfo();
+    Bitboard* bb = &_bb;
+    BoardInfo* bi = &_bi;
+    Board _b = Board(fen_path, bb, bi);
+    Board* b = &_b;
     vector<unsigned int> move_list = {
         MoveUtils::create_move(e2, e4, WHITE, pPAWN, DOUBLE_PAWN_PUSH),
         MoveUtils::create_move(f7, f5, BLACK, pPAWN, DOUBLE_PAWN_PUSH),
         MoveUtils::create_move(e4, e5, WHITE, pPAWN, QUIET_MOVE),
         MoveUtils::create_move(d7, d5, BLACK, pPAWN, DOUBLE_PAWN_PUSH),
     };
-    MoveGen mg = MoveGen(WHITE, mEP_CAPTURE);
+    MoveGen mg = MoveGen(b, WHITE, mEP_CAPTURE);
     // MoveGen mg = MoveGen(WHITE);
     // mg.set_move_type(mEP_CAPTURE);
 
@@ -270,9 +268,7 @@ TEST_CASE("En Passant Move Generated", "[En Passant]"){
         MoveUtils::create_move(a4, a5, WHITE, pPAWN, QUIET_MOVE),
         MoveUtils::create_move(b7, b5, BLACK, pPAWN, DOUBLE_PAWN_PUSH)
     };    
-    MoveGen mg1 = MoveGen(WHITE, mEP_CAPTURE);
-    // MoveGen mg1 = MoveGen(WHITE);
-    // mg1.set_move_type(mEP_CAPTURE);
+    MoveGen mg1 = MoveGen(b, WHITE, mEP_CAPTURE);
 
     SECTION("queen side (a-b capture) en passant move generated"){
 
@@ -297,7 +293,7 @@ TEST_CASE("En Passant Move Generated", "[En Passant]"){
         MoveUtils::create_move(a7, a5, BLACK, pPAWN, DOUBLE_PAWN_PUSH)
     };
 
-    MoveGen mg2 = MoveGen(WHITE, mEP_CAPTURE);
+    MoveGen mg2 = MoveGen(b, WHITE, mEP_CAPTURE);
 
     // MoveGen mg2 = MoveGen(WHITE);
     // mg2.set_move_type(mEP_CAPTURE);
@@ -324,7 +320,7 @@ TEST_CASE("En Passant Move Generated", "[En Passant]"){
         MoveUtils::create_move(h4, h5, WHITE, pPAWN, QUIET_MOVE),
         MoveUtils::create_move(g7, g5, BLACK, pPAWN, DOUBLE_PAWN_PUSH)
     };
-    MoveGen mg3 = MoveGen(WHITE,  mEP_CAPTURE);
+    MoveGen mg3 = MoveGen(b, WHITE,  mEP_CAPTURE);
     // MoveGen mg3 = MoveGen(WHITE);
     // mg3.set_move_type(mEP_CAPTURE);
 
@@ -344,28 +340,29 @@ TEST_CASE("En Passant Move Generated", "[En Passant]"){
             b->reverse_move(move);
         }
     }
-    delete b;
-    delete Bitboard::instanceptr;
-    delete BoardInfo::instanceptr;
-    b = nullptr;
-    Bitboard::instanceptr = nullptr;
-    BoardInfo::instanceptr = nullptr;
 }
 
 TEST_CASE("Initial value for pesto evaluation", "[PestoEvaluation]"){
 
-    Board* b = new Board();
     string fen_path = "./positions/starting_position.txt";
+    Bitboard _bb = Bitboard();
+    BoardInfo _bi = BoardInfo();
+    Bitboard* bb = &_bb;
+    BoardInfo* bi = &_bi;
+    Board _b = Board(fen_path, bb, bi);
+    Board* b = &_b;
     b->parse_fen(fen_path);
 
     SECTION("init_evaluation"){
-        PestoEvaluation* pesto = PestoEvaluation::get_instance(WHITE);
+        PestoEvaluation _pesto = PestoEvaluation(b);
+        PestoEvaluation* pesto = &_pesto;
         pesto->init_evaluate();
         REQUIRE(pesto->get_evaluation(WHITE, WHITE) == 0);
         REQUIRE(pesto->gamePhase == 24);
     }
     SECTION("update_evaluation (basic)"){
-        PestoEvaluation* pesto = PestoEvaluation::get_instance(WHITE);
+        PestoEvaluation _pesto = PestoEvaluation(b);
+        PestoEvaluation* pesto = &_pesto;
         pesto->init_evaluate();
         REQUIRE(pesto->get_evaluation(WHITE, WHITE) == 0);
         REQUIRE(pesto->gamePhase == 24);
@@ -382,21 +379,17 @@ TEST_CASE("Initial value for pesto evaluation", "[PestoEvaluation]"){
         REQUIRE(pesto->gamePhase == 24);
 
     }
-    delete b;
-    delete Bitboard::instanceptr;
-    delete BoardInfo::instanceptr;
-    delete PestoEvaluation::instanceptr;
-    b = nullptr;
-    Bitboard::instanceptr = nullptr;
-    BoardInfo::instanceptr = nullptr;
-    PestoEvaluation::instanceptr = nullptr;
 }
 
 TEST_CASE("Update evaluation for pesto evaluation", "[PestoEvaluation]"){
 
-    Board* b = new Board();
     string fen_path = "./positions/bratko-kopec/bk_2.txt";
-    b->parse_fen(fen_path);
+    Bitboard _bb = Bitboard();
+    BoardInfo _bi = BoardInfo();
+    Bitboard* bb = &_bb;
+    BoardInfo* bi = &_bi;
+    Board _b = Board(fen_path, bb, bi);
+    Board* b = &_b;
     b->get_bitboard()->display();
 
 
@@ -421,7 +414,9 @@ TEST_CASE("Update evaluation for pesto evaluation", "[PestoEvaluation]"){
                             (4));
     SECTION("init_evaluation"){
 
-        PestoEvaluation* pesto = PestoEvaluation::get_instance(WHITE);
+        PestoEvaluation _pesto = PestoEvaluation(b);
+        PestoEvaluation* pesto = &_pesto;
+
         int actual_eval = pesto->init_evaluate();
         int expected_mg_score = -expected_mg[BLACK] + expected_mg[WHITE];
         int expected_eg_score = -expected_eg[BLACK] + expected_eg[WHITE];
@@ -463,22 +458,21 @@ TEST_CASE("Update evaluation for pesto evaluation", "[PestoEvaluation]"){
     }
 }
 
-TEST_CASE("Update value for pesto evaluation", "[PestoEvaluation]"){
-
-    Board* b = new Board();
-    string fen_path = "./positions/starting_position.txt";
-    b->parse_fen(fen_path);
-}
-
 TEST_CASE("Only Captures","[MoveGen]"){
 
-    Board* b = new Board();
+    string fen_path = "./positions/starting_position.txt";
+    Bitboard _bb = Bitboard();
+    BoardInfo _bi = BoardInfo();
+    Bitboard* bb = &_bb;
+    BoardInfo* bi = &_bi;
+    Board _b = Board(fen_path, bb, bi);
+    Board* b = &_b;
+    b->get_bitboard()->display();
 
     SECTION("No captures generated with starting position"){
         const char* fen_path = "./positions/starting_position.txt";
         b->parse_fen(fen_path);
-        // MoveGen mg = MoveGen(WHITE, mQUIET, true);
-        MoveGen mg = MoveGen(WHITE);
+        MoveGen mg = MoveGen(b, WHITE);
         mg.set_gen_type(ONLY_CAPTURES);
         unsigned int move = 0;
         int move_count = 0;
@@ -496,7 +490,7 @@ TEST_CASE("Only Captures","[MoveGen]"){
         b->parse_fen(queen_trade_path);
 
         // MoveGen mg1 = MoveGen(BLACK, mQUIET, true);
-        MoveGen mg1 = MoveGen(BLACK);
+        MoveGen mg1 = MoveGen(b, BLACK);
         mg1.set_gen_type(ONLY_CAPTURES);
 
         vector<unsigned int> expected_moves = {
@@ -514,7 +508,6 @@ TEST_CASE("Only Captures","[MoveGen]"){
             actual_moves.push_back(move);
         }
         for(int i = 0 ; i < actual_moves.size() ; i ++){
-            // cout<<actual_moves[i]<<" ";
             MoveUtils::display(actual_moves[i]);
             cout<<" ";
         }
@@ -528,7 +521,7 @@ TEST_CASE("Only Captures","[MoveGen]"){
         const char* perft_ordered = "./positions/bugs/test_perft_ordered.txt";
         b->parse_fen(perft_ordered);
         b->get_bitboard()->display();
-        MoveGen mg1 = MoveGen(WHITE);
+        MoveGen mg1 = MoveGen(b, WHITE);
         mg1.set_gen_type(ONLY_CAPTURES);
         unsigned int move;  
         bool move_exists=false;
@@ -546,25 +539,22 @@ TEST_CASE("Only Captures","[MoveGen]"){
 
     }
 
-    delete b;
-    delete Bitboard::instanceptr;
-    delete BoardInfo::instanceptr;
-    b = nullptr;
-    Bitboard::instanceptr = nullptr;
-    BoardInfo::instanceptr = nullptr;
-
 }
 
 TEST_CASE("Move generation total","[MoveGen]"){
 
 
-    Board* b = new Board();
     const char* queen_trade_path = "./positions/queen_trade.txt";
-    b->parse_fen(queen_trade_path);
+    Bitboard _bb = Bitboard();
+    BoardInfo _bi = BoardInfo();
+    Bitboard* bb = &_bb;
+    BoardInfo* bi = &_bi;
+    Board _b = Board(queen_trade_path, bb, bi);
+    Board* b = &_b;
 
-    MoveGen mg_captures = MoveGen(BLACK);
-    MoveGen mg_quiet = MoveGen(BLACK);
-    MoveGen mg = MoveGen(BLACK);
+    MoveGen mg_captures = MoveGen(b, BLACK);
+    MoveGen mg_quiet = MoveGen(b, BLACK);
+    MoveGen mg = MoveGen(b, BLACK);
     mg_captures.set_gen_type(ONLY_CAPTURES);
     mg_quiet.set_gen_type(ONLY_QUIET);
     SECTION("num_captures + num_quiet == num_moves"){
@@ -591,12 +581,6 @@ TEST_CASE("Move generation total","[MoveGen]"){
         REQUIRE(num_captures == 2);
         REQUIRE(num_captures + num_quiet == num_total);
     }
-    delete b;
-    delete Bitboard::instanceptr;
-    delete BoardInfo::instanceptr;
-    b = nullptr;
-    Bitboard::instanceptr = nullptr;
-    BoardInfo::instanceptr = nullptr;
 
 }
 #if defined(ENABLE_PERFT) && (ENABLE_PERFT != 0)
@@ -604,143 +588,152 @@ TEST_CASE("Number of nodes during search","[Perft]"){
 
 
 
-    Board* b = new Board();
     const char* fen_path = "./positions/starting_position.txt";
-    b->parse_fen(fen_path);
-
-    Search* s = new Search(b);
+    Bitboard _bb = Bitboard();
+    BoardInfo _bi = BoardInfo();
+    Bitboard* bb = &_bb;
+    BoardInfo* bi = &_bi;
+    Board _b = Board(fen_path, bb, bi);
+    Board* b = &_b;
+    
+    PestoEvaluation _pesto = PestoEvaluation(b);
+    PestoEvaluation* pesto = &_pesto;
+    Search s = Search(b, pesto);
     SECTION("Depth = 1"){
-        REQUIRE(s->perft(1, 1, WHITE) == 20);
-        REQUIRE(s->num_captures == 0);
+        REQUIRE(s.perft(1, 1, WHITE) == 20);
+        REQUIRE(s.num_captures == 0);
     }
     SECTION("Depth = 2"){
-        REQUIRE(s->perft(2, 2, WHITE) == 400);
-        REQUIRE(s->num_captures == 0);
+        REQUIRE(s.perft(2, 2, WHITE) == 400);
+        REQUIRE(s.num_captures == 0);
     }
     SECTION("Depth = 3"){
-        REQUIRE(s->perft(3, 3, WHITE) == 8902);
-        REQUIRE(s->num_captures == 34);
+        REQUIRE(s.perft(3, 3, WHITE) == 8902);
+        REQUIRE(s.num_captures == 34);
     }
-    delete b;
-    delete Bitboard::instanceptr;
-    delete BoardInfo::instanceptr;
-    b = nullptr;
-    Bitboard::instanceptr = nullptr;
-    BoardInfo::instanceptr = nullptr;
-    TranspositionTable::instanceptr = nullptr;
+
 }
 TEST_CASE("Number of nodes during search depth 4","[Perft]"){
 
-
-
-    Board* b = new Board();
     const char* fen_path = "./positions/starting_position.txt";
-    b->parse_fen(fen_path);
+    Bitboard _bb = Bitboard();
+    BoardInfo _bi = BoardInfo();
+    Bitboard* bb = &_bb;
+    BoardInfo* bi = &_bi;
+    Board _b = Board(fen_path, bb, bi);
+    Board* b = &_b;
 
-    Search* s = new Search(b);
+    PestoEvaluation _pesto = PestoEvaluation(b);
+    PestoEvaluation* pesto = &_pesto;
+    Search s = Search(b, pesto);
+
     SECTION("Depth = 4"){
-        REQUIRE(s->perft(4, 4, WHITE) == 197281);
-        REQUIRE(s->num_captures == 1576);
+        REQUIRE(s.perft(4, 4, WHITE) == 197281);
+        REQUIRE(s.num_captures == 1576);
     }
-    delete b;
-    delete Bitboard::instanceptr;
-    delete BoardInfo::instanceptr;
-    b = nullptr;
-    Bitboard::instanceptr = nullptr;
-    BoardInfo::instanceptr = nullptr;
-    TranspositionTable::instanceptr = nullptr;
+
 }
 TEST_CASE("Number of nodes during search depth 5","[Perft]"){
 
-
-    Board* b = new Board();
     const char* fen_path = "./positions/starting_position.txt";
-    b->parse_fen(fen_path);
-    Search* s = new Search(b);
+    Bitboard _bb = Bitboard();
+    BoardInfo _bi = BoardInfo();
+    Bitboard* bb = &_bb;
+    BoardInfo* bi = &_bi;
+    Board _b = Board(fen_path, bb, bi);
+    Board* b = &_b;
+
+    PestoEvaluation _pesto = PestoEvaluation(b);
+    PestoEvaluation* pesto = &_pesto;
+    Search s = Search(b, pesto);
+
     SECTION("Depth = 5"){
-        REQUIRE(s->perft(5, 5, WHITE) == 4865609);
-        REQUIRE(s->num_captures == 82719);
+        REQUIRE(s.perft(5, 5, WHITE) == 4865609);
+        REQUIRE(s.num_captures == 82719);
     }
-    delete b;
-    delete Bitboard::instanceptr;
-    delete BoardInfo::instanceptr;
-    b = nullptr;
-    Bitboard::instanceptr = nullptr;
-    BoardInfo::instanceptr = nullptr;
-    TranspositionTable::instanceptr = nullptr;
+
 }
 
 TEST_CASE("perft == perft_ordered","[Perft]"){
 
+    const char* fen_path = "./positions/starting_position.txt";
+    Bitboard _bb = Bitboard();
+    BoardInfo _bi = BoardInfo();
+    Bitboard* bb = &_bb;
+    BoardInfo* bi = &_bi;
+    Board _b = Board(fen_path, bb, bi);
+    Board* b = &_b;
 
-    Board* b = new Board();
-    const char* fen_path = "./positions/bugs/test_perft_ordered.txt";
-    b->parse_fen(fen_path);
-    Search* s = new Search(b);
+    PestoEvaluation _pesto = PestoEvaluation(b);
+    PestoEvaluation* pesto = &_pesto;
+    Search s = Search(b, pesto);
+
     SECTION("Depth = 5"){
-        REQUIRE(s->perft(5, 5, WHITE) == s->perft_ordered(5, 5, WHITE));
+        REQUIRE(s.perft(5, 5, WHITE) == s.perft_ordered(5, 5, WHITE));
     }
-    delete b;
-    delete Bitboard::instanceptr;
-    delete BoardInfo::instanceptr;
-    b = nullptr;
-    Bitboard::instanceptr = nullptr;
-    BoardInfo::instanceptr = nullptr;
-    TranspositionTable::instanceptr = nullptr;
+
 }
 TEST_CASE("promotions during search", "[Perft]"){
 
-    Board* b = new Board();
     string fen_path = "./positions/ep_fen.txt";
-    b->parse_fen(fen_path);
-    Search* s = new Search(b);
+    Bitboard _bb = Bitboard();
+    BoardInfo _bi = BoardInfo();
+    Bitboard* bb = &_bb;
+    BoardInfo* bi = &_bi;
+    Board _b = Board(fen_path, bb, bi);
+    Board* b = &_b;
+
+    PestoEvaluation _pesto = PestoEvaluation(b);
+    PestoEvaluation* pesto = &_pesto;
+    Search s = Search(b, pesto);
 
 
     SECTION("Depth = 5"){
-        // s->search(1, WHITE);
-        REQUIRE(s->perft(5, 5, WHITE) == 16422290);
-        REQUIRE(s->num_captures == 669892);
-        REQUIRE(s->num_promotions == 628);
-        REQUIRE(s->num_capture_promotions == 9808);
+        REQUIRE(s.perft(5, 5, WHITE) == 16422290);
+        REQUIRE(s.num_captures == 669892);
+        REQUIRE(s.num_promotions == 628);
+        REQUIRE(s.num_capture_promotions == 9808);
 
     }
-    delete b;
-    delete Bitboard::instanceptr;
-    delete BoardInfo::instanceptr;
-    b = nullptr;
-    Bitboard::instanceptr = nullptr;
-    BoardInfo::instanceptr = nullptr;
+
 }
 TEST_CASE("castles during search", "[Perft]"){
 
 
-    Board* b = new Board();
     string fen_path = "./positions/castle_fen.txt";
-    b->parse_fen(fen_path);
-    Search* s = new Search(b);
+    Bitboard _bb = Bitboard();
+    BoardInfo _bi = BoardInfo();
+    Bitboard* bb = &_bb;
+    BoardInfo* bi = &_bi;
+    Board _b = Board(fen_path, bb, bi);
+    Board* b = &_b;
+
+    PestoEvaluation _pesto = PestoEvaluation(b);
+    PestoEvaluation* pesto = &_pesto;
+    Search s = Search(b, pesto);
 
 
     SECTION("Depth = 5"){
-        REQUIRE(s->perft(5, 5, WHITE) == 22273312);
-        REQUIRE(s->num_castles == 19682);
+        REQUIRE(s.perft(5, 5, WHITE) == 22273312);
+        REQUIRE(s.num_castles == 19682);
 
     }
-
-    delete b;
-    delete Bitboard::instanceptr;
-    delete BoardInfo::instanceptr;
-    delete TranspositionTable::instanceptr;
-    b = nullptr;
-    Bitboard::instanceptr = nullptr;
-    BoardInfo::instanceptr = nullptr;
-    TranspositionTable::instanceptr = nullptr;
 
 }
 TEST_CASE("Unique Zobrist Hash vals", "[TranspositionTable]"){
 
-    Board* b = new Board();
     string fen_path = "./positions/starting_position.txt";
-    b->parse_fen(fen_path);
+    Bitboard _bb = Bitboard();
+    BoardInfo _bi = BoardInfo();
+    Bitboard* bb = &_bb;
+    BoardInfo* bi = &_bi;
+    Board _b = Board(fen_path, bb, bi);
+    Board* b = &_b;
+
+    PestoEvaluation _pesto = PestoEvaluation(b);
+    PestoEvaluation* pesto = &_pesto;
+    Search s = Search(b, pesto);
+
     vector<uint64> seen_zobrist_vals;
     bool found_duplicate = false;
     for(int i = 0 ; i < NUM_ZOBRIST_VALS ; i ++){
@@ -751,20 +744,16 @@ TEST_CASE("Unique Zobrist Hash vals", "[TranspositionTable]"){
         seen_zobrist_vals.push_back(b->tt->zobrist_vals[i]);
     }
     REQUIRE(!found_duplicate);
-    delete b;
-    delete Bitboard::instanceptr;
-    delete BoardInfo::instanceptr;
-    delete TranspositionTable::instanceptr;
-    b = nullptr;
-    Bitboard::instanceptr = nullptr;
-    BoardInfo::instanceptr = nullptr;
-    TranspositionTable::instanceptr = nullptr;
 }
 TEST_CASE("Updating hash val", "[TranspositionTable]"){
 
-    Board* b = new Board();
     string fen_path = "./positions/starting_position.txt";
-    b->parse_fen(fen_path);
+    Bitboard _bb = Bitboard();
+    BoardInfo _bi = BoardInfo();
+    Bitboard* bb = &_bb;
+    BoardInfo* bi = &_bi;
+    Board _b = Board(fen_path, bb, bi);
+    Board* b = &_b;
 
     cout<<"initial hash_val: "<<b->tt->hash_val<<endl;
     SECTION("quiet moves"){
@@ -868,20 +857,17 @@ TEST_CASE("Updating hash val", "[TranspositionTable]"){
             REQUIRE(b->tt->hash_val != seen_hash_vals[5]);
         }
     }
-    delete b;
-    delete TranspositionTable::instanceptr;
-    delete Bitboard::instanceptr;
-    delete BoardInfo::instanceptr;
-    b = nullptr;
-    TranspositionTable::instanceptr = nullptr;
-    Bitboard::instanceptr = nullptr;
-    BoardInfo::instanceptr = nullptr;
+
 }
 TEST_CASE("Updating hash val en passant", "[TranspositionTable]"){
 
-    Board* b = new Board();
     string fen_path = "./positions/starting_position.txt";
-    b->parse_fen(fen_path);
+    Bitboard _bb = Bitboard();
+    BoardInfo _bi = BoardInfo();
+    Bitboard* bb = &_bb;
+    BoardInfo* bi = &_bi;
+    Board _b = Board(fen_path, bb, bi);
+    Board* b = &_b;
 
     cout<<"initial hash_val: "<<b->tt->hash_val<<endl;
     SECTION("quiet moves"){
@@ -925,7 +911,7 @@ TEST_CASE("Updating hash val en passant", "[TranspositionTable]"){
                 b->apply_move(move_order1[i]);
                 seen_hash_vals.push_back(b->tt->hash_val);
             }
-            unsigned int move_order1_ep_right = BoardInfo::get_instance()->peek_ep_right();
+            unsigned int move_order1_ep_right = b->get_board_info()->peek_ep_right();
 
             for(int i = 3 ; i >= 0 ; i --){
                 b->reverse_move(move_order1[i]);
@@ -933,26 +919,27 @@ TEST_CASE("Updating hash val en passant", "[TranspositionTable]"){
             for(int i = 0 ; i < 4 ; i ++){
                 b->apply_move(move_order2[i]);
             }            
-            unsigned int move_order2_ep_right = BoardInfo::get_instance()->peek_ep_right();
+            unsigned int move_order2_ep_right = b->get_board_info()->peek_ep_right();
             REQUIRE(move_order1_ep_right != move_order2_ep_right);
             REQUIRE(b->tt->hash_val != seen_hash_vals[3]);
         }
     }
-    delete b;
-    delete TranspositionTable::instanceptr;
-    delete Bitboard::instanceptr;
-    delete BoardInfo::instanceptr;
-    b = nullptr;
-    TranspositionTable::instanceptr = nullptr;
-    Bitboard::instanceptr = nullptr;
-    BoardInfo::instanceptr = nullptr;
+
 }
 TEST_CASE("Transposition Table cach matches (simple)", "[TranspositionTable]"){
 
-    Board* b = new Board();
     string fen_path = "./positions/transposition_test.txt";
-    b->parse_fen(fen_path);
-    Search s = Search(b);
+    Bitboard _bb = Bitboard();
+    BoardInfo _bi = BoardInfo();
+    Bitboard* bb = &_bb;
+    BoardInfo* bi = &_bi;
+    Board _b = Board(fen_path, bb, bi);
+    Board* b = &_b;
+
+    PestoEvaluation _pesto = PestoEvaluation(b);
+    PestoEvaluation* pesto = &_pesto;
+    Search s = Search(b, pesto);
+
     cout<<"before search tt_found_count[3]: "<<s.tt_found_count[3]<<endl;
     unsigned int nodes = s.perft(4,4, WHITE, 0, true);
     SECTION("Depth = 4, tt_found_count == tt_match_count"){
@@ -966,21 +953,21 @@ TEST_CASE("Transposition Table cach matches (simple)", "[TranspositionTable]"){
         REQUIRE(s.tt_found_count[3] == 44);
     }
 
-    delete b;
-    delete TranspositionTable::instanceptr;
-    delete Bitboard::instanceptr;
-    delete BoardInfo::instanceptr;
-    b = nullptr;
-    TranspositionTable::instanceptr = nullptr;
-    Bitboard::instanceptr = nullptr;
-    BoardInfo::instanceptr = nullptr;
 }
 TEST_CASE("Transposition Table cache matches", "[TranspositionTable]"){
 
-    Board* b = new Board();
     string fen_path = "./positions/starting_position.txt";
-    b->parse_fen(fen_path);
-    Search s = Search(b);
+    Bitboard _bb = Bitboard();
+    BoardInfo _bi = BoardInfo();
+    Bitboard* bb = &_bb;
+    BoardInfo* bi = &_bi;
+    Board _b = Board(fen_path, bb, bi);
+    Board* b = &_b;
+
+    PestoEvaluation _pesto = PestoEvaluation(b);
+    PestoEvaluation* pesto = &_pesto;
+    Search s = Search(b, pesto);
+
     cout<<"before search tt_found_count[3]: "<<s.tt_found_count[3]<<endl;
     unsigned int nodes = s.perft(6, 6, WHITE, 0, true);
     SECTION("Depth = 6, tt_found_count == tt_match_count"){
@@ -990,28 +977,24 @@ TEST_CASE("Transposition Table cache matches", "[TranspositionTable]"){
         REQUIRE(s.tt_found_count[5] == 16699235);
         REQUIRE(nodes == 119060324);
     }
-    delete b;
-    // delete s;
-    delete TranspositionTable::instanceptr;
-    delete Bitboard::instanceptr;
-    delete BoardInfo::instanceptr;
-    b = nullptr;
-    // s = nullptr;
-    TranspositionTable::instanceptr = nullptr;
-    Bitboard::instanceptr = nullptr;
-    BoardInfo::instanceptr = nullptr;
+
 }
 #else
 #endif
 TEST_CASE("Alpha beta pruning selected move", "[Search]"){
 
-    Board* b = new Board();
     string fen_path = "./positions/bratko-kopec/bk_1.txt";
-    b->parse_fen(fen_path);
-    Search s = Search(b);
+    Bitboard _bb = Bitboard();
+    BoardInfo _bi = BoardInfo();
+    Bitboard* bb = &_bb;
+    BoardInfo* bi = &_bi;
+    Board _b = Board(fen_path, bb, bi);
+    Board* b = &_b;
 
-    // PestoEvaluation* pesto = PestoEvaluation::get_instance(WHITE);
-    // pesto->init_evaluate();
+    PestoEvaluation _pesto = PestoEvaluation(b);
+    PestoEvaluation* pesto = &_pesto;
+
+    Search s = Search(b, pesto);
 
     SECTION("bk 1"){
         pv_t* principal_var = (pv_t*) calloc(1, sizeof(pv_t));
@@ -1028,28 +1011,24 @@ TEST_CASE("Alpha beta pruning selected move", "[Search]"){
         REQUIRE(s.selected_move == MoveUtils::create_move(d6, d1, BLACK, pQUEEN));
     }
     
-    // delete b;
-    // delete TranspositionTable::instanceptr;
-    // delete Bitboard::instanceptr;
-    // delete BoardInfo::instanceptr;
-    // delete PestoEvaluation::instanceptr;
-    // b = nullptr;
-    // TranspositionTable::instanceptr = nullptr;
-    // Bitboard::instanceptr = nullptr;
-    // BoardInfo::instanceptr = nullptr;
-    // PestoEvaluation::instanceptr = nullptr;
 }
 
 
 TEST_CASE("Alpha beta pruning selected move backrank bug", "[Search]"){
 
-    Board* b = new Board();
     string fen_path = "./positions/bugs/backrank_miss.txt";
-    b->parse_fen(fen_path);
-    Search s = Search(b);
+    Bitboard _bb = Bitboard();
+    BoardInfo _bi = BoardInfo();
+    Bitboard* bb = &_bb;
+    BoardInfo* bi = &_bi;
+    Board _b = Board(fen_path, bb, bi);
+    Board* b = &_b;
 
-    // PestoEvaluation* pesto = PestoEvaluation::get_instance(WHITE);
-    // pesto->init_evaluate();
+    PestoEvaluation _pesto = PestoEvaluation(b);
+    PestoEvaluation* pesto = &_pesto;
+
+    Search s = Search(b, pesto);
+
 
     SECTION("backrank"){
         pv_t* principal_var = (pv_t*) calloc(1, sizeof(pv_t));
@@ -1069,14 +1048,4 @@ TEST_CASE("Alpha beta pruning selected move backrank bug", "[Search]"){
         REQUIRE(s.selected_move == MoveUtils::create_move(e5, g6, BLACK, pKNIGHT));
     }
     
-    delete b;
-    delete TranspositionTable::instanceptr;
-    delete Bitboard::instanceptr;
-    delete BoardInfo::instanceptr;
-    delete PestoEvaluation::instanceptr;
-    b = nullptr;
-    TranspositionTable::instanceptr = nullptr;
-    Bitboard::instanceptr = nullptr;
-    BoardInfo::instanceptr = nullptr;
-    PestoEvaluation::instanceptr = nullptr;
 }

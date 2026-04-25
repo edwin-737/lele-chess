@@ -11,8 +11,6 @@
 #include "move.hpp"
 #include "bitboard.hpp"
 #include "board_info.hpp"
-#include "evaluation.hpp"
-#include "pesto.hpp"
 #include "transposition_table.hpp"
 using namespace std;
 using namespace BoardSquares;
@@ -29,9 +27,16 @@ typedef enum fen_state{
 
 class Board{
 public:
-    Board(): side_to_move(WHITE){
+    Board(fs::path fen_path, Bitboard* _bb, BoardInfo* _bi): bb(_bb), bi(_bi), side_to_move(WHITE){
+        // Bitboard _bb = Bitboard();
+        // BoardInfo _bi = BoardInfo();
+        // bb = &_bb;
+        // bi = &_bi;
+        // bb = new Bitboard();
+        // bi = new BoardInfo();
         king_location[WHITE] = e1;
         king_location[BLACK] = e8;
+        parse_fen(fen_path);
     }
     void apply_move(unsigned int move);
     void reverse_move(unsigned int move);
@@ -59,9 +64,8 @@ private:
     void update_piece_locations(int side, int piece, int from, int to);
     void update_king_location(int side, int square);
     void init_piece_locations();
-    BoardInfo* bi = BoardInfo::get_instance();
-    Bitboard* bb = Bitboard::get_instance();
-    Evaluation* eval = Evaluation::get_instance();
+    BoardInfo* bi;
+    Bitboard* bb;
     unsigned int side_to_move = WHITE;
     int initial_ep_rights = NO_EP_RIGHTS, initial_castle_rights = 0x0;
 };

@@ -3,9 +3,9 @@
 #include "const.hpp"
 #include "move.hpp"
 #include "bitboard.hpp"
-#include "board_info.hpp"
 #include "board_squares.hpp"
 #include "magics.hpp"
+#include "board.hpp"
 using namespace std;
 using namespace BoardSquares;
 class MoveGen{
@@ -13,11 +13,19 @@ class MoveGen{
      * Move generation class which keeps a stack of moves being explored during search
      */
 public:
-    MoveGen():move_type(QUIET_MOVE),side(WHITE),piece(pPAWN),from(0),to(0),ep_from(EP_START){
+    MoveGen(Board* _b):b(_b),move_type(QUIET_MOVE),side(WHITE),piece(pPAWN),from(0),to(0),ep_from(EP_START){
+        bb = b->get_bitboard();
+        bi = b->get_board_info();
     }
     MoveGen(
-        int _side, int _move_type=mQUIET, bool _only_captures=false): side(_side), move_type(_move_type), gen_type(ALL_MOVES), only_captures(_only_captures), piece(pPAWN), from(0), to(0), ep_from(EP_START){
-        }
+        Board* _b, 
+        int _side, 
+        int _move_type=mQUIET, 
+        bool _only_captures=false
+    ): b(_b), side(_side), move_type(_move_type), gen_type(ALL_MOVES), only_captures(_only_captures), piece(pPAWN), from(0), to(0), ep_from(EP_START){
+        bb = b->get_bitboard();
+        bi = b->get_board_info();
+    }
     void set_gen_type(int _gen_type);
     void set_move_type(int _move_type);
     int get_special_move_type();
@@ -32,8 +40,9 @@ private:
     bool can_castle_kingside(int side);
     bool can_castle_queenside(int side);
     unsigned int get_ep_capture(int side);
-    Bitboard* bb = Bitboard::get_instance();
-    BoardInfo* bi = BoardInfo::get_instance();
+    Board* b;
+    Bitboard* bb;
+    BoardInfo* bi;
     unsigned int move_type = mQUIET, promoted_piece = pKNIGHT, promotion_counter = 0, gen_type, piece, from, to;
     int max_special_moves[7] = {
         250, 1, 1, 2, 8, 8, 8

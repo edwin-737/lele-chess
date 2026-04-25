@@ -21,7 +21,6 @@ private:
 public:        
     stack<unsigned int> castle_rights_stack, ep_rights_stack, move_stack, bi_stack;
     unsigned int num_nodes = 0, num_captures = 0, num_ep_captures = 0, num_checks = 0, num_checkmates = 0, num_castles = 0;
-    static BoardInfo* instanceptr;
     unsigned int bi_arr[60];
     int depth = -1;    
     BoardInfo(){
@@ -31,21 +30,11 @@ public:
     BoardInfo(unsigned int initial_castle_rights, unsigned int initial_ep_rights){
         bi_stack.push((initial_castle_rights << 4) | initial_ep_rights);
     }
-    BoardInfo(BoardInfo& b) = delete;
-    static BoardInfo* get_instance(){
-        if(instanceptr == nullptr){
-            instanceptr = new BoardInfo();
-            return instanceptr;
-        }
-        return instanceptr;
-    }
     void set_board_info(unsigned int castle_rights, unsigned int ep_rights){
-        if(instanceptr == nullptr){
-            return;
-        }
-        instanceptr->add_board_info(castle_rights, ep_rights);
-        cout<<"set peek castle rights: "<<instanceptr->peek_castle_right()<<endl;
-        cout<<"set peek ep rights: "<<instanceptr->peek_ep_right()<<endl;
+
+        add_board_info(castle_rights, ep_rights);
+        cout<<"set peek castle rights: "<<peek_castle_right()<<endl;
+        cout<<"set peek ep rights: "<<peek_ep_right()<<endl;
     }
     void add_board_info(int castle_right, int ep_right){
         depth ++;

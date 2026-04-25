@@ -1,8 +1,8 @@
-# ./build/engine > output.txt -f ./positions/starting_position.txt -j p -d  7 -s w
+./build/engine > output.txt -f ./positions/starting_position.txt -j p -d  6 -s w
 # ./build/engine profile.prof -f ./positions/starting_position.txt -j p -d  6 -s w > output.txt 
 #  -f ./positions/starting_position.txt -j p -d  4 -s w
 # ./build/engine -f ./positions/e2e4.txt -j p -d 4 -s w
-./build/engine -f ./positions/e2e4_g7g5.txt -j p -d 3 -s w
+# ./build/engine -f ./positions/e2e4_g7g5.txt -j p -d 3 -s w
 # ./build/engine -f ./positions/e2e4_f7f5.txt -j p -d 3 -s w
 # ./build/engine profile.prof -f ./positions/starting_position.txt -j p -d  5 -s w > output.txt 
 # ./build/engine > output.txt -f ./positions/ep_fen.txt -j p -d  5 -s w 

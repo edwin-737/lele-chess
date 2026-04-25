@@ -1,0 +1,3 @@
+init_evaluate(_b->get_side_to_move());
+pesto->get_evaluation(side ^ 1);
+return side == BLACK ? -evaluate() :evaluate()

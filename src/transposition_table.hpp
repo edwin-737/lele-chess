@@ -37,12 +37,17 @@ public:
     void update_hash_val_ep_rights(unsigned int prev_ep_right, unsigned int next_ep_right);
     unsigned int get_value_perft(int depth);
     int get_value_eval(int depth);
+    unsigned int get_value_threefold();
     void found_value();
     void not_equal();
     void add_value_perft(int depth, unsigned int val);
     void add_value_eval(int depth, int val);
+    void add_value_threefold(int val=1);
+    void increment_value_threefold();
+    void decrement_value_threefold();
     unordered_map<uint64, unsigned int> perft_table[MAX_DEPTH];
     unordered_map<uint64, int> eval_table[MAX_DEPTH];
+    unordered_map<uint64, unsigned int> threefold_table;
     uint64 zobrist_vals[NUM_ZOBRIST_VALS];
     uint64 hash_val = 0;
 };
