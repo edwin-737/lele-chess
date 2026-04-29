@@ -1,9 +1,13 @@
+#include <exception>
 #include <iostream>
 #include <string>
 #include "board.hpp"
 #include "board_squares.hpp"
 #include "const.hpp"
+#include "move.hpp"
+#include "move_set.hpp"
 #include "pesto.hpp"
+#include "utils.hpp"
 using namespace BoardSquares;
 void Board::apply_move(unsigned int move){
     unsigned int side = MoveUtils::get_side(move);
@@ -590,37 +594,209 @@ void Board::parse_pgn(fs::path path){
 
     std::ifstream file(path);
     if(file.is_open()){
-        std::string move_string;
-        while(file >> move_string){
-            cout<<"move_string: "<<move_string<<endl;
-            cout<<"side_to_move: "<<side_to_move<<endl;
-            if(move_string.length() < 4){
-                cout<<"not applying move"<<endl;
-                return;
+        std::string str;
+        unsigned int pgn_state = PGN_STATE::NUMBER;
+        while(file >> str){
+            // cout<<"side_to_move: "<<side_to_move<<endl;
+            if(pgn_state == PGN_STATE::NUMBER){
+                cout<<"string: "<<str<<endl;
+                pgn_state = PGN_STATE::MOVE;
+            } else if(pgn_state == PGN_STATE::MOVE) {
+                unsigned int move = 0;
+                unsigned int additional_info = QUIET_MOVE;
+                unsigned int piece = MoveUtils::get_piece(str);
+                unsigned int to = MoveUtils::get_to(str);
+                unsigned int from_rank = INVALID_LOCATION, from_file = INVALID_LOCATION;
+                // cout<<"piece: "<<MoveUtils::piece_as_string(piece)<<"\n";
+                bool has_from_rank = MoveUtils::has_from_rank(str);
+                bool has_from_file = MoveUtils::has_from_file(str);
+                if(has_from_rank)
+                    from_rank = MoveUtils::get_from_rank(str);
+                else if(has_from_file)
+                    from_file = MoveUtils::get_from_file(str);
+                bool is_castle = MoveUtils::is_castle(str);
+                bool is_capture = MoveUtils::is_capture(str);
+                if(is_castle){
+                    move = MoveUtils::get_castle_move(side_to_move, str);
+                } else if(is_capture){
+                    if(piece == pPAWN){
+                        unsigned int captured_piece = bb->get_piece_on_square(side_to_move ^ 1, to);
+                        if(bb->get_piece_on_square(side_to_move ^ 1, to) == INVALID_LOCATION){
+                            additional_info = EP_CAPTURE;
+                            unsigned int pawn_from_file = MoveUtils::get_pawn_from_file(str);
+                            unsigned int pawn_from = 32 + pawn_from_file;
+                            if(side_to_move == BLACK)
+                                pawn_from = 24 + pawn_from_file;
+                            move = MoveUtils::create_move(pawn_from, to, side_to_move, pPAWN, additional_info, pPAWN);
+                        } else if(MoveUtils::is_capture_promotion(str)){
+                            unsigned int promoted_piece = MoveUtils::get_promoted_piece(str);
+                            if(promoted_piece == pQUEEN)
+                                additional_info = QUEEN_CAPTURE_PROMOTION;
+                            else if(promoted_piece == pKNIGHT)
+                                additional_info = KNIGHT_CAPTURE_PROMOTION;
+                            else if(promoted_piece == pBISHOP)
+                                additional_info = BISHOP_CAPTURE_PROMOTION;
+                            else if(promoted_piece == pROOK)
+                                additional_info = ROOK_CAPTURE_PROMOTION;
+                            unsigned int pawn_from_file = MoveUtils::get_pawn_from_file(str);
+                            unsigned int pawn_from = 48 + pawn_from_file;
+                            unsigned int piece_on_square = bb->get_piece_on_square(side_to_move, pawn_from);
+                            if(piece_on_square == INVALID_LOCATION){
+                                bb->display();
+                                throw std::runtime_error("[parse_pgn] CAPTURE_PROMOTION, INVALID_PIECE, no pawn on from");
+                            }
+                            move = MoveUtils::create_move(pawn_from, to, side_to_move, pPAWN, additional_info, captured_piece);
+                        } else {
+                            additional_info = CAPTURE;
+                            unsigned int pawn_from_file = MoveUtils::get_pawn_from_file(str);
+                            uint64 file_bb = get_file_bitboard(pawn_from_file);
+                            uint64 pawn_bb = bb->piece_boards[side_to_move][piece] & file_bb;
+                            if(pawn_bb){
+                                int from = bit_scan_forward(pawn_bb);
+                                if(from != -1)
+                                    move = MoveUtils::create_move(from, to, side_to_move, piece, additional_info, captured_piece);
+                            } else {
+                                bb->display();
+                                throw std::runtime_error("[parse_pgn] CAPTURE, invalid pawn, no piece on from");
+                            }
+                        }
+                    } else { // other piece capture
+                        additional_info = CAPTURE;
+                        unsigned int captured_piece = bb->get_piece_on_square(side_to_move ^ 1, to);
+                        if(from_rank != INVALID_LOCATION){
+                            uint64 rank_bb = get_rank_bitboard(from_rank);
+                            uint64 piece_bb = bb->piece_boards[side_to_move][piece] & rank_bb;
+                            if(piece_bb){
+                                int from = bit_scan_forward(piece_bb);
+                                if(from != -1)
+                                    move = MoveUtils::create_move(from, to, side_to_move, piece, additional_info, captured_piece);
+                            } else {
+                                bb->display();
+                                throw std::runtime_error("[parse_pgn] CAPTURE, invalid piece, no piece on from_rank");
+                            }
+                        } else if(from_file != INVALID_LOCATION){
+                            uint64 file_bb = get_file_bitboard(from_file);
+                            uint64 piece_bb = bb->piece_boards[side_to_move][piece] & file_bb;
+                            if(piece_bb){
+                                int from = bit_scan_forward(piece_bb);
+                                if(from != -1)
+                                    move = MoveUtils::create_move(from, to, side_to_move, piece, additional_info, captured_piece);
+                            } else {
+                                bb->display();
+                                throw std::runtime_error("[parse_pgn] CAPTURE, invalid piece, no piece on from_file");
+                            }
+                        } else {
+                            // cout<<MoveUtils::piece_as_string(piece)<<"\n";
+                            // cout<<MoveUtils::square_as_string(to)<<"\n";
+                            uint64 move_set = MoveSet::get_all_attack_mask(piece, to, side_to_move);
+                            // bool set = false;
+                            // if((bb->piece_boards[side_to_move ^ 1][piece] & get_square_bitboard(to)) == 0){
+                            //     bb->piece_boards[side_to_move ^ 1][piece] ^= get_square_bitboard(to);
+                            //     set = true;
+                            // }
+                            // uint64 move_set = MoveSet::get_capture_move_set(bb, piece, to, side_to_move ^ 1);
+                            // if(set){
+                            //     bb->piece_boards[side_to_move ^ 1][piece] ^= get_square_bitboard(to);
+                            //     set = false;
+                            // }
+                            // cout<<"move_set\n";
+                            // bb->display_bitboard(move_set);
+                            uint64 piece_bb = bb->piece_boards[side_to_move][piece] & move_set;
+                            // cout<<"piece_board\n";
+                            // bb->display_bitboard(bb->piece_boards[side_to_move][piece]);
+                            if(piece_bb){
+                                int from = bit_scan_forward(piece_bb);
+                                if(from != -1)
+                                    move = MoveUtils::create_move(from, to, side_to_move, piece, additional_info, captured_piece);
+                            } else {
+                                bb->display();
+                                throw std::runtime_error("[parse_pgn] CAPTURE, invalid piece, no piece can get to to");
+                            }
+                        }
+                    }
+                } else {
+                    additional_info = QUIET_MOVE;
+                    if(piece == pPAWN){
+                        
+                        unsigned int pawn_from_file = MoveUtils::get_pawn_from_file(str);
+                        uint64 file_bb = get_file_bitboard(pawn_from_file);
+                        uint64 pawn_bb = bb->piece_boards[side_to_move][piece] & file_bb;
+                        // cout<<"pawn_from_file: "<<pawn_from_file<<"\n";
+                        // cout<<"file_bb: "<<"\n";
+                        // bb->display_bitboard(file_bb);
+                        // cout<<"pawn_bb: "<<"\n";
+                        // bb->display_bitboard(pawn_bb);
+                        if(pawn_bb){
+                            unsigned int from = bit_scan_forward(pawn_bb);
+                            if((side_to_move == WHITE && to - from == 16) || (side_to_move == BLACK && from - to == 16)){
+                                additional_info = DOUBLE_PAWN_PUSH;
+                            }
+                            if(from != -1)
+                                move = MoveUtils::create_move(from, to, side_to_move, piece, additional_info);
+                        } else {
+                            bb->display();
+                            throw std::runtime_error("[parse_pgn] QUIET, invalid pawn, no pawn on from_file");
+                        }
+                    } else {
+                        if(from_rank != INVALID_LOCATION){
+                            uint64 rank_bb = get_rank_bitboard(from_rank);
+                            uint64 piece_bb = bb->piece_boards[side_to_move][piece] & rank_bb;
+                            if(piece_bb){
+                                int from = bit_scan_forward(piece_bb);
+                                if(from != -1)
+                                    move = MoveUtils::create_move(from, to, side_to_move, piece, additional_info);
+                            } else {
+                                bb->display();
+                                throw std::runtime_error("[parse_pgn] QUIET, invalid piece, no piece on from_rank");
+                            }
+                        } else if(from_file != INVALID_LOCATION){
+                            uint64 file_bb = get_file_bitboard(from_file);
+                            uint64 piece_bb = bb->piece_boards[side_to_move][piece] & file_bb;
+                            if(piece_bb){
+                                int from = bit_scan_forward(piece_bb);
+                                if(from != -1)
+                                    move = MoveUtils::create_move(from, to, side_to_move, piece, additional_info);
+                            } else {
+                                cout<<str<<endl;
+                                bb->display();
+                                throw std::runtime_error("[parse_pgn] QUIET, invalid piece, no piece on from_file");
+                            }
+                        } else {
+                            uint64 move_set =  MoveSet::get_all_attack_mask(piece, to, side_to_move);
+                            uint64 piece_bb = bb->piece_boards[side_to_move][piece] & move_set;
+
+                            if(move_set){
+                                int from = bit_scan_forward(piece_bb);
+                                if(from != -1)
+                                    move = MoveUtils::create_move(from, to, side_to_move, piece, additional_info);
+                                if(move == 0){
+                                    cout<<"piece\n";
+                                    cout<<MoveUtils::piece_as_string(piece)<<"\n";
+                                    cout<<"to\n";
+                                    cout<<MoveUtils::square_as_string(to)<<"\n";
+                                    cout<<"move_set\n";
+                                    bb->display_bitboard(move_set);
+                                    cout<<"bb->piece_boards[side_to_move][piece\n";
+                                    bb->display_bitboard(bb->piece_boards[side_to_move][piece]);
+                                }
+                            } else {
+                                bb->display();
+                                throw std::runtime_error("[parse_pgn] QUIET, invalid piece, no piece can get to to");
+                            }
+                        }
+                    }
+                }
+
+                if(side_to_move == BLACK){
+                    pgn_state = PGN_STATE::NUMBER;
+                }
+                MoveUtils::display(move);
+                if(!apply_move_if_legal(move) || move == 0){
+                    bb->display();
+                    throw std::runtime_error("[parse_pgn] apply_move_if_legal, move not legal");
+                };
+                change_side_to_move();
             }
-            else if(move_string.length() == 4){
-                std::string from_string = move_string.substr(0, 2);
-                std::string to_string = move_string.substr(2, 2);
-
-                unsigned int from = MoveUtils::square_as_uint(from_string);
-                unsigned int to = MoveUtils::square_as_uint(to_string);
-                unsigned int move = create_move_using_pgn(from, to);
-                cout<<"created move: "<<MoveUtils::move_as_string(move)<<endl;
-                apply_move_if_legal(move);
-                change_side_to_move();
-            } else {
-                std::string from_string = move_string.substr(0, 2);
-                std::string to_string = move_string.substr(2, 2);
-                std::string promoted_piece_string = move_string.substr(4, 1);
-
-                unsigned int from = MoveUtils::square_as_uint(from_string);
-                unsigned int to = MoveUtils::square_as_uint(to_string);
-                unsigned int promoted_piece = MoveUtils::promoted_piece_as_uint(promoted_piece_string);
-                unsigned int move = create_move_using_pgn(from, to, promoted_piece);
-                cout<<"created move: "<<MoveUtils::move_as_string(move)<<endl;
-                apply_move_if_legal(move);
-                change_side_to_move();
-            } 
         }
     }
 }

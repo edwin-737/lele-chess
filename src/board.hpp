@@ -24,20 +24,19 @@ typedef enum fen_state{
     EP_TARGET_SQUARE,
     FINISHED
 } FEN_STATE;
+typedef enum pgn_state {
+    NUMBER,
+    MOVE
+} PGN_STATE;
 
 class Board{
 public:
     Board(fs::path fen_path, Bitboard* _bb, BoardInfo* _bi): bb(_bb), bi(_bi), side_to_move(WHITE){
-        // Bitboard _bb = Bitboard();
-        // BoardInfo _bi = BoardInfo();
-        // bb = &_bb;
-        // bi = &_bi;
-        // bb = new Bitboard();
-        // bi = new BoardInfo();
         king_location[WHITE] = e1;
         king_location[BLACK] = e8;
         parse_fen(fen_path);
     }
+    void bp();
     void apply_move(unsigned int move);
     void reverse_move(unsigned int move);
     bool is_move_legal(unsigned int move);

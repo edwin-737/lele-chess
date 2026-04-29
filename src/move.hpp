@@ -72,5 +72,22 @@ namespace MoveUtils{
     string side_as_string(unsigned int side);
     string move_as_string(unsigned int move);
     string square_as_string(unsigned int square);
+    bool is_quiet_pawn_move(string move);
+    bool has_from_file(string move);
+    bool has_from_rank(string move);
+    bool is_capture(string move);
+    bool is_check(string move);
+    bool is_castle(string move);
+    bool is_promotion(string move);
+    bool is_capture_promotion(string move);
+    bool is_potentially_double_pawn_push(unsigned int side, string move);
+    unsigned int get_pawn_from_file(string move);
+    unsigned int get_piece(string move);
+    unsigned int get_to(string move);
+    unsigned int get_from_file(string move);
+    unsigned int get_from_rank(string move);
+    unsigned int get_castle_move(unsigned int side, string move);
+    unsigned int get_promoted_piece(string move);
+    unsigned int get_square(string square);
 };
 #endif

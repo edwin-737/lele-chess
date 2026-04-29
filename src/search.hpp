@@ -6,7 +6,6 @@
 #include "const.hpp"
 #include "transposition_table.hpp"
 #include "pesto.hpp"
-
 using namespace std::chrono;
 using namespace std;
 #define DEPTH_LIMIT 20
@@ -56,5 +55,6 @@ private:
     int material = 0;
 
 };
+
 
 #endif

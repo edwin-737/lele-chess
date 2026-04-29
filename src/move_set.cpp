@@ -197,6 +197,28 @@ uint64 MoveSet::get_rook_attack_set(Bitboard* bb, int sq)
     uint64 attack_set = rook_attack_set[sq][index];
     return attack_set;
 }
+uint64 MoveSet::get_all_attack_mask(int piece, int sq, int side){
+    switch(piece){
+        case Piece::pPAWN:
+            if(side == BLACK)
+                return get_black_pawn_attack_mask(sq);
+            else
+                return get_white_pawn_attack_mask(sq);
+        case Piece::pBISHOP:
+            return bmask_all(sq);
+        case Piece::pROOK:
+            return rmask_all(sq);
+        case Piece::pKNIGHT:
+            return get_knight_attack_mask(sq);
+        case Piece::pKING:
+            return get_king_attack_mask(sq);
+        case Piece::pQUEEN:
+            return bmask_all(sq) | rmask_all(sq);
+        default:
+            return 0;
+    }
+
+}
 uint64 MoveSet::get_all_move_set(Bitboard* bb, int piece, int sq, int side)
 {
     switch(piece){

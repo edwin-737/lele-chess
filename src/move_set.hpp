@@ -27,6 +27,7 @@ namespace MoveSet{
     uint64 get_rook_attack_set(Bitboard* bb, int sq);
     uint64 get_bishop_attack_set(Bitboard* bb, int sq, int side);
     uint64 get_rook_attack_set(Bitboard* bb, int sq, int side);
+    uint64 get_all_attack_mask(int piece, int sq, int side);
     uint64 get_all_move_set(Bitboard* bb, int piece, int sq, int side);
     uint64 get_capture_move_set(Bitboard* bb, int piece, int sq, int side);
     uint64 get_quiet_move_set(Bitboard* bb, int piece, int sq, int side);

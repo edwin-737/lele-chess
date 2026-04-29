@@ -56,6 +56,20 @@ uint64 rmask(int sq)
     return result;
 }
 
+uint64 rmask_all(int sq)
+{
+    uint64 result = 0ULL;
+    int rk = sq / 8, fl = sq % 8, r, f;
+    for (r = rk + 1; r <= 7; r++)
+        result |= (1ULL << (fl + r * 8));
+    for (r = rk - 1; r >= 0; r--)
+        result |= (1ULL << (fl + r * 8));
+    for (f = fl + 1; f <= 7; f++)
+        result |= (1ULL << (f + rk * 8));
+    for (f = fl - 1; f >= 0; f--)
+        result |= (1ULL << (f + rk * 8));
+    return result;
+}
 uint64 bmask(int sq)
 {
     uint64 result = 0ULL;
@@ -71,6 +85,20 @@ uint64 bmask(int sq)
     return result;
 }
 
+uint64 bmask_all(int sq)
+{
+    uint64 result = 0ULL;
+    int rk = sq / 8, fl = sq % 8, r, f;
+    for (r = rk + 1, f = fl + 1; r <= 7 && f <= 7; r++, f++)
+        result |= (1ULL << (f + r * 8));
+    for (r = rk + 1, f = fl - 1; r <= 7 && f >= 0; r++, f--)
+        result |= (1ULL << (f + r * 8));
+    for (r = rk - 1, f = fl + 1; r >= 0 && f <= 7; r--, f++)
+        result |= (1ULL << (f + r * 8));
+    for (r = rk - 1, f = fl - 1; r >= 0 && f >= 0; r--, f--)
+        result |= (1ULL << (f + r * 8));
+    return result;
+}
 uint64 ratt(int sq, uint64 block)
 {
     uint64 result = 0ULL;

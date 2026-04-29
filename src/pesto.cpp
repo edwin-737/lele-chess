@@ -9,16 +9,11 @@ void PestoEvaluation::init_tables(){
     int pc, p, sq;
     for (p = PAWN; p <= KING; p++) {
         for (sq = 0; sq < 64; sq++) {
-            // mg_table[pc]  [sq] = mg_value[p] + mg_pesto_table[p][sq];
-            // eg_table[pc]  [sq] = eg_value[p] + eg_pesto_table[p][sq];
-            // mg_table[pc+1][sq] = mg_value[p] + mg_pesto_table[p][FLIP(sq)];
-            // eg_table[pc+1][sq] = eg_value[p] + eg_pesto_table[p][FLIP(sq)];
             mg_table[PIECE_WITH_SIDE(p, WHITE)][FLIP(sq)] = mg_value[p] + mg_pesto_table[p][sq];
             eg_table[PIECE_WITH_SIDE(p, WHITE)][FLIP(sq)] = eg_value[p] + eg_pesto_table[p][sq];
             mg_table[PIECE_WITH_SIDE(p, BLACK)][sq] = mg_value[p] + mg_pesto_table[p][sq];
             eg_table[PIECE_WITH_SIDE(p, BLACK)][sq] = eg_value[p] + eg_pesto_table[p][sq];
-            // cout<<"pc: "<<pc<<"sq: "<<sq<<", mg_table[pc][sq]: "<<mg_table[pc][sq]<<", eg_table[pc]: "<<eg_table[pc][sq]<<"\n";
-            // cout<<"pc + 1: "<<pc + 1<<", sq: "<<sq<<", mg_table[pc + 1][sq]: "<<mg_table[pc + 1][sq]<<", eg_table[pc + 1]: "<<eg_table[pc + 1][sq]<<"\n";
+
         }
     }
 }
@@ -44,9 +39,7 @@ int PestoEvaluation::calculate_evaluation(){
 
         }
     }
-    
-    // cout<<"[init_evaluation] init_evaluate mg: "<<mg[WHITE]<<" "<<mg[BLACK]<<"\n";
-    // cout<<"[init_evaluation] init_evaluate eg: "<<eg[WHITE]<<" "<<eg[BLACK]<<"\n";
+
     /* tapered eval */
     int mgScore = _mg[WHITE] - _mg[BLACK];
     int egScore = _eg[WHITE] - _eg[BLACK];
@@ -80,22 +73,16 @@ int PestoEvaluation::init_evaluate(){
         }
     }
     
-    // cout<<"[init_evaluation] init_evaluate mg: "<<mg[WHITE]<<" "<<mg[BLACK]<<"\n";
-    // cout<<"[init_evaluation] init_evaluate eg: "<<eg[WHITE]<<" "<<eg[BLACK]<<"\n";
+
     /* tapered eval */
 
     int mgScore = mg[WHITE] - mg[BLACK];
     int egScore = eg[WHITE] - eg[BLACK];
-    // if(side_to_move == BLACK){
-    //     mgScore = mg[BLACK] - mg[WHITE];
-    //     egScore = eg[BLACK] - eg[WHITE];
-    // } 
+
     int mgPhase = gamePhase;
     if (mgPhase > 24) mgPhase = 24; /* in case of early promotion */
     int egPhase = 24 - mgPhase;
-    // cout<<"[init_evaluation] "<<"mgPhase: "<<mgPhase<<" egPhase: "<<egPhase<<"\n";
     int initial_eval = ((mgScore * mgPhase) + (egScore * egPhase));
-    // cout<<"eval: "<<initial_eval<<"\n";
     this->evaluation[WHITE] = initial_eval;
     this->evaluation[BLACK] = -initial_eval;
     return initial_eval;
@@ -114,25 +101,14 @@ int PestoEvaluation::update_evaluation(unsigned int move, int reverse)
     // reverse == 1, reverse_mult = -1
     // reverse == 0, reverse_mult = 1
     int reverse_mult = 2 * (reverse ^ 1) - 1;
-    // cout<<"[update_evaluation]: reverse_mult "<<reverse_mult<<"\n";
-    // cout<<"[update_evaluation]: mg[WHITE] "<<mg[WHITE]<<"\n";
-    // cout<<"[update_evaluation]: mg[BLACK] "<<mg[BLACK]<<"\n";
-    // cout<<"[update_evaluation]: eg[WHITE] "<<eg[WHITE]<<"\n";
-    // cout<<"[update_evaluation]: eg[BLACK] "<<eg[BLACK]<<"\n";
+
     if(MoveUtils::is_quiet(move) || MoveUtils::is_double_pawn_push(move)){
-        // cout<<"[update_evaluation]: is_quiet"<<"\n";
-        // cout<<"[update_evaluation]: pc from mg change: "<<MoveUtils::piece_as_string(pc)<<" "<<(mg_table[piece_with_side][from] * reverse_mult)<<"\n";
-        // cout<<"[update_evaluation]: pc to mg change: "<<MoveUtils::piece_as_string(pc)<<" "<<-(mg_table[piece_with_side][to] * reverse_mult)<<"\n";
-        // cout<<"[update_evaluation]: pc from eg change: "<<MoveUtils::piece_as_string(pc)<<" "<<(eg_table[piece_with_side][from] * reverse_mult)<<"\n";
-        // cout<<"[update_evaluation]: pc to eg change: "<<MoveUtils::piece_as_string(pc)<<" "<<-(eg_table[piece_with_side][to] * reverse_mult)<<"\n";
-        // cout<<"PestoEvaluation::update_evaluation: double_pawn_push\n";
-        // cout<<"Before\nmg[WHITE]: "<<mg[WHITE]<<"\nmg[BLACK]: "<<mg[BLACK]<<"\n";
+
         mg[side] -= (mg_table[piece_with_side][from] * reverse_mult);
         eg[side] -= (eg_table[piece_with_side][from] * reverse_mult);
 
         mg[side] += (mg_table[piece_with_side][to] * reverse_mult);
         eg[side] += (eg_table[piece_with_side][to] * reverse_mult);
-        // cout<<"After\nmg[WHITE]: "<<mg[WHITE]<<"\nmg[BLACK]: "<<mg[BLACK]<<"\n";
     }
     else if(MoveUtils::is_capture(move)){
         int captured_pc = MoveUtils::get_captured_piece(move);
@@ -149,13 +125,6 @@ int PestoEvaluation::update_evaluation(unsigned int move, int reverse)
         mg[side] += (mg_table[piece_with_side][to] * reverse_mult);
         eg[side] += (eg_table[piece_with_side][to] * reverse_mult);
 
-        // cout<<"[update_evaluation]: gamePhase: "<<gamePhase<<"\n";
-        // cout<<"[update_evaluation]: pc from mg: "<<MoveUtils::piece_as_string(pc)<<" "<<(mg_table[piece_with_side][from] * reverse_mult)<<"\n";
-        // cout<<"[update_evaluation]: pc to mg: "<<MoveUtils::piece_as_string(pc)<<" "<<(mg_table[piece_with_side][to] * reverse_mult)<<"\n";
-        // cout<<"[update_evaluation]: pc from eg: "<<MoveUtils::piece_as_string(pc)<<" "<<(eg_table[piece_with_side][from] * reverse_mult)<<"\n";
-        // cout<<"[update_evaluation]: pc to eg: "<<MoveUtils::piece_as_string(pc)<<" "<<(eg_table[piece_with_side][to] * reverse_mult)<<"\n";
-        // cout<<"[update_evaluation]: captured_pc to mg change: "<<MoveUtils::piece_as_string(captured_pc)<<" "<<-(mg_table[captured_piece_with_side][to] * reverse_mult)<<"\n";
-        // cout<<"[update_evaluation]: captured_pc to eg change: "<<MoveUtils::piece_as_string(captured_pc)<<" "<<-(eg_table[captured_piece_with_side][to] * reverse_mult)<<"\n";
 
     } else if(MoveUtils::is_castle(move)){
 
@@ -279,25 +248,13 @@ int PestoEvaluation::update_evaluation(unsigned int move, int reverse)
     int mgPhase = gamePhase;
     if (mgPhase > 24) mgPhase = 24; /* in case of early promotion */
     int egPhase = 24 - mgPhase;
-    // cout<<"[update_evaluation] "<<"mgPhase: "<<mgPhase<<"\n";
-    // cout<<"[update_evaluation] "<<"egPhase: "<<egPhase<<"\n";
+
     this->evaluation[side_to_move] = (mgScore * mgPhase + egScore * egPhase);
     this->evaluation[side_to_move ^ 1] = -this->evaluation[side_to_move];
     return this->evaluation[side_to_move];
 }
 int PestoEvaluation::get_evaluation(unsigned int starting_side, unsigned int side){
-
-    // cout<<"[get_evaluation]: mg[WHITE] "<<mg[WHITE]<<"\n";
-    // cout<<"[get_evaluation]: mg[BLACK] "<<mg[BLACK]<<"\n";
-    // cout<<"[get_evaluation]: eg[WHITE] "<<eg[WHITE]<<"\n";
-    // cout<<"[get_evaluation]: eg[BLACK] "<<eg[BLACK]<<"\n";
-    // return this->evaluation[WHITE];
-    // return this->evaluation[starting_side];
     return side == WHITE ? evaluation[WHITE] : -evaluation[WHITE];
-    // return side == starting_side ? evaluation[side] : -evaluation[side];
-    // return evaluation[side];
-    // return evaluation;
-    // return evaluation;
 }
 void PestoEvaluation::set_evaluation(int val){
     evaluation[WHITE] = val;

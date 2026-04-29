@@ -460,18 +460,6 @@ int Search::quiesce(int alpha, int beta, int depth, unsigned int side,  unsigned
                 memcpy(principal_variation->moves + 1, line.moves, line.len * sizeof(unsigned int));
                 principal_variation->len = line.len + 1;
 
-                // cout<<"-----------------\n";
-                // cout<<"current variation\n";
-                // cout<<"principal_variation length: "<<principal_variation->len<<endl;
-                // for(int i = 0 ; i < principal_variation->len ; i ++){
-                //     cout<<i<<": ";
-                //     MoveUtils::display(principal_variation->moves[i]);
-                // }
-                // stop = high_resolution_clock::now();
-                // duration<double> elapsed = stop - start;  // seconds as double (fractional)
-                // cout<<"time elapsed: "<<elapsed.count()<<endl;
-                // cout<<"node count: "<<num_nodes<<endl;
-                // cout<<"-----------------\n";
                 alpha = score;
             }
         }

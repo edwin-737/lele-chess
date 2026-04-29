@@ -1,5 +1,8 @@
+#include <_ctype.h>
+#include <cctype>
 #include <iostream>
 #include "move.hpp"
+#include "board_info.hpp"
 #include "const.hpp"
 #include "board_squares.hpp"
 using namespace std;
@@ -177,5 +180,176 @@ namespace MoveUtils{
         string s = {file, rank};
         return s;
 
+    }
+    unsigned int get_piece(string move){
+        if(move.length() == 2){
+            return pPAWN;
+        } else if(move[0] == 'N'){
+            return pKNIGHT;
+        } else if(move[0] == 'B'){
+            return pBISHOP;
+        } else if(move[0] == 'R'){
+            return pROOK;
+        } else if(move[0] == 'Q'){
+            return pQUEEN;
+        } else if(move[0] == 'K'){
+            return pKING;
+        } else if(islower(move[0])){
+            return pPAWN;
+        } else if(move[0] == '0'){
+            return pKING;
+        }
+        return NO_PIECE;
+    }
+    unsigned int get_to(string move){
+        unsigned long len = move.length();
+        if(len == 2){
+            return get_square(move);
+        }
+        string first_two = move.substr(0, 2);
+        string last_two = move.substr(len - 2);
+        string last_char = move.substr(len - 1);
+        string third_fourth = move.substr(2, 2);
+        if(is_capture(move) && is_check(move)){
+            if(has_from_file(move) || has_from_rank(move)){
+                string third_fourth = move.substr(2, 2);
+                return get_square(third_fourth);
+            } else {
+                string second_third = move.substr(1, 2);
+                return get_square(second_third);
+            }
+        }
+        if(is_capture(move)){
+            if(has_from_file(move) || has_from_rank(move)){
+                string fourth_fifth = move.substr(3, 2);
+                return get_square(fourth_fifth);
+            } else {
+                return get_square(third_fourth);
+            }
+        } else if(is_check(move)){
+            if(has_from_file(move) || has_from_rank(move)){
+                string third_fourth = move.substr(2, 2);
+                return get_square(third_fourth);
+            } else {
+                string second_third = move.substr(1, 2);
+                return get_square(second_third);
+            }
+        }
+        else if(last_char == "O"){
+            return INVALID_LOCATION;
+        } else if(is_capture_promotion(move)){
+            return get_square(third_fourth);
+        } else if(is_promotion(move)) {
+            return get_square(first_two);
+        }
+        return get_square(last_two);
+    }
+    bool is_pawn_move(string move){
+        if(move.length() == 2){
+            return true;
+        } 
+        return false;
+    }
+    bool has_from_file(string move){
+        unsigned long len = move.length();
+        if(len >= 4 && 
+            (isalpha(move[1]) && move[1] >= 'a' && move[1] <= 'h') && 
+            (isalpha(move[2]) && move[2] >= 'a' && move[2] <= 'h')
+        )
+            return true;
+        return false;
+    }
+    bool has_from_rank(string move){
+        unsigned long len = move.length();
+        if(len >= 4 && 
+            (isalpha(move[1]) && move[1] >= '1' && move[1] <= '8') && 
+            (isalpha(move[2]) && move[2] >= 'a' && move[2] <= 'h')
+        )
+            return true;
+        return false;
+    }
+    bool is_capture(string move){
+        if(move.find('x') != string::npos){
+            return true;
+        }
+        return false;
+    }
+    bool is_check(string move){
+        if(move.find('+') != string::npos){
+            return true;
+        }
+        return false;
+    }
+    bool is_castle(string move){
+        return move[0] == 'O';
+    }
+    bool is_promotion(string move){
+        if(move.find('=') != string::npos){
+            return true;
+        }
+        return false;
+    }
+    bool is_capture_promotion(string move){
+        if(is_capture(move) && is_promotion(move))
+            return true;
+        return false;
+    }
+    bool is_potentially_double_pawn_push(unsigned int side, string move){
+        unsigned long len = move.length();
+        if(len == 2){
+            if(move[1] == '4' && side == WHITE)
+                return true;
+            else if(move[1] == '5' && side == BLACK)
+                return true;
+        }
+        return false;
+    }
+    unsigned int get_pawn_from_file(string move){
+        return move[0] - 'a';
+    }
+    unsigned int get_from_file(string move){
+        const char from_file = move[1];
+        return from_file - 'a';
+    }
+    unsigned int get_from_rank(string move){
+        const char from_rank = move[1];
+        return from_rank - 'a';
+    }
+    unsigned int get_castle_move(unsigned int side, string move){
+        unsigned long len = move.length();
+        if(side == WHITE){
+            if(len == 3)
+                return MoveUtils::create_move(e1, g1, side, pKING, KING_CASTLE);
+            else
+                return MoveUtils::create_move(e1, c1, side, pKING, QUEEN_CASTLE);
+        } else {
+            if(len == 3)
+                return MoveUtils::create_move(e8, g8, side, pKING, KING_CASTLE);
+            else
+                return MoveUtils::create_move(e8, c8, side, pKING, QUEEN_CASTLE);
+        }
+    }
+    unsigned int get_promoted_piece(string move){
+        unsigned long len = move.length();
+        char promoted_piece_char = move[len - 1];
+        if(move[len - 1] == '+'){ // check so use the second to last character
+            promoted_piece_char = move[len - 2];
+        }
+        if(promoted_piece_char == 'N')
+            return pKNIGHT;
+        else if(promoted_piece_char == 'B')
+            return pBISHOP;
+        else if(promoted_piece_char == 'R')
+            return pROOK;
+        else if(promoted_piece_char == 'Q')
+            return pQUEEN;
+        return NO_PIECE;
+    }
+    unsigned int get_square(string square){
+        const char file = square[0];
+        const char rank = square[1];
+        int file_num = file - 'a';
+        int rank_num = rank - '1';
+        return rank_num * 8 + file_num;
     }
 };
