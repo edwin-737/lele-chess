@@ -186,6 +186,44 @@ TEST_CASE("Piece locations for fen test position", "[Parsing FEN]"){
     }
 }
 
+TEST_CASE("parse_pgn == parse_fen at the end", "[Parsing PGN]"){
+    const char* starting_fen_path = "./positions/starting_position.txt";
+    Bitboard _bb = Bitboard();
+    BoardInfo _bi = BoardInfo();
+    Bitboard* bb = &_bb;
+    BoardInfo* bi = &_bi;
+
+    SECTION("parse_pgn == parse_fen at the end"){
+        const char* pgn_path = "pgn/test_parse_pgn.txt";
+        Board _b_pgn = Board(starting_fen_path, bb, bi);
+        Board* b_pgn = &_b_pgn;
+        _b_pgn.parse_pgn(pgn_path);
+        const char* final_fen_path = "positions/test_parse_pgn_end.txt";
+        Board _b_fen = Board(final_fen_path, bb, bi);
+        Board* b_fen = &_b_fen;
+        for(unsigned int side = 0 ; side < NUM_SIDES ; side ++){
+            for(unsigned int piece = 0 ; piece < NUM_PIECE_TYPES ; piece ++){
+                REQUIRE(b_pgn->get_bitboard()->piece_boards[side][piece] == b_fen->get_bitboard()->piece_boards[side][piece]);
+            }
+        }
+    }
+
+    SECTION("parse_pgn == parse_fen fabiano nepo"){
+        const char* pgn_path = "pgn/test_parse_pgn_fabi_nepo.txt";
+        Board _b_pgn = Board(starting_fen_path, bb, bi);
+        Board* b_pgn = &_b_pgn;
+        _b_pgn.parse_pgn(pgn_path);
+        const char* final_fen_path = "positions/test_parse_pgn_end_fabi_nepo.txt";
+        Board _b_fen = Board(final_fen_path, bb, bi);
+        Board* b_fen = &_b_fen;
+        for(unsigned int side = 0 ; side < NUM_SIDES ; side ++){
+            for(unsigned int piece = 0 ; piece < NUM_PIECE_TYPES ; piece ++){
+                REQUIRE(b_pgn->get_bitboard()->piece_boards[side][piece] == b_fen->get_bitboard()->piece_boards[side][piece]);
+            }
+        }
+    }
+}
+
 TEST_CASE("En Passant Rights Updated", "[En Passant]"){
 
 
@@ -351,7 +389,6 @@ TEST_CASE("Initial value for pesto evaluation", "[PestoEvaluation]"){
     BoardInfo* bi = &_bi;
     Board _b = Board(fen_path, bb, bi);
     Board* b = &_b;
-    b->parse_fen(fen_path);
 
     SECTION("init_evaluation"){
         PestoEvaluation _pesto = PestoEvaluation(b);
