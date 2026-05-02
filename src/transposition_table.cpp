@@ -2,14 +2,6 @@
 #include "const.hpp"
 #include "move.hpp"
 #include "transposition_table.hpp"
-TranspositionTable* TranspositionTable::instanceptr=nullptr;
-
-TranspositionTable* TranspositionTable::get_instance() {
-    if (instanceptr == nullptr) {
-        instanceptr = new TranspositionTable();
-    }
-    return instanceptr;
-}
 
 void TranspositionTable::generate_zobrist_values(){
     std::mt19937_64 gen(0);           // 64-bit Mersenne Twister RNG
@@ -151,7 +143,7 @@ void TranspositionTable::not_equal(){
 unsigned int TranspositionTable::get_value_perft(int depth_searched){
     auto val = perft_table[depth_searched].find(hash_val);
     if(val != perft_table[depth_searched].end()){
-        found_value();
+        // found_value();
         return val->second;
     }
     return 0;
@@ -159,7 +151,7 @@ unsigned int TranspositionTable::get_value_perft(int depth_searched){
 int TranspositionTable::get_value_eval(int depth_searched){
     auto val = eval_table[depth_searched].find(hash_val);
     if(val != eval_table[depth_searched].end()){
-        found_value();
+        // found_value();
         return val->second;
     }
     return DEFAULT_EVAL;
@@ -167,6 +159,7 @@ int TranspositionTable::get_value_eval(int depth_searched){
 unsigned int TranspositionTable::get_value_threefold(){
     auto val = threefold_table.find(hash_val);
     if(val != threefold_table.end()){
+        // found_value();
         return val->second;
     }
     return 0;
@@ -184,8 +177,12 @@ void TranspositionTable::add_value_threefold(int val){
     threefold_table.insert({hash_val, val});
 }
 void TranspositionTable::increment_value_threefold(){
-    threefold_table[hash_val] ++;
+    if(get_value_threefold() > 0)
+        threefold_table[hash_val] ++;
+    else
+        add_value_threefold(1);
 }
 void TranspositionTable::decrement_value_threefold(){
-    threefold_table[hash_val] --;
+    if(get_value_threefold() > 1)
+        threefold_table[hash_val] --;
 }

@@ -14,6 +14,7 @@
 #include "bitboard.hpp"
 #include "board_info.hpp"
 #include "move_set.hpp"
+#include "transposition_table.hpp"
 #include "utils.hpp"
 #include "move_gen.hpp"
 using namespace std::chrono;
@@ -68,9 +69,12 @@ TEST_CASE("Piece locations for starting position", "[Parsing FEN]"){
     const char* fen_path = "./positions/starting_position.txt";
     Bitboard _bb = Bitboard();
     BoardInfo _bi = BoardInfo();
+    TranspositionTable _tt = TranspositionTable();
+
     Bitboard* bb = &_bb;
     BoardInfo* bi = &_bi;
-    Board _b = Board(fen_path, bb, bi);
+    TranspositionTable* tt = &_tt;
+    Board _b = Board(fen_path, bb, bi, tt);
     Board* b = &_b;
     b->get_bitboard()->display();
 
@@ -130,9 +134,11 @@ TEST_CASE("Piece locations for fen test position", "[Parsing FEN]"){
     const char* fen_path = "./positions/fen_test_position.txt";
     Bitboard _bb = Bitboard();
     BoardInfo _bi = BoardInfo();
+    TranspositionTable _tt = TranspositionTable();
     Bitboard* bb = &_bb;
     BoardInfo* bi = &_bi;
-    Board _b = Board(fen_path, bb, bi);
+    TranspositionTable* tt = &_tt;
+    Board _b = Board(fen_path, bb, bi, tt);
     Board* b = &_b;
     SECTION("Pawn locations"){
         vector<vector<int>> expected_pawn_locations = {
@@ -186,20 +192,22 @@ TEST_CASE("Piece locations for fen test position", "[Parsing FEN]"){
     }
 }
 
-TEST_CASE("parse_pgn == parse_fen at the end", "[Parsing PGN]"){
+TEST_CASE("parse_uci_pgn == parse_fen at the end", "[Board]"){
     const char* starting_fen_path = "./positions/starting_position.txt";
     Bitboard _bb = Bitboard();
     BoardInfo _bi = BoardInfo();
+    TranspositionTable _tt = TranspositionTable();
     Bitboard* bb = &_bb;
     BoardInfo* bi = &_bi;
+    TranspositionTable* tt = &_tt;
 
-    SECTION("parse_pgn == parse_fen at the end"){
-        const char* pgn_path = "pgn/test_parse_pgn.txt";
-        Board _b_pgn = Board(starting_fen_path, bb, bi);
+    SECTION("parse_uci_pgn == parse_fen at the end 1"){
+        const char* pgn_path = "pgn/tests/test_1.uci";
+        Board _b_pgn = Board(starting_fen_path, bb, bi, tt);
         Board* b_pgn = &_b_pgn;
-        _b_pgn.parse_pgn(pgn_path);
-        const char* final_fen_path = "positions/test_parse_pgn_end.txt";
-        Board _b_fen = Board(final_fen_path, bb, bi);
+        b_pgn->parse_uci_pgn(pgn_path);
+        const char* final_fen_path = "positions/tests/test_parse_pgn_end.txt";
+        Board _b_fen = Board(final_fen_path, bb, bi, tt);
         Board* b_fen = &_b_fen;
         for(unsigned int side = 0 ; side < NUM_SIDES ; side ++){
             for(unsigned int piece = 0 ; piece < NUM_PIECE_TYPES ; piece ++){
@@ -207,14 +215,13 @@ TEST_CASE("parse_pgn == parse_fen at the end", "[Parsing PGN]"){
             }
         }
     }
-
-    SECTION("parse_pgn == parse_fen fabiano nepo"){
-        const char* pgn_path = "pgn/test_parse_pgn_fabi_nepo.txt";
-        Board _b_pgn = Board(starting_fen_path, bb, bi);
+    SECTION("parse_uci_pgn == parse_fen at the end 2"){
+        const char* pgn_path = "pgn/tests/test_2.uci";
+        Board _b_pgn = Board(starting_fen_path, bb, bi, tt);
         Board* b_pgn = &_b_pgn;
-        _b_pgn.parse_pgn(pgn_path);
-        const char* final_fen_path = "positions/test_parse_pgn_end_fabi_nepo.txt";
-        Board _b_fen = Board(final_fen_path, bb, bi);
+        b_pgn->parse_uci_pgn(pgn_path);
+        const char* final_fen_path = "positions/tests/test_parse_pgn_end_fabi_nepo.txt";
+        Board _b_fen = Board(final_fen_path, bb, bi, tt);
         Board* b_fen = &_b_fen;
         for(unsigned int side = 0 ; side < NUM_SIDES ; side ++){
             for(unsigned int piece = 0 ; piece < NUM_PIECE_TYPES ; piece ++){
@@ -224,15 +231,35 @@ TEST_CASE("parse_pgn == parse_fen at the end", "[Parsing PGN]"){
     }
 }
 
-TEST_CASE("En Passant Rights Updated", "[En Passant]"){
+TEST_CASE("threefold repitition draw", "[Board]"){
+    const char* starting_fen_path = "./positions/starting_position.txt";
+    Bitboard _bb = Bitboard();
+    BoardInfo _bi = BoardInfo();
+    TranspositionTable _tt = TranspositionTable();
+    Bitboard* bb = &_bb;
+    BoardInfo* bi = &_bi;
+    TranspositionTable* tt = &_tt;
+
+    SECTION("game ends after threefold repitition"){
+        const char* pgn_path = "pgn/tests/draw_end_early.uci";
+        Board _b_pgn = Board(starting_fen_path, bb, bi, tt);
+        Board* b_pgn = &_b_pgn;
+        b_pgn->parse_uci_pgn(pgn_path);
+        REQUIRE(b_pgn->threefold_draw == true);
+        REQUIRE(b_pgn->move_count == 74);
+    }
+}
+TEST_CASE("En Passant Rights Updated", "[Board]"){
 
 
     const char* fen_path = "./positions/starting_position.txt";
     Bitboard _bb = Bitboard();
     BoardInfo _bi = BoardInfo();
+    TranspositionTable _tt = TranspositionTable();
     Bitboard* bb = &_bb;
     BoardInfo* bi = &_bi;
-    Board _b = Board(fen_path, bb, bi);
+    TranspositionTable* tt = &_tt;
+    Board _b = Board(fen_path, bb, bi, tt);
     Board* b = &_b;
     vector<unsigned int> move_list = {
         MoveUtils::create_move(e2, e4, WHITE, pPAWN, DOUBLE_PAWN_PUSH),
@@ -261,15 +288,17 @@ TEST_CASE("En Passant Rights Updated", "[En Passant]"){
     }
 }
 
-TEST_CASE("En Passant Move Generated", "[En Passant]"){
+TEST_CASE("En Passant Move Generated", "[MoveGen]"){
 
 
     const char* fen_path = "./positions/starting_position.txt";
     Bitboard _bb = Bitboard();
     BoardInfo _bi = BoardInfo();
+    TranspositionTable _tt = TranspositionTable();
     Bitboard* bb = &_bb;
     BoardInfo* bi = &_bi;
-    Board _b = Board(fen_path, bb, bi);
+    TranspositionTable* tt = &_tt;
+    Board _b = Board(fen_path, bb, bi, tt);
     Board* b = &_b;
     vector<unsigned int> move_list = {
         MoveUtils::create_move(e2, e4, WHITE, pPAWN, DOUBLE_PAWN_PUSH),
@@ -333,8 +362,6 @@ TEST_CASE("En Passant Move Generated", "[En Passant]"){
 
     MoveGen mg2 = MoveGen(b, WHITE, mEP_CAPTURE);
 
-    // MoveGen mg2 = MoveGen(WHITE);
-    // mg2.set_move_type(mEP_CAPTURE);
 
     SECTION("queen side (b-a capture) en passant move generated"){
 
@@ -359,8 +386,6 @@ TEST_CASE("En Passant Move Generated", "[En Passant]"){
         MoveUtils::create_move(g7, g5, BLACK, pPAWN, DOUBLE_PAWN_PUSH)
     };
     MoveGen mg3 = MoveGen(b, WHITE,  mEP_CAPTURE);
-    // MoveGen mg3 = MoveGen(WHITE);
-    // mg3.set_move_type(mEP_CAPTURE);
 
     SECTION("king side (h-g capture) en passant move generated"){
 
@@ -385,9 +410,11 @@ TEST_CASE("Initial value for pesto evaluation", "[PestoEvaluation]"){
     string fen_path = "./positions/starting_position.txt";
     Bitboard _bb = Bitboard();
     BoardInfo _bi = BoardInfo();
+    TranspositionTable _tt = TranspositionTable();
     Bitboard* bb = &_bb;
     BoardInfo* bi = &_bi;
-    Board _b = Board(fen_path, bb, bi);
+    TranspositionTable* tt = &_tt;
+    Board _b = Board(fen_path, bb, bi, tt);
     Board* b = &_b;
 
     SECTION("init_evaluation"){
@@ -423,9 +450,11 @@ TEST_CASE("Update evaluation for pesto evaluation", "[PestoEvaluation]"){
     string fen_path = "./positions/bratko-kopec/bk_2.txt";
     Bitboard _bb = Bitboard();
     BoardInfo _bi = BoardInfo();
+    TranspositionTable _tt = TranspositionTable();
     Bitboard* bb = &_bb;
     BoardInfo* bi = &_bi;
-    Board _b = Board(fen_path, bb, bi);
+    TranspositionTable* tt = &_tt;
+    Board _b = Board(fen_path, bb, bi, tt);
     Board* b = &_b;
     b->get_bitboard()->display();
 
@@ -500,9 +529,11 @@ TEST_CASE("Only Captures","[MoveGen]"){
     string fen_path = "./positions/starting_position.txt";
     Bitboard _bb = Bitboard();
     BoardInfo _bi = BoardInfo();
+    TranspositionTable _tt = TranspositionTable();
     Bitboard* bb = &_bb;
     BoardInfo* bi = &_bi;
-    Board _b = Board(fen_path, bb, bi);
+    TranspositionTable* tt = &_tt;
+    Board _b = Board(fen_path, bb, bi, tt);
     Board* b = &_b;
     b->get_bitboard()->display();
 
@@ -555,7 +586,7 @@ TEST_CASE("Only Captures","[MoveGen]"){
 
     SECTION("pawn explored first"){
 
-        const char* perft_ordered = "./positions/bugs/test_perft_ordered.txt";
+        const char* perft_ordered = "./positions/tests/test_perft_ordered.txt";
         b->parse_fen(perft_ordered);
         b->get_bitboard()->display();
         MoveGen mg1 = MoveGen(b, WHITE);
@@ -584,9 +615,11 @@ TEST_CASE("Move generation total","[MoveGen]"){
     const char* queen_trade_path = "./positions/queen_trade.txt";
     Bitboard _bb = Bitboard();
     BoardInfo _bi = BoardInfo();
+    TranspositionTable _tt = TranspositionTable();
     Bitboard* bb = &_bb;
     BoardInfo* bi = &_bi;
-    Board _b = Board(queen_trade_path, bb, bi);
+    TranspositionTable* tt = &_tt;
+    Board _b = Board(queen_trade_path, bb, bi, tt);
     Board* b = &_b;
 
     MoveGen mg_captures = MoveGen(b, BLACK);
@@ -628,9 +661,11 @@ TEST_CASE("Number of nodes during search","[Perft]"){
     const char* fen_path = "./positions/starting_position.txt";
     Bitboard _bb = Bitboard();
     BoardInfo _bi = BoardInfo();
+    TranspositionTable _tt = TranspositionTable();
     Bitboard* bb = &_bb;
     BoardInfo* bi = &_bi;
-    Board _b = Board(fen_path, bb, bi);
+    TranspositionTable* tt = &_tt;
+    Board _b = Board(fen_path, bb, bi, tt);
     Board* b = &_b;
     
     PestoEvaluation _pesto = PestoEvaluation(b);
@@ -655,9 +690,11 @@ TEST_CASE("Number of nodes during search depth 4","[Perft]"){
     const char* fen_path = "./positions/starting_position.txt";
     Bitboard _bb = Bitboard();
     BoardInfo _bi = BoardInfo();
+    TranspositionTable _tt = TranspositionTable();
     Bitboard* bb = &_bb;
     BoardInfo* bi = &_bi;
-    Board _b = Board(fen_path, bb, bi);
+    TranspositionTable* tt = &_tt;
+    Board _b = Board(fen_path, bb, bi, tt);
     Board* b = &_b;
 
     PestoEvaluation _pesto = PestoEvaluation(b);
@@ -675,9 +712,11 @@ TEST_CASE("Number of nodes during search depth 5","[Perft]"){
     const char* fen_path = "./positions/starting_position.txt";
     Bitboard _bb = Bitboard();
     BoardInfo _bi = BoardInfo();
+    TranspositionTable _tt = TranspositionTable();
     Bitboard* bb = &_bb;
     BoardInfo* bi = &_bi;
-    Board _b = Board(fen_path, bb, bi);
+    TranspositionTable* tt = &_tt;
+    Board _b = Board(fen_path, bb, bi, tt);
     Board* b = &_b;
 
     PestoEvaluation _pesto = PestoEvaluation(b);
@@ -696,9 +735,11 @@ TEST_CASE("perft == perft_ordered","[Perft]"){
     const char* fen_path = "./positions/starting_position.txt";
     Bitboard _bb = Bitboard();
     BoardInfo _bi = BoardInfo();
+    TranspositionTable _tt = TranspositionTable();
     Bitboard* bb = &_bb;
     BoardInfo* bi = &_bi;
-    Board _b = Board(fen_path, bb, bi);
+    TranspositionTable* tt = &_tt;
+    Board _b = Board(fen_path, bb, bi, tt);
     Board* b = &_b;
 
     PestoEvaluation _pesto = PestoEvaluation(b);
@@ -715,9 +756,11 @@ TEST_CASE("promotions during search", "[Perft]"){
     string fen_path = "./positions/ep_fen.txt";
     Bitboard _bb = Bitboard();
     BoardInfo _bi = BoardInfo();
+    TranspositionTable _tt = TranspositionTable();
     Bitboard* bb = &_bb;
     BoardInfo* bi = &_bi;
-    Board _b = Board(fen_path, bb, bi);
+    TranspositionTable* tt = &_tt;
+    Board _b = Board(fen_path, bb, bi, tt);
     Board* b = &_b;
 
     PestoEvaluation _pesto = PestoEvaluation(b);
@@ -740,9 +783,11 @@ TEST_CASE("castles during search", "[Perft]"){
     string fen_path = "./positions/castle_fen.txt";
     Bitboard _bb = Bitboard();
     BoardInfo _bi = BoardInfo();
+    TranspositionTable _tt = TranspositionTable();
     Bitboard* bb = &_bb;
     BoardInfo* bi = &_bi;
-    Board _b = Board(fen_path, bb, bi);
+    TranspositionTable* tt = &_tt;
+    Board _b = Board(fen_path, bb, bi, tt);
     Board* b = &_b;
 
     PestoEvaluation _pesto = PestoEvaluation(b);
@@ -762,9 +807,11 @@ TEST_CASE("Unique Zobrist Hash vals", "[TranspositionTable]"){
     string fen_path = "./positions/starting_position.txt";
     Bitboard _bb = Bitboard();
     BoardInfo _bi = BoardInfo();
+    TranspositionTable _tt = TranspositionTable();
     Bitboard* bb = &_bb;
     BoardInfo* bi = &_bi;
-    Board _b = Board(fen_path, bb, bi);
+    TranspositionTable* tt = &_tt;
+    Board _b = Board(fen_path, bb, bi, tt);
     Board* b = &_b;
 
     PestoEvaluation _pesto = PestoEvaluation(b);
@@ -787,9 +834,11 @@ TEST_CASE("Updating hash val", "[TranspositionTable]"){
     string fen_path = "./positions/starting_position.txt";
     Bitboard _bb = Bitboard();
     BoardInfo _bi = BoardInfo();
+    TranspositionTable _tt = TranspositionTable();
     Bitboard* bb = &_bb;
     BoardInfo* bi = &_bi;
-    Board _b = Board(fen_path, bb, bi);
+    TranspositionTable* tt = &_tt;
+    Board _b = Board(fen_path, bb, bi, tt);
     Board* b = &_b;
 
     cout<<"initial hash_val: "<<b->tt->hash_val<<endl;
@@ -901,9 +950,11 @@ TEST_CASE("Updating hash val en passant", "[TranspositionTable]"){
     string fen_path = "./positions/starting_position.txt";
     Bitboard _bb = Bitboard();
     BoardInfo _bi = BoardInfo();
+    TranspositionTable _tt = TranspositionTable();
     Bitboard* bb = &_bb;
     BoardInfo* bi = &_bi;
-    Board _b = Board(fen_path, bb, bi);
+    TranspositionTable* tt = &_tt;
+    Board _b = Board(fen_path, bb, bi, tt);
     Board* b = &_b;
 
     cout<<"initial hash_val: "<<b->tt->hash_val<<endl;
@@ -965,12 +1016,14 @@ TEST_CASE("Updating hash val en passant", "[TranspositionTable]"){
 }
 TEST_CASE("Transposition Table cach matches (simple)", "[TranspositionTable]"){
 
-    string fen_path = "./positions/transposition_test.txt";
+    string fen_path = "./positions/tests/transposition_test.txt";
     Bitboard _bb = Bitboard();
     BoardInfo _bi = BoardInfo();
+    TranspositionTable _tt = TranspositionTable();
     Bitboard* bb = &_bb;
     BoardInfo* bi = &_bi;
-    Board _b = Board(fen_path, bb, bi);
+    TranspositionTable* tt = &_tt;
+    Board _b = Board(fen_path, bb, bi, tt);
     Board* b = &_b;
 
     PestoEvaluation _pesto = PestoEvaluation(b);
@@ -996,9 +1049,11 @@ TEST_CASE("Transposition Table cache matches", "[TranspositionTable]"){
     string fen_path = "./positions/starting_position.txt";
     Bitboard _bb = Bitboard();
     BoardInfo _bi = BoardInfo();
+    TranspositionTable _tt = TranspositionTable();
     Bitboard* bb = &_bb;
     BoardInfo* bi = &_bi;
-    Board _b = Board(fen_path, bb, bi);
+    TranspositionTable* tt = &_tt;
+    Board _b = Board(fen_path, bb, bi, tt);
     Board* b = &_b;
 
     PestoEvaluation _pesto = PestoEvaluation(b);
@@ -1023,9 +1078,11 @@ TEST_CASE("Alpha beta pruning selected move", "[Search]"){
     string fen_path = "./positions/bratko-kopec/bk_1.txt";
     Bitboard _bb = Bitboard();
     BoardInfo _bi = BoardInfo();
+    TranspositionTable _tt = TranspositionTable();
     Bitboard* bb = &_bb;
     BoardInfo* bi = &_bi;
-    Board _b = Board(fen_path, bb, bi);
+    TranspositionTable* tt = &_tt;
+    Board _b = Board(fen_path, bb, bi, tt);
     Board* b = &_b;
 
     PestoEvaluation _pesto = PestoEvaluation(b);
@@ -1056,16 +1113,17 @@ TEST_CASE("Alpha beta pruning selected move backrank bug", "[Search]"){
     string fen_path = "./positions/bugs/backrank_miss.txt";
     Bitboard _bb = Bitboard();
     BoardInfo _bi = BoardInfo();
+    TranspositionTable _tt = TranspositionTable();
     Bitboard* bb = &_bb;
     BoardInfo* bi = &_bi;
-    Board _b = Board(fen_path, bb, bi);
+    TranspositionTable* tt = &_tt;
+    Board _b = Board(fen_path, bb, bi, tt);
     Board* b = &_b;
 
     PestoEvaluation _pesto = PestoEvaluation(b);
     PestoEvaluation* pesto = &_pesto;
 
     Search s = Search(b, pesto);
-
 
     SECTION("backrank"){
         pv_t* principal_var = (pv_t*) calloc(1, sizeof(pv_t));
@@ -1084,5 +1142,27 @@ TEST_CASE("Alpha beta pruning selected move backrank bug", "[Search]"){
         REQUIRE(s.selected_move != MoveUtils::create_move(e5, c4, BLACK, pKNIGHT));
         REQUIRE(s.selected_move == MoveUtils::create_move(e5, g6, BLACK, pKNIGHT));
     }
-    
+}
+TEST_CASE("Alpha beta pruning avoid threefold repitition in winning position", "[Search]"){
+    string fen_path = "./positions/starting_position.txt";
+    string pgn_path = "./pgn/tests/avoid_draw.uci";
+    Bitboard _bb = Bitboard();
+    BoardInfo _bi = BoardInfo();
+    TranspositionTable _tt = TranspositionTable();
+    Bitboard* bb = &_bb;
+    BoardInfo* bi = &_bi;
+    TranspositionTable* tt = &_tt;
+    Board _b = Board(fen_path, bb, bi, tt);
+    Board* b = &_b;
+    b->parse_uci_pgn(pgn_path);
+
+    PestoEvaluation _pesto = PestoEvaluation(b);
+    PestoEvaluation* pesto = &_pesto;
+
+    Search s = Search(b, pesto);
+    SECTION("Avoid a5a1 to prevent threefold"){
+        int score = s.iterative_deepening(6, BLACK, BLACK);
+        unsigned int drawing_move = MoveUtils::create_move(a5, a1, BLACK, pQUEEN);
+        REQUIRE(s.selected_move != drawing_move);
+    }
 }

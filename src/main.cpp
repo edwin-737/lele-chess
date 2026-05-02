@@ -1,4 +1,5 @@
 #include "pesto.hpp"
+#include "transposition_table.hpp"
 #include <chrono>
 #include <stdlib.h>
 #include <vector>
@@ -99,12 +100,17 @@ int main(int argc, char** argv)
     cout << "Making objects \n";
     Bitboard _bb = Bitboard();
     BoardInfo _bi = BoardInfo();
-    Board b = Board(fen_path, &_bb, &_bi);
+    TranspositionTable _tt = TranspositionTable();
 
-    b.get_bitboard()->display();
-    PestoEvaluation pesto = PestoEvaluation(&b);
-
-    Search s = Search(&b, &pesto, depth);
+    Board _b = Board(fen_path, &_bb, &_bi, &_tt);
+    Board* b = &_b;
+    if(pgn_path.length() > 0){
+        b->parse_uci_pgn(pgn_path);
+    }
+    b->get_bitboard()->display();
+    PestoEvaluation _pesto = PestoEvaluation(b);
+    PestoEvaluation* pesto = &_pesto;
+    Search s = Search(b, pesto, depth);
     auto start = high_resolution_clock::now();
 
     if (task == PERFT) {
@@ -112,7 +118,7 @@ int main(int argc, char** argv)
         #ifdef ENABLE_PROFILER
             ProfilerStart("perf-profile.prof");
         #endif
-        unsigned int num_nodes = s.perft(depth, depth, b.get_side_to_move(), transposition);
+        unsigned int num_nodes = s.perft(depth, depth, b->get_side_to_move(), transposition);
         
         #ifdef ENABLE_PROFILER
             ProfilerStop();

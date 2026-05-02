@@ -16,9 +16,6 @@ using namespace BoardSquares;
 
 class TranspositionTable{
 private:
-    TranspositionTable(){
-        generate_zobrist_values();
-    };
     void generate_zobrist_values();
     uint64 get_zobrist_value(unsigned int zobrist_offset, unsigned int idx);
     unsigned int calculate_zobrist_idx_piece_square(unsigned int side, unsigned int piece, unsigned int square);
@@ -26,9 +23,9 @@ private:
     unsigned int calculate_zobrist_idx_castle_rights(unsigned int castle_right);
     unsigned int calculate_zobrist_idx_ep_rights(unsigned int ep_right);
 public: 
-    static TranspositionTable* instanceptr;
-    TranspositionTable(const TranspositionTable& obj) = delete;
-    static TranspositionTable* get_instance();
+    TranspositionTable(){
+        generate_zobrist_values();
+    };
     void initialise_hash_val(unsigned int side_to_move, Bitboard* bb, BoardInfo* bi);
     void update_table(uint64 val);
     void update_hash_val_side_to_move(unsigned int move);

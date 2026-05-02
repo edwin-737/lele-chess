@@ -24,6 +24,7 @@ class Search{
 public:
     Search(Board* _b, PestoEvaluation* _pesto, int _max_depth=5): b(_b), pesto(_pesto),max_depth(_max_depth){
         pesto->init_evaluate();
+        tt = b->get_transposition_table();
     }
 
     unsigned int perft(int original_depth,int depth_left, unsigned int side, unsigned int root_move = 0ULL, bool transposition = false);
@@ -50,7 +51,7 @@ public:
 private:
     Board* b;
     PestoEvaluation* pesto;
-    TranspositionTable* tt = TranspositionTable::get_instance();
+    TranspositionTable* tt;
     vector<unsigned int> selected_moves[DEPTH_LIMIT];
     int material = 0;
 

@@ -31,7 +31,7 @@ typedef enum pgn_state {
 
 class Board{
 public:
-    Board(fs::path fen_path, Bitboard* _bb, BoardInfo* _bi): bb(_bb), bi(_bi), side_to_move(WHITE){
+    Board(fs::path fen_path, Bitboard* _bb, BoardInfo* _bi, TranspositionTable* _tt): bb(_bb), bi(_bi), tt(_tt), side_to_move(WHITE){
         king_location[WHITE] = e1;
         king_location[BLACK] = e8;
         parse_fen(fen_path);
@@ -47,6 +47,7 @@ public:
     bool can_castle_queenside(unsigned int side);
     void parse_fen(fs::path path);
     void parse_pgn(fs::path path);
+    void parse_uci_pgn(fs::path path);
     unsigned int get_side_to_move();
     void change_side_to_move();
     int get_piece_location(unsigned int side, unsigned int piece);
@@ -56,9 +57,12 @@ public:
     unsigned int create_move_using_pgn(unsigned int from, unsigned int to, unsigned int promoted_piece = NO_PIECE);
     BoardInfo* get_board_info();
     Bitboard* get_bitboard();
+    TranspositionTable* get_transposition_table();
     set<int> piece_locations[NUM_SIDES][NUM_PIECE_TYPES];
     int king_location[NUM_SIDES];
-    TranspositionTable* tt = TranspositionTable::get_instance();
+    TranspositionTable* tt;
+    bool threefold_draw = false;
+    int move_count = 1;
 private:
     void update_piece_locations(int side, int piece, int from, int to);
     void update_king_location(int side, int square);
