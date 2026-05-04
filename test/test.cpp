@@ -14,6 +14,7 @@
 #include "bitboard.hpp"
 #include "board_info.hpp"
 #include "move_set.hpp"
+#include "transposition_table.hpp"
 #include "utils.hpp"
 #include "move_gen.hpp"
 using namespace std::chrono;
@@ -186,6 +187,42 @@ TEST_CASE("Piece locations for fen test position", "[Parsing FEN]"){
     }
 }
 
+TEST_CASE("parse_uci_pgn == parse_fen at the end", "[Board]"){
+    const char* starting_fen_path = "./positions/starting_position.txt";
+    Bitboard _bb = Bitboard();
+    BoardInfo _bi = BoardInfo();
+    Bitboard* bb = &_bb;
+    BoardInfo* bi = &_bi;
+
+    SECTION("parse_uci_pgn == parse_fen at the end 1"){
+        const char* pgn_path = "pgn/tests/test_1.uci";
+        Board _b_pgn = Board(starting_fen_path, bb, bi);
+        Board* b_pgn = &_b_pgn;
+        b_pgn->parse_uci_pgn(pgn_path);
+        const char* final_fen_path = "positions/tests/test_1_end.txt";
+        Board _b_fen = Board(final_fen_path, bb, bi);
+        Board* b_fen = &_b_fen;
+        for(unsigned int side = 0 ; side < NUM_SIDES ; side ++){
+            for(unsigned int piece = 0 ; piece < NUM_PIECE_TYPES ; piece ++){
+                REQUIRE(b_pgn->get_bitboard()->piece_boards[side][piece] == b_fen->get_bitboard()->piece_boards[side][piece]);
+            }
+        }
+    }
+    SECTION("parse_uci_pgn == parse_fen at the end 2"){
+        const char* pgn_path = "pgn/tests/test_2.uci";
+        Board _b_pgn = Board(starting_fen_path, bb, bi);
+        Board* b_pgn = &_b_pgn;
+        b_pgn->parse_uci_pgn(pgn_path);
+        const char* final_fen_path = "positions/tests/test_2_end.txt";
+        Board _b_fen = Board(final_fen_path, bb, bi);
+        Board* b_fen = &_b_fen;
+        for(unsigned int side = 0 ; side < NUM_SIDES ; side ++){
+            for(unsigned int piece = 0 ; piece < NUM_PIECE_TYPES ; piece ++){
+                REQUIRE(b_pgn->get_bitboard()->piece_boards[side][piece] == b_fen->get_bitboard()->piece_boards[side][piece]);
+            }
+        }
+    }
+}
 TEST_CASE("En Passant Rights Updated", "[En Passant]"){
 
 
@@ -1047,5 +1084,57 @@ TEST_CASE("Alpha beta pruning selected move backrank bug", "[Search]"){
         REQUIRE(s.selected_move != MoveUtils::create_move(e5, c4, BLACK, pKNIGHT));
         REQUIRE(s.selected_move == MoveUtils::create_move(e5, g6, BLACK, pKNIGHT));
     }
-    
+    TranspositionTable::instanceptr = nullptr;
+    delete TranspositionTable::instanceptr;
+}
+
+TEST_CASE("Iterative deepening avoid threefold repitition in winning position", "[Search]"){
+    string fen_path = "./positions/starting_position.txt";
+    string pgn_path = "./pgn/tests/avoid_draw.uci";
+    Bitboard _bb = Bitboard();
+    BoardInfo _bi = BoardInfo();
+    Bitboard* bb = &_bb;
+    BoardInfo* bi = &_bi;
+
+    Board _b = Board(fen_path, bb, bi);
+    Board* b = &_b;
+    b->parse_uci_pgn(pgn_path);
+
+    PestoEvaluation _pesto = PestoEvaluation(b);
+    PestoEvaluation* pesto = &_pesto;
+
+    Search s = Search(b, pesto);
+    SECTION("Avoid a5a1 to prevent threefold"){
+        int score = s.iterative_deepening(6, BLACK, BLACK);
+        unsigned int drawing_move = MoveUtils::create_move(a5, a1, BLACK, pQUEEN);
+        cout<<"selected move: \n";
+        MoveUtils::display(s.selected_move);
+        REQUIRE(s.selected_move != drawing_move);
+    }
+}
+
+TEST_CASE("Alpha beta pruning take threefold repitition in losing position", "[Search]"){
+    string fen_path = "./positions/starting_position.txt";
+    string pgn_path = "./pgn/tests/take_draw.uci";
+    Bitboard _bb = Bitboard();
+    BoardInfo _bi = BoardInfo();
+    Bitboard* bb = &_bb;
+    BoardInfo* bi = &_bi;
+
+    Board _b = Board(fen_path, bb, bi);
+    Board* b = &_b;
+    b->parse_uci_pgn(pgn_path);
+
+    PestoEvaluation _pesto = PestoEvaluation(b);
+    PestoEvaluation* pesto = &_pesto;
+
+    Search s = Search(b, pesto);
+    SECTION("make f4c1 to take threefold"){
+        int score = s.iterative_deepening(6, BLACK, BLACK);
+        unsigned int drawing_move = MoveUtils::create_move(f4, c1, BLACK, pQUEEN);
+        cout<<"selected move: \n";
+        MoveUtils::display(s.selected_move);
+        REQUIRE(s.selected_move == drawing_move);
+        REQUIRE(score == 0);
+    }
 }

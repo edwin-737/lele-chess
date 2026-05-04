@@ -47,7 +47,7 @@ public:
     bool can_castle_kingside(unsigned int side);
     bool can_castle_queenside(unsigned int side);
     void parse_fen(fs::path path);
-    void parse_pgn(fs::path path);
+    void parse_uci_pgn(fs::path path, bool verbose=false);
     unsigned int get_side_to_move();
     void change_side_to_move();
     int get_piece_location(unsigned int side, unsigned int piece);
@@ -60,6 +60,9 @@ public:
     set<int> piece_locations[NUM_SIDES][NUM_PIECE_TYPES];
     int king_location[NUM_SIDES];
     TranspositionTable* tt = TranspositionTable::get_instance();
+
+    bool threefold_draw = false;
+    int move_count = 0;
 private:
     void update_piece_locations(int side, int piece, int from, int to);
     void update_king_location(int side, int square);

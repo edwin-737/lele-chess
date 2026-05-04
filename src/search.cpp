@@ -172,75 +172,71 @@ int Search::alpha_beta(int alpha, int beta, int depth_left, unsigned int side, u
         if(b->apply_move_if_legal(move)){
 
             tt->increment_value_threefold();
-            if(tt->get_value_threefold() == 3){  
-                b->reverse_move(move);
-                tt->decrement_value_threefold();
+            if(use_pesto)
+                pesto->update_evaluation(move, 0);
+            int score = 0;
+            int depth_searched = 10 - depth_left;
+            // if(transposition){
+            //     int tt_val = tt->get_value_eval(depth_searched);
+            //     if(tt_val == DEFAULT_EVAL){
+            //         score = -alpha_beta(-beta, -alpha, depth_left - 1, side ^ 1, starting_side, move, &line, transposition, use_pesto);
+            //         tt->add_value_eval(depth_searched, score);
+            //     } else {
+            //         score = tt_val;
+            //     }
+            // } else {
+
+            if(tt->get_value_threefold() == 3){
+                score = STALEMATE_EVAL;
             } else {
-                if(use_pesto)
-                    pesto->update_evaluation(move, 0);
-                int score = 0;
-                int depth_searched = 10 - depth_left;
-                // if(transposition){
-                //     int tt_val = tt->get_value_eval(depth_searched);
-                //     if(tt_val == DEFAULT_EVAL){
-                //         score = -alpha_beta(-beta, -alpha, depth_left - 1, side ^ 1, starting_side, move, &line, transposition, use_pesto);
-                //         tt->add_value_eval(depth_searched, score);
-                //     } else {
-                //         score = tt_val;
-                //     }
-                // } else {
-                    score = -alpha_beta(-beta, -alpha, depth_left - 1, side ^ 1, starting_side, move, &line, transposition, use_pesto);
-                // }
+                score = -alpha_beta(-beta, -alpha, depth_left - 1, side ^ 1, starting_side, move, &line, transposition, use_pesto);
+            }                
+            // }
 
-                if(!searched_move_found && MoveUtils::get_from(move) == e4 && MoveUtils::get_to(move) == d5){
-                    searched_move_found = true;
-                    searched_move_depth = depth_left;
-                    searched_move_eval = score;
-                }
-                // if(mg_captures.searched_move_found){
-                //     searched_move_found = true;
-                // }
-                b->reverse_move(move);
-                tt->decrement_value_threefold();
-                if(use_pesto)
-                    pesto->update_evaluation(move, 1);
-                if(score >= beta){
-                    num_nodes++;
-                    return beta;
+            // if(mg_captures.searched_move_found){
+            //     searched_move_found = true;
+            // }
+            tt->decrement_value_threefold();
+            b->reverse_move(move);
+            if(use_pesto)
+                pesto->update_evaluation(move, 1);
+            if(score >= beta){
+                num_nodes++;
+                return beta;
+            } 
+            if(score > alpha){
+
+                principal_variation->moves[0] = move;
+                memcpy(principal_variation->moves + 1, line.moves, line.len * sizeof(unsigned int));
+                principal_variation->len = line.len + 1;
+
+                if(depth_left == max_depth){
+                    selected_move = move;
+                    cout<<"-----------------\n";
+                    cout<<"selected_move:";
+                    MoveUtils::display(selected_move);
+                    cout<<"score: "<<score<<endl;
+                    cout<<"alpha: "<<alpha<<endl;
+                    cout<<"-----------------\n";
+
+
+                    cout<<"-----------------\n";
+                    cout<<"current variation\n";
+                    cout<<"principal_variation length: "<<principal_variation->len<<endl;
+                    for(int i = 0 ; i < principal_variation->len ; i ++){
+                        cout<<i<<": ";
+                        MoveUtils::display(principal_variation->moves[i]);
+                    }
+                    stop = high_resolution_clock::now();
+                    duration<double> elapsed = stop - start;  // seconds as double (fractional)
+                    cout<<"time elapsed: "<<elapsed.count()<<endl;
+                    cout<<"node count: "<<num_nodes<<endl;
+                    cout<<"-----------------\n";
                 } 
-                if(score > alpha){
-
-                    principal_variation->moves[0] = move;
-                    memcpy(principal_variation->moves + 1, line.moves, line.len * sizeof(unsigned int));
-                    principal_variation->len = line.len + 1;
-
-                    if(depth_left == max_depth){
-                        selected_move = move;
-                        cout<<"-----------------\n";
-                        cout<<"selected_move:";
-                        MoveUtils::display(selected_move);
-                        cout<<"score: "<<score<<endl;
-                        cout<<"alpha: "<<alpha<<endl;
-                        cout<<"-----------------\n";
-
-
-                        cout<<"-----------------\n";
-                        cout<<"current variation\n";
-                        cout<<"principal_variation length: "<<principal_variation->len<<endl;
-                        for(int i = 0 ; i < principal_variation->len ; i ++){
-                            cout<<i<<": ";
-                            MoveUtils::display(principal_variation->moves[i]);
-                        }
-                        stop = high_resolution_clock::now();
-                        duration<double> elapsed = stop - start;  // seconds as double (fractional)
-                        cout<<"time elapsed: "<<elapsed.count()<<endl;
-                        cout<<"node count: "<<num_nodes<<endl;
-                        cout<<"-----------------\n";
-                    } 
-                    alpha = score;
-                } 
-                no_moves_left = false;
-            }
+                alpha = score;
+            } 
+            no_moves_left = false;
+            // }
         }
     }
 
@@ -248,14 +244,17 @@ int Search::alpha_beta(int alpha, int beta, int depth_left, unsigned int side, u
         if(move == INCREMENTING_MOVE_TYPE)
             continue;
         if(b->apply_move_if_legal(move)){
+            tt->increment_value_threefold();
             int prev_eval = pesto->get_evaluation(starting_side, side);
             if(use_pesto)
                 pesto->update_evaluation(move, 0);
             int score = 0;
             int depth_searched = 10 - depth_left;
-
-            score = -alpha_beta(-beta, -alpha, depth_left - 1, side ^ 1, starting_side, move, &line, transposition, use_pesto);
-
+            if(tt->get_value_threefold() == 3){
+                score = STALEMATE_EVAL;
+            } else {
+                score = -alpha_beta(-beta, -alpha, depth_left - 1, side ^ 1, starting_side, move, &line, transposition, use_pesto);
+            }
             // if(!searched_move_found && depth_left == max_depth && MoveUtils::get_from(move) == e4){
             //     searched_move_depth = depth_left;
             //     searched_move_found = true;
@@ -266,6 +265,7 @@ int Search::alpha_beta(int alpha, int beta, int depth_left, unsigned int side, u
             //     }
 
             // }
+            tt->decrement_value_threefold();
             b->reverse_move(move);
             if(use_pesto)
                 pesto->update_evaluation(move, 1);
@@ -307,7 +307,6 @@ int Search::alpha_beta(int alpha, int beta, int depth_left, unsigned int side, u
             } 
             no_moves_left = false;
         }
-
     }
 
     while((move = mg_quiet.get_move()) != NO_MOVES_LEFT){
@@ -322,6 +321,7 @@ int Search::alpha_beta(int alpha, int beta, int depth_left, unsigned int side, u
             searched_move_found = true;
         }
         if(b->apply_move_if_legal(move)){
+            tt->increment_value_threefold();
             if(use_pesto)
                 pesto->update_evaluation(move, 0);
             int score = 0;
@@ -335,8 +335,14 @@ int Search::alpha_beta(int alpha, int beta, int depth_left, unsigned int side, u
             //         score = tt_val;
             //     }
             // } else {
+
+            if(tt->get_value_threefold() == 3){
+                score = STALEMATE_EVAL;
+            } else {
                 score = -alpha_beta(-beta, -alpha, depth_left - 1, side ^ 1, starting_side, move, &line, transposition, use_pesto);
+            }
             // }
+            tt->decrement_value_threefold();
             b->reverse_move(move);
             if(use_pesto)
                 pesto->update_evaluation(move, 1);
@@ -379,7 +385,6 @@ int Search::alpha_beta(int alpha, int beta, int depth_left, unsigned int side, u
             } 
             no_moves_left = false;
         }
-
     }
 
     if(no_moves_left){
@@ -438,13 +443,22 @@ int Search::quiesce(int alpha, int beta, int depth, unsigned int side,  unsigned
             continue;
         }
         if(b->apply_move_if_legal(move)){
+            tt->increment_value_threefold();
             if(use_pesto)
                 pesto->update_evaluation(move, 0);
-            int score = -quiesce(-beta, -alpha, depth-1, side ^ 1, starting_side, &line, transposition, use_pesto);
+            int score = 0;
+
+            if(tt->get_value_threefold() == 3){
+                score = STALEMATE_EVAL;
+            } else {
+                score = -quiesce(-beta, -alpha, depth-1, side ^ 1, starting_side, &line, transposition, use_pesto);                
+            }
+            // int score = -quiesce(-beta, -alpha, depth-1, side ^ 1, starting_side, &line, transposition, use_pesto);
             if(move == searched_move){
                 searched_move_eval = score;
                 searched_move_found = true;
             }
+            tt->decrement_value_threefold();
             b->reverse_move(move);
             if(use_pesto)
                 pesto->update_evaluation(move, 1);
@@ -473,9 +487,9 @@ int Search::quiesce(int alpha, int beta, int depth, unsigned int side,  unsigned
                 // cout<<"node count: "<<num_nodes<<endl;
                 // cout<<"-----------------\n";
                 alpha = score;
+            // }
             }
         }
-
     }
 
     num_nodes++;

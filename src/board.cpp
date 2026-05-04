@@ -412,50 +412,48 @@ unsigned int Board::create_move_using_pgn(unsigned int from, unsigned int to, un
         int from_to_difference = abs((int)from - (int)to);
         if(from_to_difference == 16){
             additional_info = DOUBLE_PAWN_PUSH;
-        } else if(from_to_difference == 7 || from_to_difference == 9){
-            if(promoted_piece){
-                if(bb->collective_piece_boards[side ^ 1] & to_bb){
-                    if(promoted_piece == pKNIGHT){
-                        additional_info = KNIGHT_CAPTURE_PROMOTION;
-                    } else if(promoted_piece == pBISHOP){
-                        additional_info = BISHOP_CAPTURE_PROMOTION;
-                    } else if(promoted_piece == pROOK){
-                        additional_info = ROOK_CAPTURE_PROMOTION;
-                    } else {
-                        additional_info = QUEEN_CAPTURE_PROMOTION;
-                    }
-                } else {
-                    if(promoted_piece == pKNIGHT){
-                        additional_info = KNIGHT_PROMOTION;
-                    } else if(promoted_piece == pBISHOP){
-                        additional_info = BISHOP_PROMOTION;
-                    } else if(promoted_piece == pROOK){
-                        additional_info = ROOK_PROMOTION;
-                    } else {
-                        additional_info = QUEEN_PROMOTION;
-                    }
-                }
+        } else if((promoted_piece != NO_PIECE || MoveUtils::is_final_rank(to)) && from_to_difference == 8){
+            if(promoted_piece == pKNIGHT){
+                additional_info = KNIGHT_PROMOTION;
+            } else if(promoted_piece == pBISHOP){
+                additional_info = BISHOP_PROMOTION;
+            } else if(promoted_piece == pROOK){
+                additional_info = ROOK_PROMOTION;
             } else {
-                if(bb->collective_piece_boards[side ^ 1] & to_bb){
-                    additional_info = CAPTURE;
-                } else {
-                    additional_info = EP_CAPTURE;
-                }
+                additional_info = QUEEN_PROMOTION;
             }
-        } 
+        } else if(promoted_piece != NO_PIECE || MoveUtils::is_final_rank(to) && from_to_difference != 8){
+            if(promoted_piece == pKNIGHT){
+                additional_info = KNIGHT_CAPTURE_PROMOTION;
+            } else if(promoted_piece == pBISHOP){
+                additional_info = BISHOP_CAPTURE_PROMOTION;
+            } else if(promoted_piece == pROOK){
+                additional_info = ROOK_CAPTURE_PROMOTION;
+            } else {
+                additional_info = QUEEN_CAPTURE_PROMOTION;
+            }
+        } else if(from_to_difference == 7 || from_to_difference == 9){
+            if(bb->collective_piece_boards[side ^ 1] & to_bb){
+                additional_info = CAPTURE;
+            } else {
+                additional_info = EP_CAPTURE;
+            }
+        }
     } else {
-        if(bb->collective_piece_boards[side ^ 1] & to_bb)
+        if(captured_piece != NO_PIECE)
             additional_info = CAPTURE;
     }
     if(additional_info == QUIET_MOVE){
-        cout<<"move is quiet\n";
+        // cout<<"move is quiet\n";
         return MoveUtils::create_move(from, to, side, piece, QUIET_MOVE);
     } else if(additional_info == DOUBLE_PAWN_PUSH){
-        cout<<"move is double pawn push\n";
+        // cout<<"move is double pawn push\n";
         return MoveUtils::create_move(from, to, side, pPAWN, DOUBLE_PAWN_PUSH);
     } else if(additional_info == CAPTURE){
+        // cout<<"move is quiet\n";
         return MoveUtils::create_move(from, to, side, piece, CAPTURE, captured_piece);
     } else if(additional_info == EP_CAPTURE){
+        // cout<<"move is en passant\n";
         unsigned int ep_capture_file = 0;
         if(side == WHITE){
             ep_capture_file = to - a4;
@@ -464,24 +462,34 @@ unsigned int Board::create_move_using_pgn(unsigned int from, unsigned int to, un
         }
         return MoveUtils::create_move(from, to, side, pPAWN, EP_CAPTURE, pPAWN, ep_capture_file);
     } else if(additional_info == KING_CASTLE){
+        // cout<<"move is kingside castle\n";
         return MoveUtils::create_move(from, to, side, pKING, KING_CASTLE);
     } else if(additional_info == QUEEN_CASTLE){
+        // cout<<"move is queenside castle\n";
         return MoveUtils::create_move(from, to, side, pKING, QUEEN_CASTLE);
     } else if(additional_info == KNIGHT_PROMOTION){
+        // cout<<"move is knight promotion\n";
         return MoveUtils::create_move(from, to, side, piece, KNIGHT_PROMOTION);
     } else if(additional_info == BISHOP_PROMOTION){
+        // cout<<"move is bishop promotion\n";
         return MoveUtils::create_move(from, to, side, piece, BISHOP_PROMOTION);
     } else if(additional_info == ROOK_PROMOTION){
+        // cout<<"move is rook promotion\n";
         return MoveUtils::create_move(from, to, side, piece, ROOK_PROMOTION);
     } else if(additional_info == QUEEN_PROMOTION){
+        // cout<<"move is queen promotion\n";
         return MoveUtils::create_move(from, to, side, piece, QUEEN_PROMOTION);
     } else if(additional_info == KNIGHT_CAPTURE_PROMOTION){
+        // cout<<"move is knight capture promotion\n";
         return MoveUtils::create_move(from, to, side, piece, KNIGHT_CAPTURE_PROMOTION, captured_piece);
     } else if(additional_info == BISHOP_CAPTURE_PROMOTION){
+        // cout<<"move is bishop capture promotion\n";
         return MoveUtils::create_move(from, to, side, piece, BISHOP_CAPTURE_PROMOTION, captured_piece);
     } else if(additional_info == ROOK_CAPTURE_PROMOTION){
+        // cout<<"move is rook capture promotion\n";
         return MoveUtils::create_move(from, to, side, piece, ROOK_CAPTURE_PROMOTION, captured_piece);
     } else if(additional_info == QUEEN_CAPTURE_PROMOTION){
+        // cout<<"move is queen capture promotion\n";
         return MoveUtils::create_move(from, to, side, piece, QUEEN_CAPTURE_PROMOTION, captured_piece);
     }
     cout<<"no move match\n";
@@ -580,10 +588,10 @@ void Board::parse_fen(fs::path path){
     }
     bi->set_board_info(initial_castle_rights, initial_ep_rights);
     bb->update();
-    init_piece_locations();
+    // init_piece_locations();
     tt->initialise_hash_val(side_to_move, bb, bi);
 }
-void Board::parse_pgn(fs::path path){
+void Board::parse_uci_pgn(fs::path path, bool verbose){
 
     bi->set_board_info(initial_castle_rights, initial_ep_rights);
     bb->update();
@@ -592,22 +600,16 @@ void Board::parse_pgn(fs::path path){
     if(file.is_open()){
         std::string move_string;
         while(file >> move_string){
-            cout<<"move_string: "<<move_string<<endl;
-            cout<<"side_to_move: "<<side_to_move<<endl;
+            unsigned int move = 0;
             if(move_string.length() < 4){
-                cout<<"not applying move"<<endl;
                 return;
-            }
-            else if(move_string.length() == 4){
+            } else if(move_string.length() == 4){
                 std::string from_string = move_string.substr(0, 2);
                 std::string to_string = move_string.substr(2, 2);
 
                 unsigned int from = MoveUtils::square_as_uint(from_string);
                 unsigned int to = MoveUtils::square_as_uint(to_string);
-                unsigned int move = create_move_using_pgn(from, to);
-                cout<<"created move: "<<MoveUtils::move_as_string(move)<<endl;
-                apply_move_if_legal(move);
-                change_side_to_move();
+                move = create_move_using_pgn(from, to);
             } else {
                 std::string from_string = move_string.substr(0, 2);
                 std::string to_string = move_string.substr(2, 2);
@@ -616,22 +618,25 @@ void Board::parse_pgn(fs::path path){
                 unsigned int from = MoveUtils::square_as_uint(from_string);
                 unsigned int to = MoveUtils::square_as_uint(to_string);
                 unsigned int promoted_piece = MoveUtils::promoted_piece_as_uint(promoted_piece_string);
-                unsigned int move = create_move_using_pgn(from, to, promoted_piece);
-                cout<<"created move: "<<MoveUtils::move_as_string(move)<<endl;
-                apply_move_if_legal(move);
-                change_side_to_move();
+                move = create_move_using_pgn(from, to, promoted_piece);
             } 
-        }
-    }
-}
-void Board::init_piece_locations(){
-    for(int sq = 0 ; sq < NUM_SQUARES ; sq ++){
-        for(int side = 0 ; side < NUM_SIDES ; side ++){
-            for(int piece = 0 ; piece < NUM_PIECE_TYPES ; piece ++){
-                if(bb->piece_boards[side][piece] & get_square_bitboard(sq)){
-                    piece_locations[side][piece].insert(sq);
-                }
-            }
+            move_count++;
+            if(verbose && side_to_move == WHITE)
+                cout<<move_count<<"\n";
+            if(verbose)
+                MoveUtils::display(move);
+            if(!apply_move_if_legal(move) || move == 0){
+                bb->display();
+                throw std::runtime_error("[parse_pgn] apply_move_if_legal, move not legal");
+            };
+            tt->increment_value_threefold();
+            unsigned int value_threefold = tt->get_value_threefold();
+            // cout<<"get_value_threefold(): "<<value_threefold<<"\n";
+            if(value_threefold == 3){  
+                threefold_draw = true;
+                return;
+            } 
+            change_side_to_move();
         }
     }
 }
