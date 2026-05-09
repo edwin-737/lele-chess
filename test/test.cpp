@@ -775,10 +775,10 @@ TEST_CASE("Unique Zobrist Hash vals", "[TranspositionTable]"){
     bool found_duplicate = false;
     for(int i = 0 ; i < NUM_ZOBRIST_VALS ; i ++){
         for(int j = 0 ; j < seen_zobrist_vals.size() ; j ++){
-            if(seen_zobrist_vals[j] == b->tt->zobrist_vals[i])
+            if(seen_zobrist_vals[j] == b->tt.zobrist_vals[i])
                 found_duplicate = true;
         }
-        seen_zobrist_vals.push_back(b->tt->zobrist_vals[i]);
+        seen_zobrist_vals.push_back(b->tt.zobrist_vals[i]);
     }
     REQUIRE(!found_duplicate);
 }
@@ -792,7 +792,7 @@ TEST_CASE("Updating hash val", "[TranspositionTable]"){
     Board _b = Board(fen_path, bb, bi);
     Board* b = &_b;
 
-    cout<<"initial hash_val: "<<b->tt->hash_val<<endl;
+    cout<<"initial hash_val: "<<b->tt.hash_val<<endl;
     SECTION("quiet moves"){
 
         unsigned int move_order1[4] = {
@@ -812,15 +812,15 @@ TEST_CASE("Updating hash val", "[TranspositionTable]"){
             for(int i = 0 ; i < 4 ; i ++){
                 b->apply_move(move_order1[i]);
                 if(i > 0){
-                    REQUIRE(b->tt->hash_val != seen_hash_vals[i-1]);
+                    REQUIRE(b->tt.hash_val != seen_hash_vals[i-1]);
                 }
-                seen_hash_vals.push_back(b->tt->hash_val);
+                seen_hash_vals.push_back(b->tt.hash_val);
             }
 
             bool found_hash_val = true;
             for(int i = 3 ; i >= 0 ; i --){
                 b->reverse_move(move_order1[i]);
-                if(i > 0 && b->tt->hash_val != seen_hash_vals[i - 1]){
+                if(i > 0 && b->tt.hash_val != seen_hash_vals[i - 1]){
                     found_hash_val = false;
                 }
 
@@ -853,15 +853,15 @@ TEST_CASE("Updating hash val", "[TranspositionTable]"){
             for(int i = 0 ; i < 7 ; i ++){
                 b->apply_move(move_order1[i]);
                 if(i > 0){
-                    REQUIRE(b->tt->hash_val != seen_hash_vals[i-1]);
+                    REQUIRE(b->tt.hash_val != seen_hash_vals[i-1]);
                 }
-                seen_hash_vals.push_back(b->tt->hash_val);
+                seen_hash_vals.push_back(b->tt.hash_val);
             }
 
             bool found_hash_val = true;
             for(int i = 6 ; i >= 0 ; i --){
                 b->reverse_move(move_order1[i]);
-                if(i > 0 && b->tt->hash_val != seen_hash_vals[i - 1]){
+                if(i > 0 && b->tt.hash_val != seen_hash_vals[i - 1]){
                     found_hash_val = false;
                 }
 
@@ -873,7 +873,7 @@ TEST_CASE("Updating hash val", "[TranspositionTable]"){
             vector<uint64> seen_hash_vals;
             for(int i = 0 ; i < 7 ; i ++){
                 b->apply_move(move_order1[i]);
-                seen_hash_vals.push_back(b->tt->hash_val);
+                seen_hash_vals.push_back(b->tt.hash_val);
             }
             for(int i = 6 ; i >= 0 ; i --){
                 b->reverse_move(move_order1[i]);
@@ -882,7 +882,7 @@ TEST_CASE("Updating hash val", "[TranspositionTable]"){
                 b->apply_move(move_order2[i]);
             }
             // at index=6, the position of the move_order2 should be equal to the position after move_order1
-            REQUIRE(b->tt->hash_val == seen_hash_vals[6]);
+            REQUIRE(b->tt.hash_val == seen_hash_vals[6]);
             for(int i = 6 ; i >= 0 ; i --){
                 b->reverse_move(move_order2[i]);
             }
@@ -891,7 +891,7 @@ TEST_CASE("Updating hash val", "[TranspositionTable]"){
                 b->apply_move(move_order2[i]);
             }
             // at index=5, the position of the move_order2 should not be equal to the position after move_order1
-            REQUIRE(b->tt->hash_val != seen_hash_vals[5]);
+            REQUIRE(b->tt.hash_val != seen_hash_vals[5]);
         }
     }
 
@@ -906,7 +906,7 @@ TEST_CASE("Updating hash val en passant", "[TranspositionTable]"){
     Board _b = Board(fen_path, bb, bi);
     Board* b = &_b;
 
-    cout<<"initial hash_val: "<<b->tt->hash_val<<endl;
+    cout<<"initial hash_val: "<<b->tt.hash_val<<endl;
     SECTION("quiet moves"){
 
         unsigned int move_order1[4] = {
@@ -926,15 +926,15 @@ TEST_CASE("Updating hash val en passant", "[TranspositionTable]"){
             for(int i = 0 ; i < 4 ; i ++){
                 b->apply_move(move_order1[i]);
                 if(i > 0){
-                    REQUIRE(b->tt->hash_val != seen_hash_vals[i-1]);
+                    REQUIRE(b->tt.hash_val != seen_hash_vals[i-1]);
                 }
-                seen_hash_vals.push_back(b->tt->hash_val);
+                seen_hash_vals.push_back(b->tt.hash_val);
             }
 
             bool found_hash_val = true;
             for(int i = 3 ; i >= 0 ; i --){
                 b->reverse_move(move_order1[i]);
-                if(i > 0 && b->tt->hash_val != seen_hash_vals[i - 1]){
+                if(i > 0 && b->tt.hash_val != seen_hash_vals[i - 1]){
                     found_hash_val = false;
                 }
 
@@ -946,7 +946,7 @@ TEST_CASE("Updating hash val en passant", "[TranspositionTable]"){
             vector<uint64> seen_hash_vals;
             for(int i = 0 ; i < 4 ; i ++){
                 b->apply_move(move_order1[i]);
-                seen_hash_vals.push_back(b->tt->hash_val);
+                seen_hash_vals.push_back(b->tt.hash_val);
             }
             unsigned int move_order1_ep_right = b->get_board_info()->peek_ep_right();
 
@@ -958,7 +958,7 @@ TEST_CASE("Updating hash val en passant", "[TranspositionTable]"){
             }            
             unsigned int move_order2_ep_right = b->get_board_info()->peek_ep_right();
             REQUIRE(move_order1_ep_right != move_order2_ep_right);
-            REQUIRE(b->tt->hash_val != seen_hash_vals[3]);
+            REQUIRE(b->tt.hash_val != seen_hash_vals[3]);
         }
     }
 
@@ -1048,8 +1048,6 @@ TEST_CASE("Alpha beta pruning selected move", "[Search]"){
         REQUIRE(s.selected_move == MoveUtils::create_move(d6, d1, BLACK, pQUEEN));
     }
     
-    TranspositionTable::instanceptr = nullptr;
-    delete TranspositionTable::instanceptr;
 }
 
 TEST_CASE("Perft king move miss", "[Search]"){
@@ -1121,8 +1119,7 @@ TEST_CASE("Alpha beta pruning selected move backrank bug", "[Search]"){
         REQUIRE(s.selected_move != MoveUtils::create_move(e5, c4, BLACK, pKNIGHT));
         REQUIRE(s.selected_move == MoveUtils::create_move(e5, g6, BLACK, pKNIGHT));
     }
-    TranspositionTable::instanceptr = nullptr;
-    delete TranspositionTable::instanceptr;
+
 }
 
 TEST_CASE("Iterative deepening avoid threefold repitition in winning position", "[Search]"){
@@ -1151,21 +1148,19 @@ TEST_CASE("Iterative deepening avoid threefold repitition in winning position", 
     SECTION("at 57 moves, there should be two repititions for move 53 and 57"){
         string pgn_path = "./pgn/tests/avoid_draw_1.uci";
         b->parse_uci_pgn(pgn_path, 57, true);
-        uint64 tt_val = b->tt->get_value_threefold();
+        uint64 tt_val = b->tt.get_value_threefold();
         REQUIRE(tt_val == 2);
     }
-    // SECTION("Avoid e7e8 to prevent threefold"){
-    //     string pgn_path = "./pgn/tests/avoid_draw_1.uci";
-    //     b->parse_uci_pgn(pgn_path, 59,true);
-    //     b->get_bitboard()->display();
-    //     int score = s.iterative_deepening(6, BLACK, BLACK);
-    //     unsigned int drawing_move = MoveUtils::create_move(e7, e8, BLACK, pKING);
-    //     cout<<"selected move: \n";
-    //     MoveUtils::display(s.selected_move);
-    //     REQUIRE(s.selected_move != drawing_move);
-    // }
-    // TranspositionTable::instanceptr = nullptr;
-    // delete TranspositionTable::instanceptr;
+    SECTION("Avoid e7e8 to prevent threefold"){
+        string pgn_path = "./pgn/tests/avoid_draw_1.uci";
+        b->parse_uci_pgn(pgn_path, 59,true);
+        b->get_bitboard()->display();
+        int score = s.iterative_deepening(6, BLACK, BLACK);
+        unsigned int drawing_move = MoveUtils::create_move(e7, e8, BLACK, pKING);
+        cout<<"selected move: \n";
+        MoveUtils::display(s.selected_move);
+        REQUIRE(s.selected_move != drawing_move);
+    }
 }
 
 TEST_CASE("Alpha beta pruning take threefold repitition in losing position", "[Search]"){

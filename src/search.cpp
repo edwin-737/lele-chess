@@ -40,11 +40,11 @@ unsigned int Search::perft(int original_depth, int depth_left, unsigned int side
                 unsigned int perft_val = perft(original_depth, depth_left - 1, side ^ 1, move);
                 ans += perft_val;
             } else {
-                unsigned int tt_val = tt->get_value_perft(depth_searched);
+                unsigned int tt_val = b->tt.get_value_perft(depth_searched);
                 if(!tt_val){
                     unsigned int perft_val = perft(original_depth, depth_left - 1, side ^ 1, move, true);
                     ans += perft_val;
-                    tt->add_value_perft(depth_searched, perft_val);
+                    b->tt.add_value_perft(depth_searched, perft_val);
                     tt_not_found_count[depth_searched] ++;
                 }
                 else{
@@ -101,11 +101,11 @@ unsigned int Search::perft_ordered(int original_depth, int depth_left, unsigned 
                 unsigned int perft_val = perft(original_depth, depth_left - 1, side ^ 1, move);
                 ans += perft_val;
             } else {
-                unsigned int tt_val = tt->get_value_perft(depth_searched);
+                unsigned int tt_val = b->tt.get_value_perft(depth_searched);
                 if(!tt_val){
                     unsigned int perft_val = perft(original_depth, depth_left - 1, side ^ 1, move, true);
                     ans += perft_val;
-                    tt->add_value_perft(depth_searched, perft_val);
+                    b->tt.add_value_perft(depth_searched, perft_val);
                     tt_not_found_count[depth_searched] ++;
                 }
                 else{
@@ -128,11 +128,11 @@ unsigned int Search::perft_ordered(int original_depth, int depth_left, unsigned 
                 unsigned int perft_val = perft(original_depth, depth_left - 1, side ^ 1, move);
                 ans += perft_val;
             } else {
-                unsigned int tt_val = tt->get_value_perft(depth_searched);
+                unsigned int tt_val = b->tt.get_value_perft(depth_searched);
                 if(!tt_val){
                     unsigned int perft_val = perft(original_depth, depth_left - 1, side ^ 1, move, true);
                     ans += perft_val;
-                    tt->add_value_perft(depth_searched, perft_val);
+                    b->tt.add_value_perft(depth_searched, perft_val);
                     tt_not_found_count[depth_searched] ++;
                 }
                 else{
@@ -171,22 +171,22 @@ int Search::alpha_beta(int alpha, int beta, int depth_left, unsigned int side, u
         move = prev_variation->moves[max_depth-depth_left];
         if(b->apply_move_if_legal(move)){
 
-            tt->increment_value_threefold();
+            b->tt.increment_value_threefold();
             if(use_pesto)
                 pesto->update_evaluation(move, 0);
             int score = 0;
             int depth_searched = 10 - depth_left;
             // if(transposition){
-            //     int tt_val = tt->get_value_eval(depth_searched);
+            //     int tt_val = b->tt.get_value_eval(depth_searched);
             //     if(tt_val == DEFAULT_EVAL){
             //         score = -alpha_beta(-beta, -alpha, depth_left - 1, side ^ 1, starting_side, move, &line, transposition, use_pesto);
-            //         tt->add_value_eval(depth_searched, score);
+            //         b->tt.add_value_eval(depth_searched, score);
             //     } else {
             //         score = tt_val;
             //     }
             // } else {
 
-            if(tt->get_value_threefold() == 3){
+            if(b->tt.get_value_threefold() == 3){
                 score = STALEMATE_EVAL;
             } else {
                 score = -alpha_beta(-beta, -alpha, depth_left - 1, side ^ 1, starting_side, move, &line, transposition, use_pesto);
@@ -196,7 +196,7 @@ int Search::alpha_beta(int alpha, int beta, int depth_left, unsigned int side, u
             // if(mg_captures.searched_move_found){
             //     searched_move_found = true;
             // }
-            tt->decrement_value_threefold();
+            b->tt.decrement_value_threefold();
             b->reverse_move(move);
             if(use_pesto)
                 pesto->update_evaluation(move, 1);
@@ -244,13 +244,13 @@ int Search::alpha_beta(int alpha, int beta, int depth_left, unsigned int side, u
         if(move == INCREMENTING_MOVE_TYPE)
             continue;
         if(b->apply_move_if_legal(move)){
-            tt->increment_value_threefold();
+            b->tt.increment_value_threefold();
             int prev_eval = pesto->get_evaluation(starting_side, side);
             if(use_pesto)
                 pesto->update_evaluation(move, 0);
             int score = 0;
             int depth_searched = 10 - depth_left;
-            if(tt->get_value_threefold() == 3){
+            if(b->tt.get_value_threefold() == 3){
                 score = STALEMATE_EVAL;
             } else {
                 score = -alpha_beta(-beta, -alpha, depth_left - 1, side ^ 1, starting_side, move, &line, transposition, use_pesto);
@@ -265,7 +265,7 @@ int Search::alpha_beta(int alpha, int beta, int depth_left, unsigned int side, u
             //     }
 
             // }
-            tt->decrement_value_threefold();
+            b->tt.decrement_value_threefold();
             b->reverse_move(move);
             if(use_pesto)
                 pesto->update_evaluation(move, 1);
@@ -321,28 +321,28 @@ int Search::alpha_beta(int alpha, int beta, int depth_left, unsigned int side, u
             searched_move_found = true;
         }
         if(b->apply_move_if_legal(move)){
-            tt->increment_value_threefold();
+            b->tt.increment_value_threefold();
             if(use_pesto)
                 pesto->update_evaluation(move, 0);
             int score = 0;
             int depth_searched = 10 - depth_left;
             // if(transposition){
-            //     int tt_val = tt->get_value_eval(depth_searched);
+            //     int tt_val = b->tt.get_value_eval(depth_searched);
             //     if(tt_val == DEFAULT_EVAL){
             //         score = -alpha_beta(-beta, -alpha, depth_left - 1, side ^ 1, starting_side, move, &line, transposition, use_pesto);
-            //         tt->add_value_eval(depth_searched, score);
+            //         b->tt.add_value_eval(depth_searched, score);
             //     } else {
             //         score = tt_val;
             //     }
             // } else {
 
-            if(tt->get_value_threefold() == 3){
+            if(b->tt.get_value_threefold() == 3){
                 score = STALEMATE_EVAL;
             } else {
                 score = -alpha_beta(-beta, -alpha, depth_left - 1, side ^ 1, starting_side, move, &line, transposition, use_pesto);
             }
             // }
-            tt->decrement_value_threefold();
+            b->tt.decrement_value_threefold();
             b->reverse_move(move);
             if(use_pesto)
                 pesto->update_evaluation(move, 1);
@@ -443,12 +443,12 @@ int Search::quiesce(int alpha, int beta, int depth, unsigned int side,  unsigned
             continue;
         }
         if(b->apply_move_if_legal(move)){
-            tt->increment_value_threefold();
+            b->tt.increment_value_threefold();
             if(use_pesto)
                 pesto->update_evaluation(move, 0);
             int score = 0;
 
-            if(tt->get_value_threefold() == 3){
+            if(b->tt.get_value_threefold() == 3){
                 score = STALEMATE_EVAL;
             } else {
                 score = -quiesce(-beta, -alpha, depth-1, side ^ 1, starting_side, &line, transposition, use_pesto);                
@@ -458,7 +458,7 @@ int Search::quiesce(int alpha, int beta, int depth, unsigned int side,  unsigned
                 searched_move_eval = score;
                 searched_move_found = true;
             }
-            tt->decrement_value_threefold();
+            b->tt.decrement_value_threefold();
             b->reverse_move(move);
             if(use_pesto)
                 pesto->update_evaluation(move, 1);

@@ -61,7 +61,7 @@ public:
     Bitboard* get_bitboard();
     set<int> piece_locations[NUM_SIDES][NUM_PIECE_TYPES];
     int king_location[NUM_SIDES];
-    TranspositionTable* tt = TranspositionTable::get_instance();
+    TranspositionTable tt = TranspositionTable();
 
     bool threefold_draw = false;
     int move_count = 0;

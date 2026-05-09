@@ -51,7 +51,6 @@ public:
 private:
     Board* b;
     PestoEvaluation* pesto;
-    TranspositionTable* tt = TranspositionTable::get_instance();
     vector<unsigned int> selected_moves[DEPTH_LIMIT];
     int material = 0;
 

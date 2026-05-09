@@ -19,8 +19,8 @@ void Board::apply_move(unsigned int move){
     // for zobrist hash val update
     unsigned int prev_castle_rights = bi->peek_castle_right();
     unsigned int prev_ep_rights = bi->peek_ep_right();
-    tt->update_hash_val_piece_square(move);
-    tt->update_hash_val_side_to_move(move);
+    tt.update_hash_val_piece_square(move);
+    tt.update_hash_val_side_to_move(move);
     if(MoveUtils::is_quiet(move)){
         uint64 from_to = get_from_to(from, to);
         bb->piece_boards[side][piece] ^= from_to;
@@ -232,8 +232,8 @@ void Board::apply_move(unsigned int move){
 
     unsigned int next_castle_rights = bi->peek_castle_right();
     unsigned int next_ep_rights = bi->peek_ep_right();
-    tt->update_hash_val_castle_rights(prev_castle_rights, next_castle_rights);
-    tt->update_hash_val_ep_rights(prev_ep_rights, next_ep_rights);
+    tt.update_hash_val_castle_rights(prev_castle_rights, next_castle_rights);
+    tt.update_hash_val_ep_rights(prev_ep_rights, next_ep_rights);
 }
 
 void Board::reverse_move(unsigned int move){
@@ -245,8 +245,8 @@ void Board::reverse_move(unsigned int move){
     // for zobrist hash val update
     unsigned int prev_castle_rights = bi->peek_castle_right();
     unsigned int prev_ep_rights = bi->peek_ep_right();
-    tt->update_hash_val_piece_square(move);
-    tt->update_hash_val_side_to_move(move);
+    tt.update_hash_val_piece_square(move);
+    tt.update_hash_val_side_to_move(move);
     if(MoveUtils::is_quiet(move)){
         uint64 from_to = get_from_to(from, to);
         bb->piece_boards[side][piece] ^= from_to;
@@ -363,8 +363,8 @@ void Board::reverse_move(unsigned int move){
 
     unsigned int next_castle_rights = bi->peek_castle_right();
     unsigned int next_ep_rights = bi->peek_ep_right();
-    tt->update_hash_val_castle_rights(prev_castle_rights, next_castle_rights);
-    tt->update_hash_val_ep_rights(prev_ep_rights, next_ep_rights);
+    tt.update_hash_val_castle_rights(prev_castle_rights, next_castle_rights);
+    tt.update_hash_val_ep_rights(prev_ep_rights, next_ep_rights);
 }
 bool Board::apply_move_if_legal(unsigned int move)
 {
@@ -621,7 +621,7 @@ void Board::parse_fen(fs::path path){
     bi->set_board_info(initial_castle_rights, initial_ep_rights);
     bb->update();
     // init_piece_locations();
-    tt->initialise_hash_val(side_to_move, bb, bi);
+    tt.initialise_hash_val(side_to_move, bb, bi);
 }
 void Board::parse_uci_pgn(fs::path path, int last_move, bool verbose){
 
@@ -661,12 +661,12 @@ void Board::parse_uci_pgn(fs::path path, int last_move, bool verbose){
                 bb->display();
                 throw std::runtime_error("[parse_pgn] apply_move_if_legal, move not legal");
             };
-            tt->increment_value_threefold();
+            tt.increment_value_threefold();
             if(verbose){
-                cout<<"threefold repition: "<< tt->get_value_threefold()<<"\n";
-                cout<<"transposition hash val: "<<tt->hash_val<<"\n";
+                cout<<"threefold repition: "<< tt.get_value_threefold()<<"\n";
+                cout<<"transposition hash val: "<<tt.hash_val<<"\n";
             }
-            unsigned int value_threefold = tt->get_value_threefold();
+            unsigned int value_threefold = tt.get_value_threefold();
             // cout<<"get_value_threefold(): "<<value_threefold<<"\n";
             if(value_threefold == 3){  
                 threefold_draw = true;

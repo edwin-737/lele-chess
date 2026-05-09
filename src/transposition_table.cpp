@@ -2,14 +2,6 @@
 #include "const.hpp"
 #include "move.hpp"
 #include "transposition_table.hpp"
-TranspositionTable* TranspositionTable::instanceptr=nullptr;
-
-TranspositionTable* TranspositionTable::get_instance() {
-    if (instanceptr == nullptr) {
-        instanceptr = new TranspositionTable();
-    }
-    return instanceptr;
-}
 
 void TranspositionTable::generate_zobrist_values(){
     std::mt19937_64 gen(0);           // 64-bit Mersenne Twister RNG
