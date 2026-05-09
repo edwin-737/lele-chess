@@ -23,7 +23,7 @@ typedef struct pv_node {
 
 class Search{
 public:
-    Search(Board* _b, PestoEvaluation* _pesto, int _max_depth=5): b(_b), pesto(_pesto),max_depth(_max_depth){
+    Search(Board* _b, PestoEvaluation* _pesto, int _max_depth=5, bool _verbose=false): b(_b), pesto(_pesto),max_depth(_max_depth), verbose(_verbose){
         pesto->init_evaluate();
     }
 
@@ -35,8 +35,11 @@ public:
     int static_exchange_evaluation(unsigned int side, int square);
     int static_exchange_evaluation(int move);
     int iterative_deepening(int depth, unsigned int side, unsigned int starting_side, bool transposition=false, bool use_pesto=false);
+    int get_evaluation(unsigned int side);
+    int init_evaluate();
     unsigned int num_nodes = 0, num_captures = 0, num_ep_captures = 0, num_checks = 0, num_checkmates = 0, num_castles = 0, num_promotions = 0, num_capture_promotions = 0;
     int max_depth;
+    bool verbose;
     unsigned int selected_move; 
     int side_to_move;
     int tt_not_found_count[10] = {0};

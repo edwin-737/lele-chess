@@ -130,8 +130,8 @@ void TranspositionTable::update_hash_val_piece_square(unsigned int move){
     }
 }
 void TranspositionTable::update_hash_val_castle_rights(unsigned int prev_castle_right, unsigned int next_castle_right){
-    hash_val ^= get_zobrist_value(ZOBRIST_OFFSET_CASTLE_RIGHTS, calculate_zobrist_idx_castle_rights(prev_castle_right));
-    hash_val ^= get_zobrist_value(ZOBRIST_OFFSET_CASTLE_RIGHTS, calculate_zobrist_idx_castle_rights(next_castle_right));
+    // hash_val ^= get_zobrist_value(ZOBRIST_OFFSET_CASTLE_RIGHTS, calculate_zobrist_idx_castle_rights(prev_castle_right));
+    // hash_val ^= get_zobrist_value(ZOBRIST_OFFSET_CASTLE_RIGHTS, calculate_zobrist_idx_castle_rights(next_castle_right));
 }
 void TranspositionTable::update_hash_val_ep_rights(unsigned int prev_ep_right, unsigned int next_ep_right){
     hash_val ^= get_zobrist_value(ZOBRIST_OFFSET_EP_RIGHTS, calculate_zobrist_idx_ep_rights(prev_ep_right));

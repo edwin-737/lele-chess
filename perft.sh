@@ -1,4 +1,4 @@
-./build/engine > output.txt -f ./positions/starting_position.txt -j p -d  6 -s w
+# ./build/engine > output.txt -f ./positions/starting_position.txt -j p -d  6 -s w
 # ./build/engine profile.prof -f ./positions/starting_position.txt -j p -d  6 -s w > output.txt 
 #  -f ./positions/starting_position.txt -j p -d  4 -s w
 # ./build/engine -f ./positions/e2e4.txt -j p -d 4 -s w
@@ -25,3 +25,12 @@
 # ./engine > output.txt -f ./positions/e2e4_e7e5_f1e2.txt -d 4 -s b
 # ./engine > output.txt -f ./positions/e2e4_e7e5.txt -d 5 -s w
 # ./engine > output.txt -f ./positions/e2e4.txt -d 6 -s b
+# ./build/engine > output.txt -f ./positions/bugs/backrank_miss.txt -j p -d  5 -s b
+# ./build/engine > output.txt -f ./positions/bugs/backrank_miss_e5c4.txt -j p -d  4 -s w
+./build/engine > output.txt -f ./positions/bugs/backrank_miss_e5c4_d1c1.txt -j p -d  3 -s b
+# ./build/engine > output.txt -f ./positions/bugs/backrank_miss_e5f3.txt -j p -d  4 -s w
+# ./build/engine > output.txt -f ./positions/bugs/backrank_miss_e5f3_g1h1.txt -j p -d  3 -s b
+# ./build/engine > output.txt -f ./positions/bugs/backrank_miss_e5f3_g1h1_c6c5.txt -j p -d  2 -s w
+# ./build/engine > output.txt -f ./positions/bugs/backrank_miss_c6c5.txt -j p -d  4 -s w
+# ./build/engine > output.txt -f ./positions/bugs/backrank_miss_c6c5_d1c1.txt -j p -d  2 -s b
+# ./build/engine > output.txt -f ./positions/bugs/backrank_miss_c6c5_d1c1_d2c1q.txt -j p -d  1 -s w

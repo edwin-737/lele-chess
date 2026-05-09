@@ -165,9 +165,9 @@ int Search::alpha_beta(int alpha, int beta, int depth_left, unsigned int side, u
 
     unsigned int move = 0;
     bool no_moves_left = true;
-
     std::unordered_set<unsigned int> seen_moves;
     if(prev_variation != nullptr && max_depth - depth_left < prev_variation->len){
+        bool stalemate = false;
         move = prev_variation->moves[max_depth-depth_left];
         if(b->apply_move_if_legal(move)){
 
@@ -188,6 +188,9 @@ int Search::alpha_beta(int alpha, int beta, int depth_left, unsigned int side, u
 
             if(b->tt.get_value_threefold() == 3){
                 score = STALEMATE_EVAL;
+                // return STALEMATE_EVAL;
+                stalemate = true;
+                // no_moves_left = true;
             } else {
                 score = -alpha_beta(-beta, -alpha, depth_left - 1, side ^ 1, starting_side, move, &line, transposition, use_pesto);
             }                
@@ -205,33 +208,48 @@ int Search::alpha_beta(int alpha, int beta, int depth_left, unsigned int side, u
                 return beta;
             } 
             if(score > alpha){
-
-                principal_variation->moves[0] = move;
-                memcpy(principal_variation->moves + 1, line.moves, line.len * sizeof(unsigned int));
-                principal_variation->len = line.len + 1;
-
-                if(depth_left == max_depth){
+                if(!stalemate){
+                    principal_variation->moves[0] = move;
+                    memcpy(principal_variation->moves + 1, line.moves, line.len * sizeof(unsigned int));
+                    principal_variation->len = line.len + 1;
+                } else {
+                    principal_variation->moves[0] = move;
+                    principal_variation->len = 1;
+                }
+                if(stalemate){
                     selected_move = move;
                     cout<<"-----------------\n";
+                    cout<<"stalemate\n";
                     cout<<"selected_move:";
                     MoveUtils::display(selected_move);
                     cout<<"score: "<<score<<endl;
                     cout<<"alpha: "<<alpha<<endl;
                     cout<<"-----------------\n";
-
-
+                }
+                else if(depth_left == max_depth){
+                    selected_move = move;
                     cout<<"-----------------\n";
-                    cout<<"current variation\n";
-                    cout<<"principal_variation length: "<<principal_variation->len<<endl;
-                    for(int i = 0 ; i < principal_variation->len ; i ++){
-                        cout<<i<<": ";
-                        MoveUtils::display(principal_variation->moves[i]);
+                    cout<<"selected_move:";
+                    if(stalemate) cout<<"stalemate\n";
+                    MoveUtils::display(selected_move);
+                    cout<<"score: "<<score<<endl;
+                    cout<<"alpha: "<<alpha<<endl;
+                    cout<<"-----------------\n";
+
+                    if(verbose){
+                        cout<<"-----------------\n";
+                        cout<<"current variation\n";
+                        cout<<"principal_variation length: "<<principal_variation->len<<endl;
+                        for(int i = 0 ; i < principal_variation->len ; i ++){
+                            cout<<i<<": ";
+                            MoveUtils::display(principal_variation->moves[i]);
+                        }
+                        stop = high_resolution_clock::now();
+                        duration<double> elapsed = stop - start;  // seconds as double (fractional)
+                        cout<<"time elapsed: "<<elapsed.count()<<endl;
+                        cout<<"node count: "<<num_nodes<<endl;
+                        cout<<"-----------------\n";
                     }
-                    stop = high_resolution_clock::now();
-                    duration<double> elapsed = stop - start;  // seconds as double (fractional)
-                    cout<<"time elapsed: "<<elapsed.count()<<endl;
-                    cout<<"node count: "<<num_nodes<<endl;
-                    cout<<"-----------------\n";
                 } 
                 alpha = score;
             } 
@@ -241,6 +259,7 @@ int Search::alpha_beta(int alpha, int beta, int depth_left, unsigned int side, u
     }
 
     while((move = mg_captures.get_move()) != NO_MOVES_LEFT){
+        bool stalemate = false;
         if(move == INCREMENTING_MOVE_TYPE)
             continue;
         if(b->apply_move_if_legal(move)){
@@ -252,6 +271,10 @@ int Search::alpha_beta(int alpha, int beta, int depth_left, unsigned int side, u
             int depth_searched = 10 - depth_left;
             if(b->tt.get_value_threefold() == 3){
                 score = STALEMATE_EVAL;
+                // return STALEMATE_EVAL;
+                stalemate = true;
+                // no_moves_left = true;
+                // break;
             } else {
                 score = -alpha_beta(-beta, -alpha, depth_left - 1, side ^ 1, starting_side, move, &line, transposition, use_pesto);
             }
@@ -279,29 +302,49 @@ int Search::alpha_beta(int alpha, int beta, int depth_left, unsigned int side, u
                 memcpy(principal_variation->moves + 1, line.moves, line.len * sizeof(unsigned int));
                 principal_variation->len = line.len + 1;
 
-                if(depth_left == max_depth){
+                if(!stalemate){
+                    principal_variation->moves[0] = move;
+                    memcpy(principal_variation->moves + 1, line.moves, line.len * sizeof(unsigned int));
+                    principal_variation->len = line.len + 1;
+                } else {
+                    principal_variation->moves[0] = move;
+                    principal_variation->len = 1;
+                }
+                if(stalemate){
+                    selected_move = move;
+                    cout<<"-----------------\n";
+                    cout<<"stalemate\n";
+                    cout<<"selected_move:";
+                    MoveUtils::display(selected_move);
+                    cout<<"score: "<<score<<endl;
+                    cout<<"alpha: "<<alpha<<endl;
+                    cout<<"-----------------\n";
+                }
+                else if(depth_left == max_depth){
                     selected_move = move;
 
                     cout<<"-----------------\n";
+                    if(stalemate) cout<<"stalemate\n";
                     cout<<"selected_move:";
                     MoveUtils::display(selected_move);
                     cout<<"score: "<<score<<endl;
                     cout<<"alpha: "<<alpha<<endl;
                     cout<<"-----------------\n";
 
-
-                    cout<<"-----------------\n";
-                    cout<<"current variation\n";
-                    cout<<"principal_variation length: "<<principal_variation->len<<endl;
-                    for(int i = 0 ; i < principal_variation->len ; i ++){
-                        cout<<i<<": ";
-                        MoveUtils::display(principal_variation->moves[i]);
+                    if(verbose){
+                        cout<<"-----------------\n";
+                        cout<<"current variation\n";
+                        cout<<"principal_variation length: "<<principal_variation->len<<endl;
+                        for(int i = 0 ; i < principal_variation->len ; i ++){
+                            cout<<i<<": ";
+                            MoveUtils::display(principal_variation->moves[i]);
+                        }
+                        stop = high_resolution_clock::now();
+                        duration<double> elapsed = stop - start;  // seconds as double (fractional)
+                        cout<<"time elapsed: "<<elapsed.count()<<endl;
+                        cout<<"node count: "<<num_nodes<<endl;
+                        cout<<"-----------------\n";
                     }
-                    stop = high_resolution_clock::now();
-                    duration<double> elapsed = stop - start;  // seconds as double (fractional)
-                    cout<<"time elapsed: "<<elapsed.count()<<endl;
-                    cout<<"node count: "<<num_nodes<<endl;
-                    cout<<"-----------------\n";
                 } 
                 alpha = score;
             } 
@@ -310,6 +353,7 @@ int Search::alpha_beta(int alpha, int beta, int depth_left, unsigned int side, u
     }
 
     while((move = mg_quiet.get_move()) != NO_MOVES_LEFT){
+        bool stalemate = false;
         if(move == INCREMENTING_MOVE_TYPE)
             continue;
         if(seen_moves.find(move) != seen_moves.end()){
@@ -338,6 +382,10 @@ int Search::alpha_beta(int alpha, int beta, int depth_left, unsigned int side, u
 
             if(b->tt.get_value_threefold() == 3){
                 score = STALEMATE_EVAL;
+                // return STALEMATE_EVAL;
+                stalemate = true;
+                // no_moves_left = true;
+                // break;
             } else {
                 score = -alpha_beta(-beta, -alpha, depth_left - 1, side ^ 1, starting_side, move, &line, transposition, use_pesto);
             }
@@ -356,11 +404,30 @@ int Search::alpha_beta(int alpha, int beta, int depth_left, unsigned int side, u
                 memcpy(principal_variation->moves + 1, line.moves, line.len * sizeof(unsigned int));
                 principal_variation->len = line.len + 1;
 
-                if(depth_left == max_depth){
+                if(!stalemate){
+                    principal_variation->moves[0] = move;
+                    memcpy(principal_variation->moves + 1, line.moves, line.len * sizeof(unsigned int));
+                    principal_variation->len = line.len + 1;
+                } else {
+                    principal_variation->moves[0] = move;
+                    principal_variation->len = 1;
+                }
+                if(stalemate){
+                    selected_move = move;
+                    cout<<"-----------------\n";
+                    cout<<"stalemate\n";
+                    cout<<"selected_move:";
+                    MoveUtils::display(selected_move);
+                    cout<<"score: "<<score<<endl;
+                    cout<<"alpha: "<<alpha<<endl;
+                    cout<<"-----------------\n";
+                }
+                else if(depth_left == max_depth){
                     selected_move = move;
                     selected_moves[max_depth + 2].push_back(selected_move);
 
                     cout<<"-----------------\n";
+                    if(stalemate) cout<<"stalemate\n";
                     cout<<"selected_move:";
                     MoveUtils::display(selected_move);
                     cout<<"score: "<<score<<endl;
@@ -368,18 +435,20 @@ int Search::alpha_beta(int alpha, int beta, int depth_left, unsigned int side, u
                     cout<<"-----------------\n";
 
 
-                    cout<<"-----------------\n";
-                    cout<<"current variation\n";
-                    cout<<"principal_variation length: "<<principal_variation->len<<endl;
-                    for(int i = 0 ; i < principal_variation->len ; i ++){
-                        cout<<i<<": ";
-                        MoveUtils::display(principal_variation->moves[i]);
+                    if(verbose){
+                        cout<<"-----------------\n";
+                        cout<<"current variation\n";
+                        cout<<"principal_variation length: "<<principal_variation->len<<endl;
+                        for(int i = 0 ; i < principal_variation->len ; i ++){
+                            cout<<i<<": ";
+                            MoveUtils::display(principal_variation->moves[i]);
+                        }
+                        stop = high_resolution_clock::now();
+                        duration<double> elapsed = stop - start;  // seconds as double (fractional)
+                        cout<<"time elapsed: "<<elapsed.count()<<endl;
+                        cout<<"node count: "<<num_nodes<<endl;
+                        cout<<"-----------------\n";
                     }
-                    stop = high_resolution_clock::now();
-                    duration<double> elapsed = stop - start;  // seconds as double (fractional)
-                    cout<<"time elapsed: "<<elapsed.count()<<endl;
-                    cout<<"node count: "<<num_nodes<<endl;
-                    cout<<"-----------------\n";
                 } 
                 alpha = score;
             } 
@@ -527,15 +596,16 @@ int Search::iterative_deepening(int depth, unsigned int side, unsigned int start
             MoveUtils::display(selected_moves[max_depth][i]);
         }
         cout<<"----------------------------\n";
-
-        cout<<"-----------------\n";
-        cout<<"prev variation\n";
-        cout<<"prev_variation length: "<<prev_variation->len<<endl;
-        for(int i = 0 ; i < prev_variation->len ; i ++){
-            cout<<i<<": ";
-            MoveUtils::display(prev_variation->moves[i]);
+        if(verbose){
+            cout<<"-----------------\n";
+            cout<<"prev variation\n";
+            cout<<"prev_variation length: "<<prev_variation->len<<endl;
+            for(int i = 0 ; i < prev_variation->len ; i ++){
+                cout<<i<<": ";
+                MoveUtils::display(prev_variation->moves[i]);
+            }
+            cout<<"-----------------\n";
         }
-        cout<<"-----------------\n";
         score = alpha_beta(alpha, beta, d, side, side, 0, principal_variation, false, true, prev_variation);
         if(searched_move_found){
             cout<<"-----------------\n";
@@ -553,7 +623,12 @@ int Search::iterative_deepening(int depth, unsigned int side, unsigned int start
         duration<double> elapsed = stop - start;  // seconds as double (fractional)
         cout<<"time elapsed: "<<elapsed.count()<<endl;
         cout<<"node count: "<<num_nodes<<endl;
-        pesto->set_evaluation(prev_eval);
     }
     return score;
+}
+int Search::get_evaluation(unsigned int side){
+    return pesto->get_evaluation(WHITE, side);
+}
+int Search::init_evaluate(){
+    return pesto->init_evaluate();
 }

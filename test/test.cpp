@@ -650,6 +650,42 @@ TEST_CASE("Number of nodes during search","[Perft]"){
     }
 
 }
+
+TEST_CASE("Perft king move miss", "[Search]"){
+    string fen_path = "./positions/bugs/backrank_miss_e5f3_g1h1_c6c5.txt";
+    Bitboard _bb = Bitboard();
+    BoardInfo _bi = BoardInfo();
+    Bitboard* bb = &_bb;
+    BoardInfo* bi = &_bi;
+    Board _b = Board(fen_path, bb, bi);
+    Board* b = &_b;
+
+    SECTION("king move generated"){
+        MoveGen mg = MoveGen(b, WHITE);
+        unsigned int move = 0;
+        bool king_move_found = false;
+        bool h1g2_move_found = false;
+        while((move = mg.get_move()) != NO_MOVES_LEFT){
+            if(MoveUtils::get_piece(move) == pKING){
+                king_move_found = true;
+                cout<<"king move found: ";
+                MoveUtils::display(move);
+            } if(move == MoveUtils::create_move(h1, g2, WHITE, pKING)){
+                h1g2_move_found = true;
+            }
+        }
+        REQUIRE(king_move_found);
+        REQUIRE(h1g2_move_found);
+    }
+    SECTION("correct number of nodes searched"){
+        PestoEvaluation _pesto = PestoEvaluation(b);
+        PestoEvaluation* pesto = &_pesto;
+
+        Search s = Search(b, pesto);
+        REQUIRE(s.perft(2, 2, WHITE) == 1473);
+    }
+}
+
 TEST_CASE("Number of nodes during search depth 4","[Perft]"){
 
     const char* fen_path = "./positions/starting_position.txt";
@@ -1050,40 +1086,6 @@ TEST_CASE("Alpha beta pruning selected move", "[Search]"){
     
 }
 
-TEST_CASE("Perft king move miss", "[Search]"){
-    string fen_path = "./positions/bugs/backrank_miss_e5f3_g1h1_c6c5.txt";
-    Bitboard _bb = Bitboard();
-    BoardInfo _bi = BoardInfo();
-    Bitboard* bb = &_bb;
-    BoardInfo* bi = &_bi;
-    Board _b = Board(fen_path, bb, bi);
-    Board* b = &_b;
-
-    SECTION("king move generated"){
-        MoveGen mg = MoveGen(b, WHITE);
-        unsigned int move = 0;
-        bool king_move_found = false;
-        bool h1g2_move_found = false;
-        while((move = mg.get_move()) != NO_MOVES_LEFT){
-            if(MoveUtils::get_piece(move) == pKING){
-                king_move_found = true;
-                cout<<"king move found: ";
-                MoveUtils::display(move);
-            } if(move == MoveUtils::create_move(h1, g2, WHITE, pKING)){
-                h1g2_move_found = true;
-            }
-        }
-        REQUIRE(king_move_found);
-        REQUIRE(h1g2_move_found);
-    }
-    SECTION("correct number of nodes searched"){
-        PestoEvaluation _pesto = PestoEvaluation(b);
-        PestoEvaluation* pesto = &_pesto;
-
-        Search s = Search(b, pesto);
-        REQUIRE(s.perft(2, 2, WHITE) == 1473);
-    }
-}
 TEST_CASE("Alpha beta pruning selected move backrank bug", "[Search]"){
 
     string fen_path = "./positions/bugs/backrank_miss.txt";
@@ -1122,6 +1124,34 @@ TEST_CASE("Alpha beta pruning selected move backrank bug", "[Search]"){
 
 }
 
+TEST_CASE("Transposition Table threefold repitition values", "[TranspositionTable]"){
+    const char* fen_path = "./positions/starting_position.txt";
+    const char* pgn_path = "./pgn/tests/transposition_captures.uci";
+
+    Bitboard _bb = Bitboard();
+    BoardInfo _bi = BoardInfo();
+    Bitboard* bb = &_bb;
+    BoardInfo* bi = &_bi;
+    Board _b = Board(fen_path, bb, bi);
+    Board* b = &_b;
+    SECTION("pos 1 first time"){
+        b->parse_uci_pgn(pgn_path, 11);
+        REQUIRE(b->tt.get_value_threefold() == 1);
+    }
+    SECTION("pos 1 repitition"){
+        b->parse_uci_pgn(pgn_path, 15);
+        REQUIRE(b->tt.get_value_threefold() == 2);
+    }
+    SECTION("pos 2 first time"){
+        b->parse_uci_pgn(pgn_path, 23);
+        REQUIRE(b->tt.get_value_threefold() == 1);
+    }
+    SECTION("pos 2 repitition"){
+        b->parse_uci_pgn(pgn_path, 27);
+        REQUIRE(b->tt.get_value_threefold() == 2);
+    }
+}
+
 TEST_CASE("Iterative deepening avoid threefold repitition in winning position", "[Search]"){
     string fen_path = "./positions/starting_position.txt";
     Bitboard _bb = Bitboard();
@@ -1135,10 +1165,10 @@ TEST_CASE("Iterative deepening avoid threefold repitition in winning position", 
     PestoEvaluation _pesto = PestoEvaluation(b);
     PestoEvaluation* pesto = &_pesto;
 
-    Search s = Search(b, pesto);
     SECTION("Avoid a5a1 to prevent threefold"){
         string pgn_path = "./pgn/tests/avoid_draw.uci";
         b->parse_uci_pgn(pgn_path);
+        Search s = Search(b, pesto, 8, true);
         int score = s.iterative_deepening(6, BLACK, BLACK);
         unsigned int drawing_move = MoveUtils::create_move(a5, a1, BLACK, pQUEEN);
         cout<<"selected move: \n";
@@ -1147,19 +1177,26 @@ TEST_CASE("Iterative deepening avoid threefold repitition in winning position", 
     }
     SECTION("at 57 moves, there should be two repititions for move 53 and 57"){
         string pgn_path = "./pgn/tests/avoid_draw_1.uci";
-        b->parse_uci_pgn(pgn_path, 57, true);
+        b->parse_uci_pgn(pgn_path, 57);
+        Search s = Search(b, pesto, 8, true);
         uint64 tt_val = b->tt.get_value_threefold();
         REQUIRE(tt_val == 2);
     }
     SECTION("Avoid e7e8 to prevent threefold"){
         string pgn_path = "./pgn/tests/avoid_draw_1.uci";
-        b->parse_uci_pgn(pgn_path, 59,true);
         b->get_bitboard()->display();
-        int score = s.iterative_deepening(6, BLACK, BLACK);
+        b->parse_uci_pgn(pgn_path);
+        b->get_bitboard()->display();
+
+        Search s = Search(b, pesto, 8, true);
+
+        int score = s.iterative_deepening(8, BLACK, BLACK);
         unsigned int drawing_move = MoveUtils::create_move(e7, e8, BLACK, pKING);
+        unsigned int winning_move = MoveUtils::create_move(e7, e6, BLACK, pKING);
         cout<<"selected move: \n";
         MoveUtils::display(s.selected_move);
         REQUIRE(s.selected_move != drawing_move);
+        REQUIRE(s.selected_move == winning_move);
     }
 }
 

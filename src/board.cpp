@@ -440,6 +440,9 @@ unsigned int Board::create_move_using_pgn(unsigned int from, unsigned int to, un
         } else if(from_to_difference == -2){
             additional_info = KING_CASTLE;
         }
+        else if(captured_piece != NO_PIECE){
+            additional_info = CAPTURE;
+        }
     } else if(piece == pPAWN){
         int from_to_difference = abs((int)from - (int)to);
         if(from_to_difference == 16){
