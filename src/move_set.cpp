@@ -20,12 +20,12 @@ void MoveSet::init_attack_masks()
 
         uint64 king_ne = king_clip_file_h <<  DirectionMap::general[Direction::General::north_east];
         uint64 king_n = king_square <<  DirectionMap::general[Direction::General::north];
-        uint64 king_nw = king_clip_file_h <<  DirectionMap::general[Direction::General::north_west];
+        uint64 king_nw = king_clip_file_a <<  DirectionMap::general[Direction::General::north_west];
         uint64 king_e = king_clip_file_h <<  DirectionMap::general[Direction::General::east];
         uint64 king_w = king_clip_file_a >>  DirectionMap::general[Direction::General::west];
         uint64 king_sw = king_clip_file_a >>  DirectionMap::general[Direction::General::south_west];
         uint64 king_s = king_square >>  DirectionMap::general[Direction::General::south];
-        uint64 king_se = king_clip_file_a >>  DirectionMap::general[Direction::General::south_east];
+        uint64 king_se = king_clip_file_h >>  DirectionMap::general[Direction::General::south_east];
         uint64 king_possible_moves_vec[] = {king_ne, king_n, king_nw, king_e, king_w, king_sw, king_s, king_se};
         king_attack_mask[sq] = OR_mult8(king_possible_moves_vec);
 

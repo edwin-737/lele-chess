@@ -99,8 +99,14 @@ int main(int argc, char** argv)
     cout << "Making objects \n";
     Bitboard _bb = Bitboard();
     BoardInfo _bi = BoardInfo();
-    Board b = Board(fen_path, &_bb, &_bi);
-
+    Board b;
+    if(include_fen){
+        b = Board(fen_path, &_bb, &_bi);
+    }
+    else if(include_pgn){
+        b = Board("./positions/starting_position.txt", &_bb, &_bi);
+        b.parse_uci_pgn(pgn_path);
+    }
     b.get_bitboard()->display();
     PestoEvaluation pesto = PestoEvaluation(&b);
 
@@ -112,7 +118,7 @@ int main(int argc, char** argv)
         #ifdef ENABLE_PROFILER
             ProfilerStart("perf-profile.prof");
         #endif
-        unsigned int num_nodes = s.perft(depth, depth, b.get_side_to_move(), transposition);
+        unsigned int num_nodes = s.perft(depth, depth, side);
         
         #ifdef ENABLE_PROFILER
             ProfilerStop();

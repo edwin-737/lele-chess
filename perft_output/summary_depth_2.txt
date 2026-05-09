@@ -1,0 +1,5 @@
+Move       | perft_output/actual_depth_2.txt | perft_output/expected_depth_2.txt | Difference
+-----------------------------------------------------------------
+h1g2       | MISSING         | 41              | N/A
+-----------------------------------------------------------------
+Summary: Found 1 moves with different node counts.

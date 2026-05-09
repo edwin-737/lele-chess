@@ -1,0 +1,8 @@
+Move       | perft_output/actual_depth_3.txt | perft_output/expected_depth_3.txt | Difference
+-----------------------------------------------------------------
+d2c1b      | 1475            | 1622            | +147
+d2c1n      | 1475            | 1607            | +132
+d2c1q      | 1475            | 1741            | +266
+d2c1r      | 1475            | 1602            | +127
+-----------------------------------------------------------------
+Summary: Found 4 moves with different node counts.

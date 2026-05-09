@@ -150,9 +150,9 @@ unsigned int Search::perft_ordered(int original_depth, int depth_left, unsigned 
 }
 
 int Search::alpha_beta(int alpha, int beta, int depth_left, unsigned int side, unsigned int starting_side, unsigned int root_move, pv_t* principal_variation, bool transposition, bool use_pesto, pv_t* prev_variation){
-    if(depth_left >= max_depth - 2 && MoveUtils::get_from(root_move) == e4 && MoveUtils::get_to(root_move) == d5){
-        cout<<"depth_left: "<<depth_left<<"\n";
-    }
+    // if(depth_left >= max_depth - 2 && MoveUtils::get_from(root_move) == e4 && MoveUtils::get_to(root_move) == d5){
+    //     cout<<"depth_left: "<<depth_left<<"\n";
+    // }
     pv_t line;
     line.len = 0;
     if(depth_left == 0)
@@ -389,11 +389,11 @@ int Search::alpha_beta(int alpha, int beta, int depth_left, unsigned int side, u
 
     if(no_moves_left){
         if(b->get_bitboard()->attacked(side, b->get_king_location(side))){
-            // return -CHECKMATE_EVAL(max_depth, depth_left);
-            if(starting_side == side)
-                return -CHECKMATE_EVAL(max_depth,depth_left);
-            else 
-                return CHECKMATE_EVAL(max_depth, depth_left);
+            return CHECKMATE_EVAL(max_depth, depth_left);
+            // if(starting_side == side)
+            //     return -CHECKMATE_EVAL(max_depth,depth_left);
+            // else 
+            //     return CHECKMATE_EVAL(max_depth, depth_left);
         } else {
             return STALEMATE_EVAL;
         }

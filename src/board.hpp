@@ -27,6 +27,8 @@ typedef enum fen_state{
 
 class Board{
 public:
+    Board(){
+    }
     Board(fs::path fen_path, Bitboard* _bb, BoardInfo* _bi): bb(_bb), bi(_bi), side_to_move(WHITE){
         // Bitboard _bb = Bitboard();
         // BoardInfo _bi = BoardInfo();
@@ -47,7 +49,7 @@ public:
     bool can_castle_kingside(unsigned int side);
     bool can_castle_queenside(unsigned int side);
     void parse_fen(fs::path path);
-    void parse_uci_pgn(fs::path path, bool verbose=false);
+    void parse_uci_pgn(fs::path path, int last_move=200, bool verbose=false);
     unsigned int get_side_to_move();
     void change_side_to_move();
     int get_piece_location(unsigned int side, unsigned int piece);
@@ -63,6 +65,8 @@ public:
 
     bool threefold_draw = false;
     int move_count = 0;
+    bool shown_capture_promotion = false;
+    bool shown_promotion = false;
 private:
     void update_piece_locations(int side, int piece, int from, int to);
     void update_king_location(int side, int square);

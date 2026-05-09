@@ -137,9 +137,19 @@ bool MoveGen::update_piece(){
         }
         piece_board = bb->piece_boards[side][piece];
         if(piece_board){
+            // if(piece == pKING){
+            //     bb->display_bitboard(piece_board);
+            // }
             found_piece = update_from();
-            if(found_piece)
+            if(found_piece){
                 return true;
+            } else {
+                // if(piece == pKING)
+                //     cout<<"[MoveGen] from not found for king\n";
+            }
+        } else {
+            // if(piece == pKING)
+            //     cout<<"[MoveGen] piece_board empty for king\n";
         }
     }
     return false;
@@ -167,16 +177,16 @@ bool MoveGen::update_from(){
 
         if(gen_type == ALL_MOVES){
             move_set = MoveSet::get_all_move_set(bb, piece, from, side);
+            if(piece == pKING && move_set==0){
+                // cout<<"[MoveGen] ONLY_CAPTURES move_set empty \n";
+            }
         } else if(gen_type == ONLY_CAPTURES) {
             move_set = MoveSet::get_capture_move_set(bb, piece, from, side);
             // cout<<"[MoveGen] ONLY_CAPTURES move_set for: "<<MoveUtils::piece_as_string(piece)<<"\n";
             // cout<<"[MoveGen] ONLY_CAPTURES piece: "<<MoveUtils::piece_as_string(piece)<<"\n";
             // cout<<"[MoveGen] ONLY_CAPTURES from: "<<MoveUtils::square_as_string(from)<<"\n";
-            if(move_set>0){
+            if(piece == pKING && move_set > 0){
                 // cout<<"[MoveGen] ONLY_CAPTURES move_set not empty \n";
-            }
-            if(move_set==0){
-                // cout<<"[MoveGen] ONLY_CAPTURES move_set empty \n";
             }
         } else if(gen_type == ONLY_QUIET) {
             move_set = MoveSet::get_quiet_move_set(bb, piece, from, side);

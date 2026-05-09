@@ -96,8 +96,9 @@ namespace MoveUtils{
         string from = square_as_string(get_from(move));
         string to = square_as_string(get_to(move));
         string piece = piece_as_string(get_piece(move));
+        string additional_info = additional_info_as_string(get_additional_info(move));
         // if(is_promotion(move) || is_capture_promotion(move)){}
-        cout<<side<<" "<<piece<<" "<<from<<" "<<to<<" "<<endl;
+        cout<<side<<" "<<piece<<" "<<from<<" "<<to<<" "<<additional_info<<endl;
 
     }
 
@@ -177,5 +178,37 @@ namespace MoveUtils{
         string s = {file, rank};
         return s;
 
+    }
+    string additional_info_as_string(unsigned int additional_info){
+        if(additional_info == QUIET_MOVE){
+            return "quiet";
+        } else if(additional_info == DOUBLE_PAWN_PUSH){
+            return "double_pawn_push";
+        } else if(additional_info == CAPTURE){
+            return "capture";
+        } else if(additional_info == KING_CASTLE){
+            return "king_castle";
+        } else if(additional_info == QUEEN_CASTLE){
+            return "queen_castle";
+        } else if(additional_info == EP_CAPTURE){
+            return "ep_capture";
+        } else if(additional_info == QUEEN_PROMOTION){
+            return "queen_promotion";
+        } else if(additional_info == ROOK_PROMOTION){
+            return "rook_promotion";
+        } else if(additional_info == BISHOP_PROMOTION){
+            return "bishop_promotion";
+        } else if(additional_info == KNIGHT_PROMOTION){
+            return "knight_promotion";
+        } else if(additional_info == QUEEN_CAPTURE_PROMOTION){
+            return "queen_capture_promotion";
+        } else if(additional_info == ROOK_CAPTURE_PROMOTION){
+            return "rook_capture_promotion";
+        } else if(additional_info == BISHOP_CAPTURE_PROMOTION){
+            return "bishop_capture_promotion";
+        } else if(additional_info == KNIGHT_CAPTURE_PROMOTION){
+            return "knight_capture_promotion";
+        }
+        return "unknown_move";
     }
 };

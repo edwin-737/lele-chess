@@ -1048,9 +1048,44 @@ TEST_CASE("Alpha beta pruning selected move", "[Search]"){
         REQUIRE(s.selected_move == MoveUtils::create_move(d6, d1, BLACK, pQUEEN));
     }
     
+    TranspositionTable::instanceptr = nullptr;
+    delete TranspositionTable::instanceptr;
 }
 
+TEST_CASE("Perft king move miss", "[Search]"){
+    string fen_path = "./positions/bugs/backrank_miss_e5f3_g1h1_c6c5.txt";
+    Bitboard _bb = Bitboard();
+    BoardInfo _bi = BoardInfo();
+    Bitboard* bb = &_bb;
+    BoardInfo* bi = &_bi;
+    Board _b = Board(fen_path, bb, bi);
+    Board* b = &_b;
 
+    SECTION("king move generated"){
+        MoveGen mg = MoveGen(b, WHITE);
+        unsigned int move = 0;
+        bool king_move_found = false;
+        bool h1g2_move_found = false;
+        while((move = mg.get_move()) != NO_MOVES_LEFT){
+            if(MoveUtils::get_piece(move) == pKING){
+                king_move_found = true;
+                cout<<"king move found: ";
+                MoveUtils::display(move);
+            } if(move == MoveUtils::create_move(h1, g2, WHITE, pKING)){
+                h1g2_move_found = true;
+            }
+        }
+        REQUIRE(king_move_found);
+        REQUIRE(h1g2_move_found);
+    }
+    SECTION("correct number of nodes searched"){
+        PestoEvaluation _pesto = PestoEvaluation(b);
+        PestoEvaluation* pesto = &_pesto;
+
+        Search s = Search(b, pesto);
+        REQUIRE(s.perft(2, 2, WHITE) == 1473);
+    }
+}
 TEST_CASE("Alpha beta pruning selected move backrank bug", "[Search]"){
 
     string fen_path = "./positions/bugs/backrank_miss.txt";
@@ -1066,8 +1101,10 @@ TEST_CASE("Alpha beta pruning selected move backrank bug", "[Search]"){
 
     Search s = Search(b, pesto);
 
-
-    SECTION("backrank"){
+    SECTION("perft backrank mate miss"){
+        REQUIRE(s.perft(5, 5, BLACK) == 39666064);
+    }
+    SECTION("alpha_beta backrank mate miss"){
         pv_t* principal_var = (pv_t*) calloc(1, sizeof(pv_t));
         principal_var->len = 0;
 
@@ -1090,7 +1127,6 @@ TEST_CASE("Alpha beta pruning selected move backrank bug", "[Search]"){
 
 TEST_CASE("Iterative deepening avoid threefold repitition in winning position", "[Search]"){
     string fen_path = "./positions/starting_position.txt";
-    string pgn_path = "./pgn/tests/avoid_draw.uci";
     Bitboard _bb = Bitboard();
     BoardInfo _bi = BoardInfo();
     Bitboard* bb = &_bb;
@@ -1098,19 +1134,38 @@ TEST_CASE("Iterative deepening avoid threefold repitition in winning position", 
 
     Board _b = Board(fen_path, bb, bi);
     Board* b = &_b;
-    b->parse_uci_pgn(pgn_path);
 
     PestoEvaluation _pesto = PestoEvaluation(b);
     PestoEvaluation* pesto = &_pesto;
 
     Search s = Search(b, pesto);
     SECTION("Avoid a5a1 to prevent threefold"){
+        string pgn_path = "./pgn/tests/avoid_draw.uci";
+        b->parse_uci_pgn(pgn_path);
         int score = s.iterative_deepening(6, BLACK, BLACK);
         unsigned int drawing_move = MoveUtils::create_move(a5, a1, BLACK, pQUEEN);
         cout<<"selected move: \n";
         MoveUtils::display(s.selected_move);
         REQUIRE(s.selected_move != drawing_move);
     }
+    SECTION("at 57 moves, there should be two repititions for move 53 and 57"){
+        string pgn_path = "./pgn/tests/avoid_draw_1.uci";
+        b->parse_uci_pgn(pgn_path, 57, true);
+        uint64 tt_val = b->tt->get_value_threefold();
+        REQUIRE(tt_val == 2);
+    }
+    // SECTION("Avoid e7e8 to prevent threefold"){
+    //     string pgn_path = "./pgn/tests/avoid_draw_1.uci";
+    //     b->parse_uci_pgn(pgn_path, 59,true);
+    //     b->get_bitboard()->display();
+    //     int score = s.iterative_deepening(6, BLACK, BLACK);
+    //     unsigned int drawing_move = MoveUtils::create_move(e7, e8, BLACK, pKING);
+    //     cout<<"selected move: \n";
+    //     MoveUtils::display(s.selected_move);
+    //     REQUIRE(s.selected_move != drawing_move);
+    // }
+    // TranspositionTable::instanceptr = nullptr;
+    // delete TranspositionTable::instanceptr;
 }
 
 TEST_CASE("Alpha beta pruning take threefold repitition in losing position", "[Search]"){

@@ -184,7 +184,10 @@ void TranspositionTable::add_value_threefold(int val){
     threefold_table.insert({hash_val, val});
 }
 void TranspositionTable::increment_value_threefold(){
-    threefold_table[hash_val] ++;
+    if(get_value_threefold() == 0)
+        threefold_table.insert({hash_val, 1});
+    else
+        threefold_table[hash_val] ++;
 }
 void TranspositionTable::decrement_value_threefold(){
     threefold_table[hash_val] --;

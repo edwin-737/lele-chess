@@ -72,5 +72,6 @@ namespace MoveUtils{
     string side_as_string(unsigned int side);
     string move_as_string(unsigned int move);
     string square_as_string(unsigned int square);
+    string additional_info_as_string(unsigned int additional_info);
 };
 #endif

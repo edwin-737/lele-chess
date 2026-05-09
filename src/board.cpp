@@ -1,8 +1,10 @@
 #include <iostream>
 #include <string>
 #include "board.hpp"
+#include "board_info.hpp"
 #include "board_squares.hpp"
 #include "const.hpp"
+#include "move.hpp"
 #include "pesto.hpp"
 using namespace BoardSquares;
 void Board::apply_move(unsigned int move){
@@ -165,7 +167,7 @@ void Board::apply_move(unsigned int move){
         uint64 from_to = get_from_to(from, to);
         uint64 from_bitboard = get_square_bitboard(from);
         uint64 to_bitboard = get_square_bitboard(to);
-        bb->piece_boards[side][piece] ^= from_bitboard;
+        bb->piece_boards[side][pPAWN] ^= from_bitboard;
         bb->collective_piece_boards[side] ^= from_to;
 
         if(MoveUtils::is_knight_promotion(move)){
@@ -177,28 +179,53 @@ void Board::apply_move(unsigned int move){
         } else if(MoveUtils::is_queen_promotion(move)){
             bb->piece_boards[side][pQUEEN] ^= to_bitboard;
         }
+
+        // if(!shown_promotion){
+        //     cout<<"=====promotion move=======\n";
+        //     bb->display_bitboard(from_bitboard);
+        //     cout<<"======\n";
+        //     bb->display_bitboard(to_bitboard);
+        //     cout<<"======\n";
+        //     bb->display();
+        //     cout<<"==========================\n";
+        //     shown_promotion = true;
+        // }
         bi->add_board_info(castle_rights, NO_EP_RIGHTS);
     } else if(MoveUtils::is_capture_promotion(move)){
 
         uint64 from_to = get_from_to(from, to);
         uint64 from_bitboard = get_square_bitboard(from);
         uint64 to_bitboard = get_square_bitboard(to);
-        bb->piece_boards[side][piece] ^= from_bitboard;
+        bb->piece_boards[side][pPAWN] ^= from_bitboard;
         bb->collective_piece_boards[side] ^= from_to;
-
         unsigned int captured_piece = MoveUtils::get_captured_piece(move);
-        bb->piece_boards[side ^ 1][captured_piece] ^= to_bitboard;
-        bb->collective_piece_boards[side ^ 1] ^= to_bitboard;
-
-        if(MoveUtils::is_knight_promotion(move)){
+        if(MoveUtils::is_knight_capture_promotion(move)){
             bb->piece_boards[side][pKNIGHT] ^= to_bitboard;
-        } else if(MoveUtils::is_bishop_promotion(move)){
+            bb->piece_boards[side ^ 1][captured_piece] ^= to_bitboard;
+            bb->collective_piece_boards[side ^ 1] ^= to_bitboard;
+        } else if(MoveUtils::is_bishop_capture_promotion(move)){
             bb->piece_boards[side][pBISHOP] ^= to_bitboard;
-        } else if(MoveUtils::is_rook_promotion(move)){
+            bb->piece_boards[side ^ 1][captured_piece] ^= to_bitboard;
+            bb->collective_piece_boards[side ^ 1] ^= to_bitboard;
+        } else if(MoveUtils::is_rook_capture_promotion(move)){
             bb->piece_boards[side][pROOK] ^= to_bitboard;
-        } else if(MoveUtils::is_queen_promotion(move)){
+            bb->piece_boards[side ^ 1][captured_piece] ^= to_bitboard;
+            bb->collective_piece_boards[side ^ 1] ^= to_bitboard;
+        } else if(MoveUtils::is_queen_capture_promotion(move)){
             bb->piece_boards[side][pQUEEN] ^= to_bitboard;
+            bb->piece_boards[side ^ 1][captured_piece] ^= to_bitboard;
+            bb->collective_piece_boards[side ^ 1] ^= to_bitboard;
         }
+        // if(!shown_capture_promotion){
+        //     cout<<"=====capture promotion move=======\n";
+        //     bb->display_bitboard(from_bitboard);
+        //     cout<<"======\n";
+        //     bb->display_bitboard(to_bitboard);
+        //     cout<<"======\n";
+        //     bb->display();
+        //     shown_capture_promotion = true;
+        //     cout<<"==================================\n";
+        // }
         bi->add_board_info(castle_rights, NO_EP_RIGHTS);
     }
     bb->all = bb->collective_piece_boards[WHITE] | bb->collective_piece_boards[BLACK];
@@ -291,7 +318,7 @@ void Board::reverse_move(unsigned int move){
         uint64 from_to = get_from_to(from, to);
         uint64 from_bitboard = get_square_bitboard(from);
         uint64 to_bitboard = get_square_bitboard(to);
-        bb->piece_boards[side][piece] ^= from_bitboard;
+        bb->piece_boards[side][pPAWN] ^= from_bitboard;
         bb->collective_piece_boards[side] ^= from_to;
 
         if(MoveUtils::is_knight_promotion(move)){
@@ -308,21 +335,26 @@ void Board::reverse_move(unsigned int move){
         uint64 from_to = get_from_to(from, to);
         uint64 from_bitboard = get_square_bitboard(from);
         uint64 to_bitboard = get_square_bitboard(to);
-        bb->piece_boards[side][piece] ^= from_bitboard;
+        bb->piece_boards[side][pPAWN] ^= from_bitboard;
         bb->collective_piece_boards[side] ^= from_to;
 
         unsigned int captured_piece = MoveUtils::get_captured_piece(move);
-        bb->piece_boards[side ^ 1][captured_piece] ^= to_bitboard;
-        bb->collective_piece_boards[side ^ 1] ^= to_bitboard;
-
-        if(MoveUtils::is_knight_promotion(move)){
+        if(MoveUtils::is_knight_capture_promotion(move)){
             bb->piece_boards[side][pKNIGHT] ^= to_bitboard;
-        } else if(MoveUtils::is_bishop_promotion(move)){
+            bb->piece_boards[side ^ 1][captured_piece] ^= to_bitboard;
+            bb->collective_piece_boards[side ^ 1] ^= to_bitboard;
+        } else if(MoveUtils::is_bishop_capture_promotion(move)){
             bb->piece_boards[side][pBISHOP] ^= to_bitboard;
-        } else if(MoveUtils::is_rook_promotion(move)){
+            bb->piece_boards[side ^ 1][captured_piece] ^= to_bitboard;
+            bb->collective_piece_boards[side ^ 1] ^= to_bitboard;
+        } else if(MoveUtils::is_rook_capture_promotion(move)){
             bb->piece_boards[side][pROOK] ^= to_bitboard;
-        } else if(MoveUtils::is_queen_promotion(move)){
+            bb->piece_boards[side ^ 1][captured_piece] ^= to_bitboard;
+            bb->collective_piece_boards[side ^ 1] ^= to_bitboard;
+        } else if(MoveUtils::is_queen_capture_promotion(move)){
             bb->piece_boards[side][pQUEEN] ^= to_bitboard;
+            bb->piece_boards[side ^ 1][captured_piece] ^= to_bitboard;
+            bb->collective_piece_boards[side ^ 1] ^= to_bitboard;
         }
     }
 
@@ -433,7 +465,7 @@ unsigned int Board::create_move_using_pgn(unsigned int from, unsigned int to, un
                 additional_info = QUEEN_CAPTURE_PROMOTION;
             }
         } else if(from_to_difference == 7 || from_to_difference == 9){
-            if(bb->collective_piece_boards[side ^ 1] & to_bb){
+            if(captured_piece != NO_PIECE){
                 additional_info = CAPTURE;
             } else {
                 additional_info = EP_CAPTURE;
@@ -591,7 +623,7 @@ void Board::parse_fen(fs::path path){
     // init_piece_locations();
     tt->initialise_hash_val(side_to_move, bb, bi);
 }
-void Board::parse_uci_pgn(fs::path path, bool verbose){
+void Board::parse_uci_pgn(fs::path path, int last_move, bool verbose){
 
     bi->set_board_info(initial_castle_rights, initial_ep_rights);
     bb->update();
@@ -599,7 +631,7 @@ void Board::parse_uci_pgn(fs::path path, bool verbose){
     std::ifstream file(path);
     if(file.is_open()){
         std::string move_string;
-        while(file >> move_string){
+        while(move_count < last_move && file >> move_string){
             unsigned int move = 0;
             if(move_string.length() < 4){
                 return;
@@ -630,6 +662,10 @@ void Board::parse_uci_pgn(fs::path path, bool verbose){
                 throw std::runtime_error("[parse_pgn] apply_move_if_legal, move not legal");
             };
             tt->increment_value_threefold();
+            if(verbose){
+                cout<<"threefold repition: "<< tt->get_value_threefold()<<"\n";
+                cout<<"transposition hash val: "<<tt->hash_val<<"\n";
+            }
             unsigned int value_threefold = tt->get_value_threefold();
             // cout<<"get_value_threefold(): "<<value_threefold<<"\n";
             if(value_threefold == 3){  
