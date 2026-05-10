@@ -49,6 +49,7 @@ public:
     bool can_castle_kingside(unsigned int side);
     bool can_castle_queenside(unsigned int side);
     void parse_fen(fs::path path);
+    unsigned int parse_single_move(string move_string, bool verbose=false);
     void parse_uci_pgn(fs::path path, int last_move=200, bool verbose=false);
     unsigned int get_side_to_move();
     void change_side_to_move();

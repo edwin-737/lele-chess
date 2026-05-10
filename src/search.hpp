@@ -1,10 +1,10 @@
 #ifndef search_h
 #define search_h
 #include <chrono>
+#include <atomic>
 
 #include "board.hpp"
 #include "const.hpp"
-#include "transposition_table.hpp"
 #include "pesto.hpp"
 
 using namespace std::chrono;
@@ -29,14 +29,15 @@ public:
 
     unsigned int perft(int original_depth,int depth_left, unsigned int side, unsigned int root_move = 0ULL, bool transposition = false);
     unsigned int perft_ordered(int original_depth, int depth_left, unsigned int side, unsigned int root_move = 0ULL, bool transposition = false);
-    int alpha_beta(int alpha, int beta, int depth_left, unsigned int side, unsigned int starting_side, unsigned int root_move=0, pv_t* pv=nullptr, bool transposition = false, bool use_pesto=true, pv_t* prev_variation=nullptr);
-    int quiesce(int alpha, int beta, int depth, unsigned int side, unsigned int starting_side, pv_t* pv=nullptr, bool transposition=false, bool use_pesto=true);
+    int alpha_beta(int alpha, int beta, int depth_left, unsigned int side, unsigned int starting_side, std::atomic<bool>& stop_flag, unsigned int root_move=0, pv_t* pv=nullptr, bool transposition = false, bool use_pesto=true, pv_t* prev_variation=nullptr);
+    int quiesce(int alpha, int beta, int depth, unsigned int side, unsigned int starting_side, std::atomic<bool>& stop_flag, pv_t* pv=nullptr, bool transposition=false, bool use_pesto=true);
     int evaluate(bool use_pesto=false);
     int static_exchange_evaluation(unsigned int side, int square);
     int static_exchange_evaluation(int move);
-    int iterative_deepening(int depth, unsigned int side, unsigned int starting_side, bool transposition=false, bool use_pesto=false);
+    int iterative_deepening(int depth, unsigned int side, unsigned int starting_side, std::atomic<bool>& stop_flag, bool transposition=false, bool use_pesto=false);
     int get_evaluation(unsigned int side);
     int init_evaluate();
+    Board* get_board_instance();
     unsigned int num_nodes = 0, num_captures = 0, num_ep_captures = 0, num_checks = 0, num_checkmates = 0, num_castles = 0, num_promotions = 0, num_capture_promotions = 0;
     int max_depth;
     bool verbose;
@@ -47,13 +48,10 @@ public:
     int tt_match_count[10] = {0};
     std::chrono::time_point<std::chrono::steady_clock> start = high_resolution_clock::now();
     std::chrono::time_point<std::chrono::steady_clock> stop = high_resolution_clock::now();
-    unsigned int searched_move_eval=0;
-    bool searched_move_found=false;
-    int searched_move_depth=false;
-    unsigned int searched_move=MoveUtils::create_move(e4, d5, WHITE, pPAWN, CAPTURE);
+
+    PestoEvaluation* pesto;
 private:
     Board* b;
-    PestoEvaluation* pesto;
     vector<unsigned int> selected_moves[DEPTH_LIMIT];
     int material = 0;
 

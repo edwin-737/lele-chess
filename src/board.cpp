@@ -626,6 +626,50 @@ void Board::parse_fen(fs::path path){
     // init_piece_locations();
     tt.initialise_hash_val(side_to_move, bb, bi);
 }
+unsigned int Board::parse_single_move(string move_string, bool verbose){
+    unsigned int move = 0;
+    if(move_string.length() < 4){
+        return 0;
+    } else if(move_string.length() == 4){
+        std::string from_string = move_string.substr(0, 2);
+        std::string to_string = move_string.substr(2, 2);
+
+        unsigned int from = MoveUtils::square_as_uint(from_string);
+        unsigned int to = MoveUtils::square_as_uint(to_string);
+        move = create_move_using_pgn(from, to);
+    } else {
+        std::string from_string = move_string.substr(0, 2);
+        std::string to_string = move_string.substr(2, 2);
+        std::string promoted_piece_string = move_string.substr(4, 1);
+
+        unsigned int from = MoveUtils::square_as_uint(from_string);
+        unsigned int to = MoveUtils::square_as_uint(to_string);
+        unsigned int promoted_piece = MoveUtils::promoted_piece_as_uint(promoted_piece_string);
+        move = create_move_using_pgn(from, to, promoted_piece);
+    } 
+    move_count++;
+    if(verbose && side_to_move == WHITE)
+        cout<<move_count<<"\n";
+    if(verbose)
+        MoveUtils::display(move);
+    if(!apply_move_if_legal(move) || move == 0){
+        bb->display();
+        throw std::runtime_error("[parse_pgn] apply_move_if_legal, move not legal");
+    };
+    tt.increment_value_threefold();
+    if(verbose){
+        cout<<"threefold repition: "<< tt.get_value_threefold()<<"\n";
+        cout<<"transposition hash val: "<<tt.hash_val<<"\n";
+    }
+    unsigned int value_threefold = tt.get_value_threefold();
+    // cout<<"get_value_threefold(): "<<value_threefold<<"\n";
+    if(value_threefold == 3){  
+        threefold_draw = true;
+        return 0;
+    } 
+    change_side_to_move();
+    return move;
+}
 void Board::parse_uci_pgn(fs::path path, int last_move, bool verbose){
 
     bi->set_board_info(initial_castle_rights, initial_ep_rights);

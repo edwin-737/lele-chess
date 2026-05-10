@@ -14,5 +14,7 @@
 
 
 
-./build/engine > alpha_beta_output/output_test_position_now.txt -p ./pgn/system_tests/system-test-1-draw-now.uci -j a -d 10 -s b -t 0 -i 1
+# ./build/engine > alpha_beta_output/output_test_position_now.txt -j a -d 10 -s b -t 0 -i 1
+# ./build/engine -j a -f ./positions/openings/kings_indian_fianchetto.txt -d 10 -s b -t 0 -i 1 -u 1
+./build/engine -j a -f ./positions/openings/sicilian_staunton.txt -d 10 -s b -t 0 -i 1 -u 1
 # ./build/engine > alpha_beta_output/output_test_position_now.txt -p ./pgn/system_tests/system-test-1-draw-now.uci -j a -d 10 -s b -t 0 -i 1

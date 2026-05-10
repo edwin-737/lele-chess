@@ -1046,8 +1046,8 @@ TEST_CASE("Transposition Table cache matches", "[TranspositionTable]"){
     SECTION("Depth = 6, tt_found_count == tt_match_count"){
         REQUIRE(s.tt_found_count[2] == 1300);
         REQUIRE(s.tt_found_count[3] == 67152);
-        REQUIRE(s.tt_found_count[4] == 1284092);
-        REQUIRE(s.tt_found_count[5] == 16699235);
+        REQUIRE(s.tt_found_count[4] == 1287835);
+        REQUIRE(s.tt_found_count[5] == 16711982);
         REQUIRE(nodes == 119060324);
     }
 
@@ -1076,7 +1076,8 @@ TEST_CASE("Alpha beta pruning selected move", "[Search]"){
         s.max_depth = 6;
         int alpha = -1e7;
         int beta = 1e7;
-        s.alpha_beta(alpha, beta, 6, BLACK, BLACK, 0, principal_var);
+        std::atomic<bool> stop_flag = std::atomic<bool>(false);
+        s.alpha_beta(alpha, beta, 6, BLACK, BLACK, stop_flag, 0, principal_var);
 
         free(principal_var);
         cout<<"selected move: ";
@@ -1111,7 +1112,8 @@ TEST_CASE("Alpha beta pruning selected move backrank bug", "[Search]"){
         s.max_depth = 6;
         int alpha = -1e7;
         int beta = 1e7;
-        s.alpha_beta(alpha, beta, 6, BLACK, BLACK, 0, principal_var);
+        std::atomic<bool> stop_flag = std::atomic<bool>(false);
+        s.alpha_beta(alpha, beta, 6, BLACK, BLACK, stop_flag, 0, principal_var);
 
         free(principal_var);
 
@@ -1169,7 +1171,8 @@ TEST_CASE("Iterative deepening avoid threefold repitition in winning position", 
         string pgn_path = "./pgn/tests/avoid_draw.uci";
         b->parse_uci_pgn(pgn_path);
         Search s = Search(b, pesto, 8, true);
-        int score = s.iterative_deepening(6, BLACK, BLACK);
+        std::atomic<bool>stop_flag = std::atomic<bool>(false);
+        int score = s.iterative_deepening(6, BLACK, BLACK, stop_flag);
         unsigned int drawing_move = MoveUtils::create_move(a5, a1, BLACK, pQUEEN);
         cout<<"selected move: \n";
         MoveUtils::display(s.selected_move);
@@ -1189,8 +1192,8 @@ TEST_CASE("Iterative deepening avoid threefold repitition in winning position", 
         b->get_bitboard()->display();
 
         Search s = Search(b, pesto, 8, true);
-
-        int score = s.iterative_deepening(8, BLACK, BLACK);
+        std::atomic<bool>stop_flag = std::atomic<bool>(false);
+        int score = s.iterative_deepening(8, BLACK, BLACK, stop_flag);
         unsigned int drawing_move = MoveUtils::create_move(e7, e8, BLACK, pKING);
         unsigned int winning_move = MoveUtils::create_move(e7, e6, BLACK, pKING);
         cout<<"selected move: \n";
@@ -1217,7 +1220,8 @@ TEST_CASE("Alpha beta pruning take threefold repitition in losing position", "[S
 
     Search s = Search(b, pesto);
     SECTION("make f4c1 to take threefold"){
-        int score = s.iterative_deepening(6, BLACK, BLACK);
+        std::atomic<bool>stop_flag = std::atomic<bool>(false);
+        int score = s.iterative_deepening(6, BLACK, BLACK, stop_flag);
         unsigned int drawing_move = MoveUtils::create_move(f4, c1, BLACK, pQUEEN);
         cout<<"selected move: \n";
         MoveUtils::display(s.selected_move);
