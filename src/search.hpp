@@ -2,6 +2,7 @@
 #define search_h
 #include <chrono>
 #include <atomic>
+#include <vector>
 
 #include "board.hpp"
 #include "const.hpp"
@@ -46,9 +47,9 @@ public:
     int tt_not_found_count[10] = {0};
     int tt_found_count[10] = {0};
     int tt_match_count[10] = {0};
-    std::chrono::time_point<std::chrono::steady_clock> start = high_resolution_clock::now();
-    std::chrono::time_point<std::chrono::steady_clock> stop = high_resolution_clock::now();
+    std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
 
+    std::chrono::steady_clock::time_point stop = std::chrono::steady_clock::now();
     PestoEvaluation* pesto;
 private:
     Board* b;

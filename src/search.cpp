@@ -1,5 +1,6 @@
 #include <unordered_set>
 #include <atomic>
+#include <cstring>
 #include "search.hpp"
 #include "move_gen.hpp"
 #include "const.hpp"
@@ -237,7 +238,7 @@ int Search::alpha_beta(int alpha, int beta, int depth_left, unsigned int side, u
                             cout<<i<<": ";
                             MoveUtils::display(principal_variation->moves[i]);
                         }
-                        stop = high_resolution_clock::now();
+                        stop = std::chrono::steady_clock::now();
                         duration<double> elapsed = stop - start;  // seconds as double (fractional)
                         cout<<"time elapsed: "<<elapsed.count()<<endl;
                         cout<<"node count: "<<num_nodes<<endl;
@@ -324,7 +325,7 @@ int Search::alpha_beta(int alpha, int beta, int depth_left, unsigned int side, u
                             cout<<i<<": ";
                             MoveUtils::display(principal_variation->moves[i]);
                         }
-                        stop = high_resolution_clock::now();
+                        stop = std::chrono::steady_clock::now();
                         duration<double> elapsed = stop - start;  // seconds as double (fractional)
                         cout<<"time elapsed: "<<elapsed.count()<<endl;
                         cout<<"node count: "<<num_nodes<<endl;
@@ -421,7 +422,7 @@ int Search::alpha_beta(int alpha, int beta, int depth_left, unsigned int side, u
                             cout<<i<<": ";
                             MoveUtils::display(principal_variation->moves[i]);
                         }
-                        stop = high_resolution_clock::now();
+                        stop = std::chrono::steady_clock::now();
                         duration<double> elapsed = stop - start;  // seconds as double (fractional)
                         cout<<"time elapsed: "<<elapsed.count()<<endl;
                         cout<<"node count: "<<num_nodes<<endl;
@@ -531,7 +532,7 @@ int Search::quiesce(int alpha, int beta, int depth, unsigned int side,  unsigned
                 //     cout<<i<<": ";
                 //     MoveUtils::display(principal_variation->moves[i]);
                 // }
-                // stop = high_resolution_clock::now();
+                // stop =  std::chrono::steady_clock::now();
                 // duration<double> elapsed = stop - start;  // seconds as double (fractional)
                 // cout<<"time elapsed: "<<elapsed.count()<<endl;
                 // cout<<"node count: "<<num_nodes<<endl;
@@ -595,7 +596,7 @@ int Search::iterative_deepening(int depth, unsigned int side, unsigned int start
         memcpy(prev_variation, principal_variation, sizeof(pv_t));
         pv1 = {};
 
-        stop = high_resolution_clock::now();
+        stop = std::chrono::steady_clock::now();
         duration<double> elapsed = stop - start;  // seconds as double (fractional)
         cout<<"time elapsed: "<<elapsed.count()<<endl;
         cout<<"node count: "<<num_nodes<<endl;

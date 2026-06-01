@@ -574,7 +574,7 @@ void Board::parse_fen(fs::path path){
                         } else if(piece_type =='r'){
                             bb->piece_boards[side][pROOK] |= square_bitboard;
                         } 
-                    } else if(isnumber(ch)){
+                    } else if(isdigit(ch)){
 
                         int stride = ch - '0';
                         pos += stride;

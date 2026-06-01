@@ -14,7 +14,6 @@
 #include "bitboard.hpp"
 #include "move_set.hpp"
 #include "worker.hpp"
-using namespace std::chrono;
 typedef enum Task{
     PERFT,
     ALPHA_BETA
@@ -32,7 +31,7 @@ typedef enum ArgState{
     USER_INPUT
 } ArgState;
 void perft(Search s, int depth, unsigned int side){
-    auto start = high_resolution_clock::now();
+    auto start = std::chrono::steady_clock::now();
     #ifdef ENABLE_PROFILER
         ProfilerStart("perf-profile.prof");
     #endif
@@ -41,7 +40,7 @@ void perft(Search s, int depth, unsigned int side){
     #ifdef ENABLE_PROFILER
         ProfilerStop();
     #endif
-    auto stop = high_resolution_clock::now();
+    auto stop = std::chrono::steady_clock::now();
     duration<double> elapsed = stop - start;  // seconds as double (fractional)
     cout<<"depth = "<<depth<<endl;
     cout<<"time = "<<elapsed.count()<<endl;

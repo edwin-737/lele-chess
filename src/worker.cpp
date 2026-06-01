@@ -25,7 +25,7 @@ void Worker::loop(long long num_seconds_per_move){
         cout<<"castle rights: "<< s.get_board_instance()->get_board_info()->peek_castle_right()<<"\n";
         cout<<"ep rights: "<<s.get_board_instance()->get_board_info()->peek_ep_right()<<"\n";
 
-        s.start = high_resolution_clock::now();
+        s.start =  std::chrono::steady_clock::now();
         std::thread t(&Worker::run_task, this, std::ref(stop_flag));
 
         std::this_thread::sleep_for(std::chrono::seconds(num_seconds_per_move));
