@@ -30,7 +30,7 @@ typedef enum ArgState{
     ITERATIVE_DEEPEN,
     USER_INPUT
 } ArgState;
-void perft(Search s, int depth, unsigned int side){
+void perft_main(Search s, int depth, unsigned int side){
     auto start = std::chrono::steady_clock::now();
     #ifdef ENABLE_PROFILER
         ProfilerStart("perf-profile.prof");
@@ -194,7 +194,7 @@ int main(int argc, char** argv)
     Search s = Search(&b, &pesto, depth);
 
     if (task == PERFT) {
-        perft(s, depth, side);
+        perft_main(s, depth, side);
     } else if(user_input){
         cout<<"using user input\n";
         interactive_move_search(s, 10, side);

@@ -7,6 +7,7 @@
 #include "board.hpp"
 #include "const.hpp"
 #include "pesto.hpp"
+#include "move_gen.hpp"
 
 using namespace std::chrono;
 using namespace std;
@@ -30,11 +31,12 @@ public:
 
     unsigned int perft(int original_depth,int depth_left, unsigned int side, unsigned int root_move = 0ULL, bool transposition = false);
     unsigned int perft_ordered(int original_depth, int depth_left, unsigned int side, unsigned int root_move = 0ULL, bool transposition = false);
+    unsigned int perft_new_movegen(int original_depth, int depth_left, unsigned int side, gen_type_t gen=ALL_MOVES,  int root_move=0ULL, bool transposition = false);
+    unsigned int perft_new_movegen_loop(MoveGen mg, int original_depth, int depth_left, unsigned int side, unsigned int root_move=0ULL, bool transposition = false);
+    unsigned int perft_new_movegen_ordered(int original_depth, int depth_left, unsigned int side, unsigned int root_move=0ULL, bool transposition = false);
     int alpha_beta(int alpha, int beta, int depth_left, unsigned int side, unsigned int starting_side, std::atomic<bool>& stop_flag, unsigned int root_move=0, pv_t* pv=nullptr, bool transposition = false, bool use_pesto=true, pv_t* prev_variation=nullptr);
+    int alpha_beta_new_movegen(int alpha, int beta, int depth_left, unsigned int side, unsigned int starting_side, std::atomic<bool>& stop_flag, unsigned int root_move=0, pv_t* pv=nullptr, bool transposition = false, bool use_pesto=true, pv_t* prev_variation=nullptr);
     int quiesce(int alpha, int beta, int depth, unsigned int side, unsigned int starting_side, std::atomic<bool>& stop_flag, pv_t* pv=nullptr, bool transposition=false, bool use_pesto=true);
-    int evaluate(bool use_pesto=false);
-    int static_exchange_evaluation(unsigned int side, int square);
-    int static_exchange_evaluation(int move);
     int iterative_deepening(int depth, unsigned int side, unsigned int starting_side, std::atomic<bool>& stop_flag, bool transposition=false, bool use_pesto=false);
     int get_evaluation(unsigned int side);
     int init_evaluate();

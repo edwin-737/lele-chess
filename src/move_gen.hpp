@@ -8,6 +8,15 @@
 #include "board.hpp"
 using namespace std;
 using namespace BoardSquares;
+
+typedef struct MoveGenState {
+    unsigned int piece;
+    uint64 piece_board;
+    uint64 move_set;
+    unsigned int promoted_piece=pKNIGHT;
+    unsigned int move_gen_stage;
+} move_gen_state_t;
+
 class MoveGen{
     /**
      * Move generation class which keeps a stack of moves being explored during search
@@ -19,10 +28,9 @@ public:
     }
     MoveGen(
         Board* _b, 
-        int _side, 
-        int _move_type=mQUIET, 
-        bool _only_captures=false
-    ): b(_b), side(_side), move_type(_move_type), gen_type(ALL_MOVES), only_captures(_only_captures), piece(pPAWN), from(0), to(0), ep_from(EP_START){
+        unsigned int _side, 
+        int _move_type=mQUIET
+    ): b(_b), side(_side), move_type(_move_type), gen_type(ALL_MOVES), piece(pPAWN), from(0), to(0), ep_from(EP_START){
         bb = b->get_bitboard();
         bi = b->get_board_info();
     }
@@ -32,14 +40,22 @@ public:
     unsigned int get_move();
     unsigned int get_special_move();
     unsigned int get_capture();
+    bool should_update_move_set(move_gen_state_t cur_state);
+    move_gen_state_t initialise(unsigned int cur_piece);
+    move_gen_state_t update(move_gen_state_t cur_state);
+    unsigned int get_move(move_gen_state_t cur_state);
 private:
+    unsigned int get_next_from(uint64 cur_piece_board);
+    unsigned int get_next_to(uint64 cur_move_set);
+    uint64 get_move_set(unsigned int _piece, unsigned int _from);
+    move_gen_state_t update_piece_board(move_gen_state_t cur_state);
     bool initialise_piece();
     bool update_piece();
     bool update_from();
     bool update_to();
     bool can_castle_kingside(int side);
     bool can_castle_queenside(int side);
-    unsigned int get_ep_capture(int side);
+    unsigned int get_ep_capture();
     Board* b;
     Bitboard* bb;
     BoardInfo* bi;

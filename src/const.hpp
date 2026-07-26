@@ -1,13 +1,19 @@
 #ifndef const_h
 #define const_h
 
-#define INCREMENTING_MOVE_TYPE 1ULL
 #define NO_MOVES_LEFT 0ULL
+#define INCREMENTING_MOVE_TYPE 1ULL
+#define EP_STAGE_1 2ULL
+#define EP_STAGE_2 3ULL
+#define QUEEN_CASTLE_STAGE 4ULL
+#define KING_CASTLE_STAGE 5ULL
+#define NORMAL_STAGE 6ULL
+#define SPECIAL_STAGE 7ULL
 #define WHITE_KING_CASTLE_SQUARES 0x60ULL
 #define WHITE_QUEEN_CASTLE_SQUARES 0xeULL
 #define BLACK_KING_CASTLE_SQUARES 0x6000000000000000ULL
 #define BLACK_QUEEN_CASTLE_SQUARES 0xe00000000000000ULL
-#define EP_START -1
+#define EP_START 64
 #define EP_FINISHED 8
 #define CHECKMATE_EVAL(max_depth,depth_left) -100000+(max_depth-depth_left)
 #define STALEMATE_EVAL 0
@@ -19,11 +25,11 @@
 #define NO_DIRECTION 9
 #define MAX_CAPTURE_VALUE 9
 #define INVALID_LOCATION 64
-enum GenType {
+typedef enum GenType {
     ALL_MOVES,
     ONLY_CAPTURES,
     ONLY_QUIET
-};
+} gen_type_t;
 enum Side
 {
     WHITE,

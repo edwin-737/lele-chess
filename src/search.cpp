@@ -21,7 +21,7 @@ unsigned int Search::perft(int original_depth, int depth_left, unsigned int side
         if(b->get_bitboard()->attacked(side, b->get_king_location(side))){
             num_checks ++;
         } 
-        return 1ULL;
+        return 1;
     } 
     else if(depth_left == original_depth - 1){
         cout<<MoveUtils::move_as_string(root_move)<<": ";
@@ -79,7 +79,7 @@ unsigned int Search::perft_ordered(int original_depth, int depth_left, unsigned 
         if(b->get_bitboard()->attacked(side, b->get_king_location(side))){
             num_checks ++;
         } 
-        return 1ULL;
+        return 1;
     } 
     else if(depth_left == original_depth - 1){
         cout<<MoveUtils::move_as_string(root_move)<<": ";
@@ -150,11 +150,157 @@ unsigned int Search::perft_ordered(int original_depth, int depth_left, unsigned 
     }
     return ans;
 }
+unsigned int Search::perft_new_movegen(int original_depth, int depth_left, unsigned int side, gen_type_t gen,  int root_move, bool transposition){
+    if(depth_left == 0){
+        if(MoveUtils::is_ep_capture(root_move)){
+            num_captures ++;
+            num_ep_captures ++;
+        } else if(MoveUtils::is_capture(root_move)){
+            num_captures ++;
+        } else if(MoveUtils::is_castle(root_move)){
+            num_castles ++;
+        } else if(MoveUtils::is_promotion(root_move)){
+            num_promotions ++;
+        } else if(MoveUtils::is_capture_promotion(root_move)){
+            num_capture_promotions ++;
+        }
+        if(b->get_bitboard()->attacked(side, b->get_king_location(side))){
+            num_checks ++;
+        } 
+        return 1;
+    } 
+    else if(depth_left == original_depth - 1){
+        if(MoveUtils::get_from(root_move) == a1 && MoveUtils::get_to(root_move) == a1){
+            cout<<"invalid root_move: ";
+            MoveUtils::display(root_move);
+            cout<<"\n";
+        }
+        cout<<MoveUtils::move_as_string(root_move)<<": ";
+    }
+    MoveGen mg = MoveGen(b, side);
+    mg.set_gen_type(gen);
+    move_gen_state_t mg_state = mg.initialise(pPAWN);
+    unsigned int move = 0;
+    int num_legal_moves = 0;
+    unsigned int ans = 0;
+    while((move = mg.get_move(mg_state)) != NO_MOVES_LEFT){
+        if(move == INCREMENTING_MOVE_TYPE){
+            continue;
+        }
+        mg_state = mg.update(mg_state);
+        if(b->apply_move_if_legal(move)){
+            if(original_depth == 1){
+                cout<<MoveUtils::move_as_string(move)<<": 1\n";
+            }
+            int depth_searched = original_depth - depth_left;
+            if(!transposition){
+                unsigned int perft_val = perft_new_movegen(original_depth, depth_left - 1, side ^ 1, gen, move);
+                ans += perft_val;
+            } else {
+                unsigned int tt_val = b->tt.get_value_perft(depth_searched);
+                if(!tt_val){
+                    unsigned int perft_val = perft_new_movegen(original_depth, depth_left - 1, side ^ 1, gen, move, true);
+                    ans += perft_val;
+                    b->tt.add_value_perft(depth_searched, perft_val);
+                    tt_not_found_count[depth_searched] ++;
+                }
+                else{
+                    ans += tt_val;
+                    tt_found_count[depth_searched] ++;
+                }
+            }
+            b->reverse_move(move);
+        }
+
+    }
+    if(depth_left == original_depth - 1){
+        cout<<ans<<endl;
+    }
+    return ans;
+}
+unsigned int Search::perft_new_movegen_loop(MoveGen mg, int original_depth, int depth_left, unsigned int side, unsigned int root_move, bool transposition){
+
+    move_gen_state_t mg_state = mg.initialise(pPAWN);
+    unsigned int move = 0;
+    int num_legal_moves = 0;
+    unsigned int ans = 0;
+    while((move = mg.get_move(mg_state)) != NO_MOVES_LEFT){
+        if(move == INCREMENTING_MOVE_TYPE){
+            continue;
+        }
+        mg_state = mg.update(mg_state);
+        if(b->apply_move_if_legal(move)){
+            if(original_depth == 1){
+                cout<<MoveUtils::move_as_string(move)<<": 1\n";
+            }
+            int depth_searched = original_depth - depth_left;
+            if(!transposition){
+                unsigned int perft_val = perft_new_movegen_ordered(original_depth, depth_left - 1, side ^ 1, move);
+                ans += perft_val;
+            } else {
+                unsigned int tt_val = b->tt.get_value_perft(depth_searched);
+                if(!tt_val){
+                    unsigned int perft_val = perft_new_movegen_ordered(original_depth, depth_left - 1, side ^ 1, move, true);
+                    ans += perft_val;
+                    b->tt.add_value_perft(depth_searched, perft_val);
+                    tt_not_found_count[depth_searched] ++;
+                }
+                else{
+                    ans += tt_val;
+                    tt_found_count[depth_searched] ++;
+                }
+            }
+            b->reverse_move(move);
+        }
+
+    }
+    return ans;
+}
+unsigned int Search::perft_new_movegen_ordered(int original_depth, int depth_left, unsigned int side, unsigned int root_move, bool transposition){
+    if(depth_left == 0){
+        if(MoveUtils::is_ep_capture(root_move)){
+            num_captures ++;
+            num_ep_captures ++;
+        } else if(MoveUtils::is_capture(root_move)){
+            num_captures ++;
+        } else if(MoveUtils::is_castle(root_move)){
+            num_castles ++;
+        } else if(MoveUtils::is_promotion(root_move)){
+            num_promotions ++;
+        } else if(MoveUtils::is_capture_promotion(root_move)){
+            num_capture_promotions ++;
+        }
+        if(b->get_bitboard()->attacked(side, b->get_king_location(side))){
+            num_checks ++;
+        } 
+        return 1;
+    } 
+    else if(depth_left == original_depth - 1){
+        if(MoveUtils::get_from(root_move) == a1 && MoveUtils::get_to(root_move) == a1){
+            cout<<"invalid root_move: ";
+            MoveUtils::display(root_move);
+            cout<<"\n";
+        }
+        cout<<MoveUtils::move_as_string(root_move)<<": ";
+    }
+    MoveGen mg_captures = MoveGen(b, side);
+    mg_captures.set_gen_type(ONLY_CAPTURES);
+    unsigned int perft_captures = perft_new_movegen_loop(mg_captures, original_depth, depth_left, side, root_move, transposition);
+
+    MoveGen mg_quiet = MoveGen(b, side);
+    mg_quiet.set_gen_type(ONLY_QUIET);
+    unsigned int perft_quiet = perft_new_movegen_loop(mg_quiet, original_depth, depth_left, side, root_move, transposition);
+
+    unsigned int ans = perft_captures + perft_quiet;
+    if(depth_left == original_depth - 1){
+        cout<<ans<<endl;
+    }
+    return perft_captures + perft_quiet;
+
+}
 
 int Search::alpha_beta(int alpha, int beta, int depth_left, unsigned int side, unsigned int starting_side, std::atomic<bool>& stop_flag, unsigned int root_move, pv_t* principal_variation, bool transposition, bool use_pesto, pv_t* prev_variation){
-    // if(depth_left >= max_depth - 2 && MoveUtils::get_from(root_move) == e4 && MoveUtils::get_to(root_move) == d5){
-    //     cout<<"depth_left: "<<depth_left<<"\n";
-    // }
+
     int prev_eval = pesto->get_evaluation(WHITE, side);    
     pv_t line;
     line.len = 0;
@@ -442,6 +588,289 @@ int Search::alpha_beta(int alpha, int beta, int depth_left, unsigned int side, u
             //     return -CHECKMATE_EVAL(max_depth,depth_left);
             // else 
             //     return CHECKMATE_EVAL(max_depth, depth_left);
+        } else {
+            return STALEMATE_EVAL;
+        }
+    }
+    if(depth_left == max_depth){
+        cout<<"----------------------------\n";
+        cout<<"final variation\n";
+        cout<<"principal_variation length: "<<principal_variation->len<<endl;
+        for(int i = 0 ; i < principal_variation->len ; i ++){
+            cout<<i<<": ";
+            MoveUtils::display(principal_variation->moves[i]);
+        }
+        cout<<"----------------------------\n";
+    }
+    return alpha;
+}
+int Search::alpha_beta_new_movegen(int alpha, int beta, int depth_left, unsigned int side, unsigned int starting_side, std::atomic<bool>& stop_flag, unsigned int root_move, pv_t* principal_variation, bool transposition, bool use_pesto, pv_t* prev_variation){
+
+    int prev_eval = pesto->get_evaluation(WHITE, side);    
+    pv_t line;
+    line.len = 0;
+    if(depth_left == 0)
+        return quiesce(alpha, beta, 2, side, starting_side, stop_flag, &line, transposition, use_pesto);
+
+    MoveGen mg_captures = MoveGen(b, side);
+    MoveGen mg_quiet = MoveGen(b, side);
+    mg_captures.set_gen_type(ONLY_CAPTURES);
+    mg_quiet.set_gen_type(ONLY_QUIET);
+
+    move_gen_state_t mg_captures_state = mg_captures.initialise(pPAWN);
+    move_gen_state_t mg_quiet_state = mg_quiet.initialise(pPAWN);
+
+    unsigned int move = 0;
+    bool no_moves_left = true;
+    std::unordered_set<unsigned int> seen_moves;
+    if(prev_variation != nullptr && max_depth - depth_left < prev_variation->len){
+        int score = 0;
+        if(stop_flag.load()){
+            pesto->set_evaluation(prev_eval);
+            return score;
+        }
+        bool threefold = false;
+        move = prev_variation->moves[max_depth-depth_left];
+        if(b->apply_move_if_legal(move)){
+
+            b->tt.increment_value_threefold();
+            if(use_pesto)
+                pesto->update_evaluation(move, 0);
+            int depth_searched = 10 - depth_left;
+
+
+            if(b->tt.get_value_threefold() == 3){
+                score = STALEMATE_EVAL;
+                threefold = true;
+            } else {
+                score = -alpha_beta(-beta, -alpha, depth_left - 1, side ^ 1, starting_side, stop_flag, move, &line, transposition, use_pesto);
+            }
+
+            b->tt.decrement_value_threefold();
+            b->reverse_move(move);
+            if(use_pesto)
+                pesto->update_evaluation(move, 1);
+            if(score >= beta){
+                num_nodes++;
+                return beta;
+            } 
+            if(score > alpha){
+                if(!threefold){
+                    principal_variation->moves[0] = move;
+                    memcpy(principal_variation->moves + 1, line.moves, line.len * sizeof(unsigned int));
+                    principal_variation->len = line.len + 1;
+                } else {
+                    principal_variation->moves[0] = move;
+                    principal_variation->len = 1;
+                }
+                if(depth_left == max_depth){
+                    selected_move = move;
+                    cout<<"-----------------\n";
+                    cout<<"selected_move:";
+                    if(threefold) cout<<"stalemate\n";
+                    MoveUtils::display(selected_move);
+                    cout<<"score: "<<score<<endl;
+                    cout<<"alpha: "<<alpha<<endl;
+                    cout<<"-----------------\n";
+
+                    if(verbose){
+                        cout<<"-----------------\n";
+                        cout<<"current variation\n";
+                        cout<<"principal_variation length: "<<principal_variation->len<<endl;
+                        for(int i = 0 ; i < principal_variation->len ; i ++){
+                            cout<<i<<": ";
+                            MoveUtils::display(principal_variation->moves[i]);
+                        }
+                        stop = std::chrono::steady_clock::now();
+                        duration<double> elapsed = stop - start;  // seconds as double (fractional)
+                        cout<<"time elapsed: "<<elapsed.count()<<endl;
+                        cout<<"node count: "<<num_nodes<<endl;
+                        cout<<"-----------------\n";
+                    }
+                } 
+                alpha = score;
+            } 
+            no_moves_left = false;
+        }
+    }
+
+    while((move = mg_captures.get_move(mg_captures_state)) != NO_MOVES_LEFT){
+        bool threefold = false;
+        if(move == INCREMENTING_MOVE_TYPE)
+            continue;
+        mg_captures_state = mg_captures.update(mg_captures_state);
+        if(b->apply_move_if_legal(move)){
+            b->tt.increment_value_threefold();
+            int prev_eval = pesto->get_evaluation(starting_side, side);
+            if(use_pesto)
+                pesto->update_evaluation(move, 0);
+            int score = 0;
+            int depth_searched = 10 - depth_left;
+            if(b->tt.get_value_threefold() == 3){
+                score = STALEMATE_EVAL;
+                threefold = true;
+            } else {
+                score = -alpha_beta(-beta, -alpha, depth_left - 1, side ^ 1, starting_side, stop_flag, move, &line, transposition, use_pesto);
+            }
+
+            b->tt.decrement_value_threefold();
+            b->reverse_move(move);
+            if(use_pesto)
+                pesto->update_evaluation(move, 1);
+            // ensures only the previous best move is returned
+            if(stop_flag.load()){
+                pesto->set_evaluation(prev_eval);
+                return CHECKMATE_EVAL(max_depth, depth_left);
+            }
+            if(score >= beta){
+                num_nodes++;
+                return beta;
+            } 
+            if(score > alpha){
+
+                principal_variation->moves[0] = move;
+                memcpy(principal_variation->moves + 1, line.moves, line.len * sizeof(unsigned int));
+                principal_variation->len = line.len + 1;
+
+                if(!threefold){
+                    principal_variation->moves[0] = move;
+                    memcpy(principal_variation->moves + 1, line.moves, line.len * sizeof(unsigned int));
+                    principal_variation->len = line.len + 1;
+                } else {
+                    principal_variation->moves[0] = move;
+                    principal_variation->len = 1;
+                }
+                if(threefold){
+                    selected_move = move;
+                    cout<<"-----------------\n";
+                    cout<<"stalemate\n";
+                    cout<<"selected_move:";
+                    MoveUtils::display(selected_move);
+                    cout<<"score: "<<score<<endl;
+                    cout<<"alpha: "<<alpha<<endl;
+                    cout<<"-----------------\n";
+                }
+                else if(depth_left == max_depth){
+                    selected_move = move;
+
+                    cout<<"-----------------\n";
+                    if(threefold) cout<<"stalemate\n";
+                    cout<<"selected_move:";
+                    MoveUtils::display(selected_move);
+                    cout<<"score: "<<score<<endl;
+                    cout<<"alpha: "<<alpha<<endl;
+                    cout<<"-----------------\n";
+
+                    if(verbose){
+                        cout<<"-----------------\n";
+                        cout<<"current variation\n";
+                        cout<<"principal_variation length: "<<principal_variation->len<<endl;
+                        for(int i = 0 ; i < principal_variation->len ; i ++){
+                            cout<<i<<": ";
+                            MoveUtils::display(principal_variation->moves[i]);
+                        }
+                        stop = std::chrono::steady_clock::now();
+                        duration<double> elapsed = stop - start;  // seconds as double (fractional)
+                        cout<<"time elapsed: "<<elapsed.count()<<endl;
+                        cout<<"node count: "<<num_nodes<<endl;
+                        cout<<"-----------------\n";
+                    }
+                } 
+                alpha = score;
+            } 
+            no_moves_left = false;
+        }
+    }
+
+    while((move = mg_quiet.get_move(mg_quiet_state)) != NO_MOVES_LEFT){
+        bool threefold = false;
+        if(move == INCREMENTING_MOVE_TYPE)
+            continue;
+        mg_quiet_state = mg_quiet.update(mg_quiet_state);
+        if(seen_moves.find(move) != seen_moves.end()){
+            cout<<"move seen: ";
+            MoveUtils::display(move);
+            continue;
+        }
+        if(b->apply_move_if_legal(move)){
+            b->tt.increment_value_threefold();
+            if(use_pesto)
+                pesto->update_evaluation(move, 0);
+            int score = 0;
+            int depth_searched = 10 - depth_left;
+
+
+            if(b->tt.get_value_threefold() == 3){
+                score = STALEMATE_EVAL;
+                threefold = true;
+            } else {
+                score = -alpha_beta(-beta, -alpha, depth_left - 1, side ^ 1, starting_side, stop_flag, move, &line, transposition, use_pesto);
+            }
+            b->tt.decrement_value_threefold();
+            b->reverse_move(move);
+            if(use_pesto)
+                pesto->update_evaluation(move, 1);
+
+            // ensures only the previous best move is returned
+            if(stop_flag.load()){
+                pesto->set_evaluation(prev_eval);
+                return CHECKMATE_EVAL(max_depth, depth_left);
+            }
+            if(score >= beta){
+                num_nodes++;
+                return beta;
+            } 
+            if(score > alpha){
+
+                principal_variation->moves[0] = move;
+                memcpy(principal_variation->moves + 1, line.moves, line.len * sizeof(unsigned int));
+                principal_variation->len = line.len + 1;
+
+                if(!threefold){
+                    principal_variation->moves[0] = move;
+                    memcpy(principal_variation->moves + 1, line.moves, line.len * sizeof(unsigned int));
+                    principal_variation->len = line.len + 1;
+                } else {
+                    principal_variation->moves[0] = move;
+                    principal_variation->len = 1;
+                }
+                if(depth_left == max_depth){
+                    selected_move = move;
+                    selected_moves[max_depth + 2].push_back(selected_move);
+
+                    cout<<"-----------------\n";
+                    if(threefold) cout<<"stalemate\n";
+                    cout<<"selected_move:";
+                    MoveUtils::display(selected_move);
+                    cout<<"score: "<<score<<endl;
+                    cout<<"alpha: "<<alpha<<endl;
+                    cout<<"-----------------\n";
+
+
+                    if(verbose){
+                        cout<<"-----------------\n";
+                        cout<<"current variation\n";
+                        cout<<"principal_variation length: "<<principal_variation->len<<endl;
+                        for(int i = 0 ; i < principal_variation->len ; i ++){
+                            cout<<i<<": ";
+                            MoveUtils::display(principal_variation->moves[i]);
+                        }
+                        stop = std::chrono::steady_clock::now();
+                        duration<double> elapsed = stop - start;  // seconds as double (fractional)
+                        cout<<"time elapsed: "<<elapsed.count()<<endl;
+                        cout<<"node count: "<<num_nodes<<endl;
+                        cout<<"-----------------\n";
+                    }
+                } 
+                alpha = score;
+            } 
+            no_moves_left = false;
+        }
+    }
+
+    if(no_moves_left){
+        if(b->get_bitboard()->attacked(side, b->get_king_location(side))){
+            return CHECKMATE_EVAL(max_depth, depth_left);
         } else {
             return STALEMATE_EVAL;
         }
