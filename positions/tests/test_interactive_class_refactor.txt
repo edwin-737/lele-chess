@@ -1,0 +1,14 @@
+[Event "?"]
+[Site "?"]
+[Date "????.??.??"]
+[Round "?"]
+[White "?"]
+[Black "?"]
+[Result "*"]
+[SetUp "1"]
+[FEN "rnbqk2r/ppp1ppbp/3p1np1/8/2PP4/2N3P1/PP2PP1P/R1BQKBNR w KQkq - 1 5"]
+[Link "https://www.chess.com/analysis"]
+
+5. Bg2 O-O 6. e4 c5 7. Nge2 cxd4 8. Nxd4 Nbd7 9. Be3 Ne5 10. b3 Neg4 11. O-O
+Nxe3 12. fxe3 a6 13. Qc2 Ng4 14. Rae1 Nxe3 15. Rxe3 Bxd4 16. Qd3 Bc5 17. b4
+Bxe3+ *

@@ -50,9 +50,10 @@ public:
         //     return bi_stack.top();
         // else 
         //     return 0;
-        if(depth >= 0)
-            return bi_arr[depth];
-        return 0;
+        // if(depth >= 0)
+            // return depth ? bi_arr[depth] : 0;
+        // return 0;
+        return bi_arr[depth];
     }
     unsigned int peek_castle_right(){
         return peek_board_info() >> 4;

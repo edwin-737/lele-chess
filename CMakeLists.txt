@@ -54,7 +54,11 @@ add_executable(test_engine ${TEST_FILES})
 # Link Catch2 for test_engine
 # --------------------------
 target_link_libraries(test_engine PRIVATE Catch2::Catch2WithMain)
-target_include_directories(test_engine PRIVATE ${SRC_DIR})
+target_include_directories(test_engine 
+    PRIVATE 
+    ${SRC_DIR}
+    ${TEST_DIR}
+)
 
 # Define a default value if the user doesn't provide one
 set(ENABLE_PERFT 1 CACHE STRING "Enable perft")
@@ -82,4 +86,8 @@ if(ENABLE_GPERFTOOLS)
     target_include_directories(engine PRIVATE ${PROFILER_INCLUDE_DIR})
     target_link_libraries(engine PRIVATE ${PROFILER_LIB})
     target_compile_definitions(engine PRIVATE ENABLE_PROFILER)
+
+    target_include_directories(test_engine PRIVATE ${PROFILER_INCLUDE_DIR})
+    target_link_libraries(test_engine PRIVATE ${PROFILER_LIB})
+    target_compile_definitions(test_engine PRIVATE ENABLE_PROFILER)
 endif()

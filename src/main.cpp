@@ -33,7 +33,7 @@ typedef enum ArgState{
 void perft_main(Search s, int depth, unsigned int side){
     auto start = std::chrono::steady_clock::now();
     #ifdef ENABLE_PROFILER
-        ProfilerStart("perf-profile.prof");
+        ProfilerStart("main-perf-profile.prof");
     #endif
     unsigned int num_nodes = s.perft(depth, depth, side);
     
@@ -75,7 +75,7 @@ void move_search(Search s, bool iterative_deepen, bool transposition, int depth,
         int score = s.iterative_deepening(depth, side, side, stop_flag);
     } else {
         std::atomic<bool> stop_flag = std::atomic<bool>(false);
-        int score = s.alpha_beta(alpha, beta, depth, side, side, stop_flag, 0, principal_variation, transposition, true);
+        int score = s.alpha_beta_new_movegen(alpha, beta, depth, side, side, stop_flag, 0, principal_variation, transposition, true);
     }
     
     free(principal_variation);
@@ -96,8 +96,6 @@ void interactive_move_search(Search s, long long num_seconds_per_move, unsigned 
     cout<<"interactive move search\n";
     s.get_board_instance()->get_bitboard()->display();
     s.max_depth = 10;
-    // Worker w = Worker(s, side_to_move, s.max_depth);
-    // w.loop(num_seconds_per_move);
     auto w = std::make_shared<Worker>(s, opp_side, s.max_depth);
     w->loop(num_seconds_per_move);
 }
@@ -197,7 +195,7 @@ int main(int argc, char** argv)
         perft_main(s, depth, side);
     } else if(user_input){
         cout<<"using user input\n";
-        interactive_move_search(s, 10, side);
+        interactive_move_search(s, 20, side);
     } else {
         move_search(s, iterative_deepen, transposition, depth, side);
 

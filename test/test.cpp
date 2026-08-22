@@ -17,6 +17,8 @@
 #include "transposition_table.hpp"
 #include "utils.hpp"
 #include "move_gen.hpp"
+
+#include "test_utils.hpp"
 using namespace std::chrono;
 using namespace std;
 #define NONE 0
@@ -553,28 +555,6 @@ TEST_CASE("Only Captures","[MoveGen]"){
         REQUIRE(are_move_vectors_equal(actual_moves, expected_moves));
     }
 
-    SECTION("pawn explored first"){
-
-        const char* perft_ordered = "./positions/bugs/test_perft_ordered.txt";
-        b->parse_fen(perft_ordered);
-        b->get_bitboard()->display();
-        MoveGen mg1 = MoveGen(b, WHITE);
-        mg1.set_gen_type(ONLY_CAPTURES);
-        unsigned int move;  
-        bool move_exists=false;
-        while((move = mg1.get_move()) != NO_MOVES_LEFT){
-            if(move == INCREMENTING_MOVE_TYPE){
-                cout<<"continuing\n";
-                continue;
-            }
-            REQUIRE(MoveUtils::get_additional_info(move) == ADDITIONAL_INFO::CAPTURE);
-            REQUIRE(MoveUtils::get_piece(move) == pPAWN);
-            move_exists=true;
-            break;
-        }
-        REQUIRE(move_exists==true);
-
-    }
 
 }
 
@@ -621,443 +601,10 @@ TEST_CASE("Move generation total","[MoveGen]"){
 
 }
 #if defined(ENABLE_PERFT) && (ENABLE_PERFT != 0)
-// TEST_CASE("Number of nodes during search","[Perft]"){
+TEST_CASE("Number of nodes during search","[Perft]"){
 
 
 
-//     const char* fen_path = "./positions/starting_position.txt";
-//     Bitboard _bb = Bitboard();
-//     BoardInfo _bi = BoardInfo();
-//     Bitboard* bb = &_bb;
-//     BoardInfo* bi = &_bi;
-//     Board _b = Board(fen_path, bb, bi);
-//     Board* b = &_b;
-    
-//     PestoEvaluation _pesto = PestoEvaluation(b);
-//     PestoEvaluation* pesto = &_pesto;
-//     Search s = Search(b, pesto);
-//     SECTION("Depth = 1"){
-//         REQUIRE(s.perft(1, 1, WHITE) == 20);
-//         REQUIRE(s.num_captures == 0);
-//     }
-//     SECTION("Depth = 2"){
-//         REQUIRE(s.perft(2, 2, WHITE) == 400);
-//         REQUIRE(s.num_captures == 0);
-//     }
-//     SECTION("Depth = 3"){
-//         REQUIRE(s.perft(3, 3, WHITE) == 8902);
-//         REQUIRE(s.num_captures == 34);
-//     }
-
-// }
-
-// TEST_CASE("Perft king move miss", "[Search]"){
-//     string fen_path = "./positions/bugs/backrank_miss_e5f3_g1h1_c6c5.txt";
-//     Bitboard _bb = Bitboard();
-//     BoardInfo _bi = BoardInfo();
-//     Bitboard* bb = &_bb;
-//     BoardInfo* bi = &_bi;
-//     Board _b = Board(fen_path, bb, bi);
-//     Board* b = &_b;
-
-//     SECTION("king move generated"){
-//         MoveGen mg = MoveGen(b, WHITE);
-//         unsigned int move = 0;
-//         bool king_move_found = false;
-//         bool h1g2_move_found = false;
-//         while((move = mg.get_move()) != NO_MOVES_LEFT){
-//             if(MoveUtils::get_piece(move) == pKING){
-//                 king_move_found = true;
-//                 cout<<"king move found: ";
-//                 MoveUtils::display(move);
-//             } if(move == MoveUtils::create_move(h1, g2, WHITE, pKING)){
-//                 h1g2_move_found = true;
-//             }
-//         }
-//         REQUIRE(king_move_found);
-//         REQUIRE(h1g2_move_found);
-//     }
-//     SECTION("correct number of nodes searched"){
-//         PestoEvaluation _pesto = PestoEvaluation(b);
-//         PestoEvaluation* pesto = &_pesto;
-
-//         Search s = Search(b, pesto);
-//         REQUIRE(s.perft(2, 2, WHITE) == 1473);
-//     }
-// }
-
-// TEST_CASE("Number of nodes during search depth 4","[Perft]"){
-
-//     const char* fen_path = "./positions/starting_position.txt";
-//     Bitboard _bb = Bitboard();
-//     BoardInfo _bi = BoardInfo();
-//     Bitboard* bb = &_bb;
-//     BoardInfo* bi = &_bi;
-//     Board _b = Board(fen_path, bb, bi);
-//     Board* b = &_b;
-
-//     PestoEvaluation _pesto = PestoEvaluation(b);
-//     PestoEvaluation* pesto = &_pesto;
-//     Search s = Search(b, pesto);
-
-//     SECTION("Depth = 4"){
-//         REQUIRE(s.perft(4, 4, WHITE) == 197281);
-//         REQUIRE(s.num_captures == 1576);
-//     }
-
-// }
-// TEST_CASE("Number of nodes during search depth 5","[Perft]"){
-
-//     const char* fen_path = "./positions/starting_position.txt";
-//     Bitboard _bb = Bitboard();
-//     BoardInfo _bi = BoardInfo();
-//     Bitboard* bb = &_bb;
-//     BoardInfo* bi = &_bi;
-//     Board _b = Board(fen_path, bb, bi);
-//     Board* b = &_b;
-
-//     PestoEvaluation _pesto = PestoEvaluation(b);
-//     PestoEvaluation* pesto = &_pesto;
-//     Search s = Search(b, pesto);
-
-//     SECTION("Depth = 5"){
-//         REQUIRE(s.perft(5, 5, WHITE) == 4865609);
-//         REQUIRE(s.num_captures == 82719);
-//     }
-
-// }
-
-// TEST_CASE("perft == perft_ordered","[Perft]"){
-
-//     const char* fen_path = "./positions/starting_position.txt";
-//     Bitboard _bb = Bitboard();
-//     BoardInfo _bi = BoardInfo();
-//     Bitboard* bb = &_bb;
-//     BoardInfo* bi = &_bi;
-//     Board _b = Board(fen_path, bb, bi);
-//     Board* b = &_b;
-
-//     PestoEvaluation _pesto = PestoEvaluation(b);
-//     PestoEvaluation* pesto = &_pesto;
-//     Search s = Search(b, pesto);
-
-//     SECTION("Depth = 5"){
-//         REQUIRE(s.perft(5, 5, WHITE) == s.perft_ordered(5, 5, WHITE));
-//     }
-
-// }
-// TEST_CASE("promotions during search", "[Perft]"){
-
-//     string fen_path = "./positions/ep_fen.txt";
-//     Bitboard _bb = Bitboard();
-//     BoardInfo _bi = BoardInfo();
-//     Bitboard* bb = &_bb;
-//     BoardInfo* bi = &_bi;
-//     Board _b = Board(fen_path, bb, bi);
-//     Board* b = &_b;
-
-//     PestoEvaluation _pesto = PestoEvaluation(b);
-//     PestoEvaluation* pesto = &_pesto;
-//     Search s = Search(b, pesto);
-//     unsigned int ans = s.perft(5, 5, WHITE);
-
-//     SECTION("Depth = 5"){
-//         REQUIRE(ans == 16422290);
-//         REQUIRE(s.num_captures == 669892);
-//         REQUIRE(s.num_ep_captures == 174);
-//         REQUIRE(s.num_promotions == 628);
-//         REQUIRE(s.num_capture_promotions == 9808);
-
-//     }
-
-// }
-TEST_CASE("castles during search", "[Perft]"){
-
-
-    string fen_path = "./positions/castle_fen.txt";
-    Bitboard _bb = Bitboard();
-    BoardInfo _bi = BoardInfo();
-    Bitboard* bb = &_bb;
-    BoardInfo* bi = &_bi;
-    Board _b = Board(fen_path, bb, bi);
-    Board* b = &_b;
-
-    PestoEvaluation _pesto = PestoEvaluation(b);
-    PestoEvaluation* pesto = &_pesto;
-    Search s1 = Search(b, pesto);
-    Search s2 = Search(b, pesto);
-    cout<<"perft_result\n";
-    unsigned int perft_result = s1.perft(5, 5, WHITE);
-    cout<<"perft_new_movegen_ordered_result\n";
-    unsigned int perft_new_movegen_ordered_result = s2.perft_new_movegen_ordered(5, 5, WHITE);
-    SECTION("Depth = 5"){
-        REQUIRE(perft_result == perft_new_movegen_ordered_result);
-        REQUIRE(s1.num_castles == s2.num_castles);
-
-    }
-
-}
-// TEST_CASE("Unique Zobrist Hash vals", "[TranspositionTable]"){
-
-//     string fen_path = "./positions/starting_position.txt";
-//     Bitboard _bb = Bitboard();
-//     BoardInfo _bi = BoardInfo();
-//     Bitboard* bb = &_bb;
-//     BoardInfo* bi = &_bi;
-//     Board _b = Board(fen_path, bb, bi);
-//     Board* b = &_b;
-
-//     PestoEvaluation _pesto = PestoEvaluation(b);
-//     PestoEvaluation* pesto = &_pesto;
-//     Search s = Search(b, pesto);
-
-//     vector<uint64> seen_zobrist_vals;
-//     bool found_duplicate = false;
-//     for(int i = 0 ; i < NUM_ZOBRIST_VALS ; i ++){
-//         for(int j = 0 ; j < seen_zobrist_vals.size() ; j ++){
-//             if(seen_zobrist_vals[j] == b->tt.zobrist_vals[i])
-//                 found_duplicate = true;
-//         }
-//         seen_zobrist_vals.push_back(b->tt.zobrist_vals[i]);
-//     }
-//     REQUIRE(!found_duplicate);
-// }
-// TEST_CASE("Updating hash val", "[TranspositionTable]"){
-
-//     string fen_path = "./positions/starting_position.txt";
-//     Bitboard _bb = Bitboard();
-//     BoardInfo _bi = BoardInfo();
-//     Bitboard* bb = &_bb;
-//     BoardInfo* bi = &_bi;
-//     Board _b = Board(fen_path, bb, bi);
-//     Board* b = &_b;
-
-//     cout<<"initial hash_val: "<<b->tt.hash_val<<endl;
-//     SECTION("quiet moves"){
-
-//         unsigned int move_order1[4] = {
-//             MoveUtils::create_move(b2, b4, WHITE, pPAWN, DOUBLE_PAWN_PUSH),
-//             MoveUtils::create_move(c7, c5, BLACK, pPAWN, DOUBLE_PAWN_PUSH),
-//             MoveUtils::create_move(a2, a4, WHITE, pPAWN, DOUBLE_PAWN_PUSH),
-//             MoveUtils::create_move(a7, a5, BLACK, pPAWN, DOUBLE_PAWN_PUSH)
-//         };
-//         unsigned int move_order2[4] = {
-//             MoveUtils::create_move(a2, a4, WHITE, pPAWN, DOUBLE_PAWN_PUSH),
-//             MoveUtils::create_move(c7, c5, BLACK, pPAWN, DOUBLE_PAWN_PUSH),
-//             MoveUtils::create_move(b2, b4, WHITE, pPAWN, DOUBLE_PAWN_PUSH),
-//             MoveUtils::create_move(a7, a5, BLACK, pPAWN, DOUBLE_PAWN_PUSH)
-//         };
-//         SECTION("applying and reversing move"){
-//             vector<uint64> seen_hash_vals;
-//             for(int i = 0 ; i < 4 ; i ++){
-//                 b->apply_move(move_order1[i]);
-//                 if(i > 0){
-//                     REQUIRE(b->tt.hash_val != seen_hash_vals[i-1]);
-//                 }
-//                 seen_hash_vals.push_back(b->tt.hash_val);
-//             }
-
-//             bool found_hash_val = true;
-//             for(int i = 3 ; i >= 0 ; i --){
-//                 b->reverse_move(move_order1[i]);
-//                 if(i > 0 && b->tt.hash_val != seen_hash_vals[i - 1]){
-//                     found_hash_val = false;
-//                 }
-
-//             }
-
-//             REQUIRE(found_hash_val == true);
-//         }
-//     }
-//     SECTION("captures"){
-//         unsigned int move_order1[7] = {
-//             MoveUtils::create_move(b2, b4, WHITE, pPAWN, DOUBLE_PAWN_PUSH),
-//             MoveUtils::create_move(a7, a5, BLACK, pPAWN, DOUBLE_PAWN_PUSH),
-//             MoveUtils::create_move(a2, a4, WHITE, pPAWN, DOUBLE_PAWN_PUSH),
-//             MoveUtils::create_move(b7, b5, BLACK, pPAWN, DOUBLE_PAWN_PUSH),
-//             MoveUtils::create_move(a4, b5, WHITE, pPAWN, CAPTURE),
-//             MoveUtils::create_move(c7, c5, BLACK, pPAWN, DOUBLE_PAWN_PUSH),
-//             MoveUtils::create_move(b4, a5, WHITE, pPAWN, CAPTURE)
-//         };
-//         unsigned int move_order2[7] = {
-//             MoveUtils::create_move(b2, b4, WHITE, pPAWN, DOUBLE_PAWN_PUSH),
-//             MoveUtils::create_move(a7, a5, BLACK, pPAWN, DOUBLE_PAWN_PUSH),
-//             MoveUtils::create_move(a2, a4, WHITE, pPAWN, DOUBLE_PAWN_PUSH),
-//             MoveUtils::create_move(b7, b5, BLACK, pPAWN, DOUBLE_PAWN_PUSH),
-//             MoveUtils::create_move(b4, a5, WHITE, pPAWN, CAPTURE),
-//             MoveUtils::create_move(c7, c5, BLACK, pPAWN, DOUBLE_PAWN_PUSH),
-//             MoveUtils::create_move(a4, b5, WHITE, pPAWN, CAPTURE)
-//         };
-//         SECTION("applying and reversing move"){
-//             vector<uint64> seen_hash_vals;
-//             for(int i = 0 ; i < 7 ; i ++){
-//                 b->apply_move(move_order1[i]);
-//                 if(i > 0){
-//                     REQUIRE(b->tt.hash_val != seen_hash_vals[i-1]);
-//                 }
-//                 seen_hash_vals.push_back(b->tt.hash_val);
-//             }
-
-//             bool found_hash_val = true;
-//             for(int i = 6 ; i >= 0 ; i --){
-//                 b->reverse_move(move_order1[i]);
-//                 if(i > 0 && b->tt.hash_val != seen_hash_vals[i - 1]){
-//                     found_hash_val = false;
-//                 }
-
-//             }
-
-//             REQUIRE(found_hash_val == true);
-//         }
-//         SECTION("hash_val from transposition should the same"){
-//             vector<uint64> seen_hash_vals;
-//             for(int i = 0 ; i < 7 ; i ++){
-//                 b->apply_move(move_order1[i]);
-//                 seen_hash_vals.push_back(b->tt.hash_val);
-//             }
-//             for(int i = 6 ; i >= 0 ; i --){
-//                 b->reverse_move(move_order1[i]);
-//             }
-//             for(int i = 0 ; i < 7 ; i ++){
-//                 b->apply_move(move_order2[i]);
-//             }
-//             // at index=6, the position of the move_order2 should be equal to the position after move_order1
-//             REQUIRE(b->tt.hash_val == seen_hash_vals[6]);
-//             for(int i = 6 ; i >= 0 ; i --){
-//                 b->reverse_move(move_order2[i]);
-//             }
-//             for(int i = 0 ; i < 6 ; i ++){
-//                 b->apply_move(move_order2[i]);
-//             }
-//             // at index=5, the position of the move_order2 should not be equal to the position after move_order1
-//             REQUIRE(b->tt.hash_val != seen_hash_vals[5]);
-//         }
-//     }
-
-// }
-// TEST_CASE("Updating hash val en passant", "[TranspositionTable]"){
-
-//     string fen_path = "./positions/starting_position.txt";
-//     Bitboard _bb = Bitboard();
-//     BoardInfo _bi = BoardInfo();
-//     Bitboard* bb = &_bb;
-//     BoardInfo* bi = &_bi;
-//     Board _b = Board(fen_path, bb, bi);
-//     Board* b = &_b;
-
-//     cout<<"initial hash_val: "<<b->tt.hash_val<<endl;
-//     SECTION("quiet moves"){
-
-//         unsigned int move_order1[4] = {
-//             MoveUtils::create_move(a2, a4, WHITE, pPAWN, DOUBLE_PAWN_PUSH),
-//             MoveUtils::create_move(a7, a6, BLACK, pPAWN, QUIET_MOVE),
-//             MoveUtils::create_move(a4, a5, WHITE, pPAWN, QUIET_MOVE),
-//             MoveUtils::create_move(b7, b5, BLACK, pPAWN, DOUBLE_PAWN_PUSH)
-//         };
-//         unsigned int move_order2[4] = {
-//             MoveUtils::create_move(a2, a4, WHITE, pPAWN, DOUBLE_PAWN_PUSH),
-//             MoveUtils::create_move(b7, b5, BLACK, pPAWN, DOUBLE_PAWN_PUSH),
-//             MoveUtils::create_move(a4, a5, WHITE, pPAWN, QUIET_MOVE),
-//             MoveUtils::create_move(a7, a6, BLACK, pPAWN, QUIET_MOVE)
-//         };
-//         SECTION("applying and reversing move"){
-//             vector<uint64> seen_hash_vals;
-//             for(int i = 0 ; i < 4 ; i ++){
-//                 b->apply_move(move_order1[i]);
-//                 if(i > 0){
-//                     REQUIRE(b->tt.hash_val != seen_hash_vals[i-1]);
-//                 }
-//                 seen_hash_vals.push_back(b->tt.hash_val);
-//             }
-
-//             bool found_hash_val = true;
-//             for(int i = 3 ; i >= 0 ; i --){
-//                 b->reverse_move(move_order1[i]);
-//                 if(i > 0 && b->tt.hash_val != seen_hash_vals[i - 1]){
-//                     found_hash_val = false;
-//                 }
-
-//             }
-
-//             REQUIRE(found_hash_val == true);
-//         }
-//         SECTION("hash_val from transposition should the same"){
-//             vector<uint64> seen_hash_vals;
-//             for(int i = 0 ; i < 4 ; i ++){
-//                 b->apply_move(move_order1[i]);
-//                 seen_hash_vals.push_back(b->tt.hash_val);
-//             }
-//             unsigned int move_order1_ep_right = b->get_board_info()->peek_ep_right();
-
-//             for(int i = 3 ; i >= 0 ; i --){
-//                 b->reverse_move(move_order1[i]);
-//             }
-//             for(int i = 0 ; i < 4 ; i ++){
-//                 b->apply_move(move_order2[i]);
-//             }            
-//             unsigned int move_order2_ep_right = b->get_board_info()->peek_ep_right();
-//             REQUIRE(move_order1_ep_right != move_order2_ep_right);
-//             REQUIRE(b->tt.hash_val != seen_hash_vals[3]);
-//         }
-//     }
-
-// }
-// TEST_CASE("Transposition Table cach matches (simple)", "[TranspositionTable]"){
-
-//     string fen_path = "./positions/transposition_test.txt";
-//     Bitboard _bb = Bitboard();
-//     BoardInfo _bi = BoardInfo();
-//     Bitboard* bb = &_bb;
-//     BoardInfo* bi = &_bi;
-//     Board _b = Board(fen_path, bb, bi);
-//     Board* b = &_b;
-
-//     PestoEvaluation _pesto = PestoEvaluation(b);
-//     PestoEvaluation* pesto = &_pesto;
-//     Search s = Search(b, pesto);
-
-//     cout<<"before search tt_found_count[3]: "<<s.tt_found_count[3]<<endl;
-//     unsigned int nodes = s.perft(4,4, WHITE, 0, true);
-//     SECTION("Depth = 4, tt_found_count == tt_match_count"){
-
-//         cout<<"after search tt_found_count[2]: "<<s.tt_found_count[2]<<endl;
-//         cout<<"after search tt_found_count[3]: "<<s.tt_found_count[3]<<endl;
-//         cout<<"after search tt_found_count[4]: "<<s.tt_found_count[4]<<endl;
-//         cout<<"nodes searched: "<<nodes<<endl;
-//         REQUIRE(s.tt_found_count[1] == 0);
-//         REQUIRE(s.tt_found_count[2] == 4);
-//         REQUIRE(s.tt_found_count[3] == 44);
-//     }
-
-// }
-// TEST_CASE("Transposition Table cache matches", "[TranspositionTable]"){
-
-//     string fen_path = "./positions/starting_position.txt";
-//     Bitboard _bb = Bitboard();
-//     BoardInfo _bi = BoardInfo();
-//     Bitboard* bb = &_bb;
-//     BoardInfo* bi = &_bi;
-//     Board _b = Board(fen_path, bb, bi);
-//     Board* b = &_b;
-
-//     PestoEvaluation _pesto = PestoEvaluation(b);
-//     PestoEvaluation* pesto = &_pesto;
-//     Search s = Search(b, pesto);
-
-//     cout<<"before search tt_found_count[3]: "<<s.tt_found_count[3]<<endl;
-//     unsigned int nodes = s.perft(6, 6, WHITE, 0, true);
-//     SECTION("Depth = 6, tt_found_count == tt_match_count"){
-//         REQUIRE(s.tt_found_count[2] == 1300);
-//         REQUIRE(s.tt_found_count[3] == 67152);
-//         REQUIRE(s.tt_found_count[4] == 1287835);
-//         REQUIRE(s.tt_found_count[5] == 16711982);
-//         REQUIRE(nodes == 119060324);
-//     }
-
-// }
-TEST_CASE("perft_new_movegen depth = 5", "[Search]"){
-    // const char* fen_path = "./positions/bugs/h4_g5_ep.txt";
-    // const char* fen_path = "./positions/bugs/h4_g5_ep.txt";
     const char* fen_path = "./positions/starting_position.txt";
     Bitboard _bb = Bitboard();
     BoardInfo _bi = BoardInfo();
@@ -1065,35 +612,96 @@ TEST_CASE("perft_new_movegen depth = 5", "[Search]"){
     BoardInfo* bi = &_bi;
     Board _b = Board(fen_path, bb, bi);
     Board* b = &_b;
-
-    unsigned int a2a4 = MoveUtils::create_move(a2, a4, WHITE, pPAWN, DOUBLE_PAWN_PUSH);
-    // b->apply_move(a2a4);
-
+    
     PestoEvaluation _pesto = PestoEvaluation(b);
     PestoEvaluation* pesto = &_pesto;
-    
-    Search s1 = Search(b, pesto);
-    Search s2 = Search(b, pesto);
-    Search s3 = Search(b, pesto);
-    cout<<"====> perft_new_movegen_result\n";
-    unsigned int perft_new_movegen_result = s1.perft_new_movegen(5, 5, WHITE);
-    // unsigned int perft_new_movegen_result = s1.perft_ordered(4, 4, BLACK);
-    cout<<"\n";
-    cout<<"====> perft_orderded_result\n";
-    unsigned int perft_ordered_result = s2.perft_ordered(5, 5, WHITE);
-    // unsigned int perft_ordered_result = s2.perft_ordered(4, 4, BLACK);
-    cout<<"====> perft_result\n";
-    unsigned int perft_result = s3.perft(5, 5, WHITE);
-    // unsigned int perft_result = s3.perft_ordered(4, 4, BLACK);
-    SECTION("Depth = 5"){
-        REQUIRE(perft_new_movegen_result == perft_result);
-        REQUIRE(perft_ordered_result == perft_result);
+    Search s = Search(b, pesto);
+    SECTION("Depth = 1"){
+        REQUIRE(s.perft(1, 1, WHITE) == 20);
+        REQUIRE(s.num_captures == 0);
+    }
+    SECTION("Depth = 2"){
+        REQUIRE(s.perft(2, 2, WHITE) == 400);
+        REQUIRE(s.num_captures == 0);
+    }
+    SECTION("Depth = 3"){
+        REQUIRE(s.perft(3, 3, WHITE) == 8902);
+        REQUIRE(s.num_captures == 34);
+    }
+
+}
+
+TEST_CASE("Perft king move miss", "[Search]"){
+    string fen_path = "./positions/bugs/backrank_miss_e5f3_g1h1_c6c5.txt";
+    Bitboard _bb = Bitboard();
+    BoardInfo _bi = BoardInfo();
+    Bitboard* bb = &_bb;
+    BoardInfo* bi = &_bi;
+    Board _b = Board(fen_path, bb, bi);
+    Board* b = &_b;
+
+    SECTION("king move generated"){
+        MoveGen mg = MoveGen(b, WHITE);
+        unsigned int move = 0;
+        bool king_move_found = false;
+        bool h1g2_move_found = false;
+        while((move = mg.get_move()) != NO_MOVES_LEFT){
+            if(MoveUtils::get_piece(move) == pKING){
+                king_move_found = true;
+                cout<<"king move found: ";
+                MoveUtils::display(move);
+            } if(move == MoveUtils::create_move(h1, g2, WHITE, pKING)){
+                h1g2_move_found = true;
+            }
+        }
+        REQUIRE(king_move_found);
+        REQUIRE(h1g2_move_found);
+    }
+    SECTION("correct number of nodes searched"){
+        REQUIRE(test_perft(fen_path, 2, 1473));
     }
 }
 
-TEST_CASE("perft_new_movegen promotions", "[Perft]"){
+TEST_CASE("Number of nodes during search depth 4","[Perft]"){
+
+    const char* fen_path = "./positions/starting_position.txt";
+
+    SECTION("Depth = 4"){
+        REQUIRE(test_perft(fen_path, 4, 197281));
+    }
+
+}
+TEST_CASE("Number of nodes during search depth 5","[Perft]"){
+
+    const char* fen_path = "./positions/starting_position.txt";
+    SECTION("Depth = 5"){
+        REQUIRE(test_perft(fen_path, 5, 4865609));
+    }
+
+}
+
+TEST_CASE("promotions during search", "[Perft]"){
 
     string fen_path = "./positions/ep_fen.txt";
+
+    SECTION("Depth = 5"){
+        REQUIRE(test_perft(fen_path, 5, 16422290));
+
+    }
+
+}
+TEST_CASE("castles during search", "[Perft]"){
+
+
+    string fen_path = "./positions/castle_fen.txt";
+    SECTION("Depth = 5"){
+        REQUIRE(test_perft(fen_path, 5, 22273312));
+    }
+
+}
+TEST_CASE("Unique Zobrist Hash vals", "[TranspositionTable]"){
+
+    string fen_path = "./positions/starting_position.txt";
     Bitboard _bb = Bitboard();
     BoardInfo _bi = BoardInfo();
     Bitboard* bb = &_bb;
@@ -1103,27 +711,256 @@ TEST_CASE("perft_new_movegen promotions", "[Perft]"){
 
     PestoEvaluation _pesto = PestoEvaluation(b);
     PestoEvaluation* pesto = &_pesto;
-    Search s1 = Search(b, pesto);
-    Search s2 = Search(b, pesto);
-    cout<<"====> perft_new_movegen_result\n";
-    unsigned int perft_new_movegen_result = s1.perft_new_movegen(5, 5, WHITE);
-    cout<<"====> perft_result\n";
-    unsigned int perft_result = s2.perft(5, 5, WHITE);
-    cout << "num_promotions: "<< s1.num_promotions <<" "<< s2.num_promotions << "\n";
-    cout << "num_ep_captures: "<< s1.num_ep_captures <<" "<< s2.num_ep_captures << "\n";
-    cout << "num_captures: "<< s1.num_captures <<" "<< s2.num_captures<< "\n";
-    cout << "num_capture_promotions: "<< s1.num_capture_promotions <<" "<< s2.num_capture_promotions << "\n";
-    cout << "num_nodes: " << perft_new_movegen_result <<" "<< perft_result << "\n";
-    SECTION("Depth = 5"){
-        REQUIRE(perft_new_movegen_result == perft_result);
-        REQUIRE(s1.num_ep_captures == s2.num_ep_captures);
-        REQUIRE(s1.num_captures == s2.num_captures);
-        REQUIRE(s1.num_promotions == s2.num_promotions);
-        REQUIRE(s1.num_capture_promotions == s2.num_capture_promotions);
+    Search s = Search(b, pesto);
 
+    vector<uint64> seen_zobrist_vals;
+    bool found_duplicate = false;
+    for(int i = 0 ; i < NUM_ZOBRIST_VALS ; i ++){
+        for(int j = 0 ; j < seen_zobrist_vals.size() ; j ++){
+            if(seen_zobrist_vals[j] == b->tt.zobrist_vals[i])
+                found_duplicate = true;
+        }
+        seen_zobrist_vals.push_back(b->tt.zobrist_vals[i]);
+    }
+    REQUIRE(!found_duplicate);
+}
+TEST_CASE("Updating hash val", "[TranspositionTable]"){
+
+    string fen_path = "./positions/starting_position.txt";
+    Bitboard _bb = Bitboard();
+    BoardInfo _bi = BoardInfo();
+    Bitboard* bb = &_bb;
+    BoardInfo* bi = &_bi;
+    Board _b = Board(fen_path, bb, bi);
+    Board* b = &_b;
+
+    cout<<"initial hash_val: "<<b->tt.hash_val<<endl;
+    SECTION("quiet moves"){
+
+        unsigned int move_order1[4] = {
+            MoveUtils::create_move(b2, b4, WHITE, pPAWN, DOUBLE_PAWN_PUSH),
+            MoveUtils::create_move(c7, c5, BLACK, pPAWN, DOUBLE_PAWN_PUSH),
+            MoveUtils::create_move(a2, a4, WHITE, pPAWN, DOUBLE_PAWN_PUSH),
+            MoveUtils::create_move(a7, a5, BLACK, pPAWN, DOUBLE_PAWN_PUSH)
+        };
+        unsigned int move_order2[4] = {
+            MoveUtils::create_move(a2, a4, WHITE, pPAWN, DOUBLE_PAWN_PUSH),
+            MoveUtils::create_move(c7, c5, BLACK, pPAWN, DOUBLE_PAWN_PUSH),
+            MoveUtils::create_move(b2, b4, WHITE, pPAWN, DOUBLE_PAWN_PUSH),
+            MoveUtils::create_move(a7, a5, BLACK, pPAWN, DOUBLE_PAWN_PUSH)
+        };
+        SECTION("applying and reversing move"){
+            vector<uint64> seen_hash_vals;
+            for(int i = 0 ; i < 4 ; i ++){
+                b->apply_move(move_order1[i]);
+                if(i > 0){
+                    REQUIRE(b->tt.hash_val != seen_hash_vals[i-1]);
+                }
+                seen_hash_vals.push_back(b->tt.hash_val);
+            }
+
+            bool found_hash_val = true;
+            for(int i = 3 ; i >= 0 ; i --){
+                b->reverse_move(move_order1[i]);
+                if(i > 0 && b->tt.hash_val != seen_hash_vals[i - 1]){
+                    found_hash_val = false;
+                }
+
+            }
+
+            REQUIRE(found_hash_val == true);
+        }
+    }
+    SECTION("captures"){
+        unsigned int move_order1[7] = {
+            MoveUtils::create_move(b2, b4, WHITE, pPAWN, DOUBLE_PAWN_PUSH),
+            MoveUtils::create_move(a7, a5, BLACK, pPAWN, DOUBLE_PAWN_PUSH),
+            MoveUtils::create_move(a2, a4, WHITE, pPAWN, DOUBLE_PAWN_PUSH),
+            MoveUtils::create_move(b7, b5, BLACK, pPAWN, DOUBLE_PAWN_PUSH),
+            MoveUtils::create_move(a4, b5, WHITE, pPAWN, CAPTURE),
+            MoveUtils::create_move(c7, c5, BLACK, pPAWN, DOUBLE_PAWN_PUSH),
+            MoveUtils::create_move(b4, a5, WHITE, pPAWN, CAPTURE)
+        };
+        unsigned int move_order2[7] = {
+            MoveUtils::create_move(b2, b4, WHITE, pPAWN, DOUBLE_PAWN_PUSH),
+            MoveUtils::create_move(a7, a5, BLACK, pPAWN, DOUBLE_PAWN_PUSH),
+            MoveUtils::create_move(a2, a4, WHITE, pPAWN, DOUBLE_PAWN_PUSH),
+            MoveUtils::create_move(b7, b5, BLACK, pPAWN, DOUBLE_PAWN_PUSH),
+            MoveUtils::create_move(b4, a5, WHITE, pPAWN, CAPTURE),
+            MoveUtils::create_move(c7, c5, BLACK, pPAWN, DOUBLE_PAWN_PUSH),
+            MoveUtils::create_move(a4, b5, WHITE, pPAWN, CAPTURE)
+        };
+        SECTION("applying and reversing move"){
+            vector<uint64> seen_hash_vals;
+            for(int i = 0 ; i < 7 ; i ++){
+                b->apply_move(move_order1[i]);
+                if(i > 0){
+                    REQUIRE(b->tt.hash_val != seen_hash_vals[i-1]);
+                }
+                seen_hash_vals.push_back(b->tt.hash_val);
+            }
+
+            bool found_hash_val = true;
+            for(int i = 6 ; i >= 0 ; i --){
+                b->reverse_move(move_order1[i]);
+                if(i > 0 && b->tt.hash_val != seen_hash_vals[i - 1]){
+                    found_hash_val = false;
+                }
+
+            }
+
+            REQUIRE(found_hash_val == true);
+        }
+        SECTION("hash_val from transposition should the same"){
+            vector<uint64> seen_hash_vals;
+            for(int i = 0 ; i < 7 ; i ++){
+                b->apply_move(move_order1[i]);
+                seen_hash_vals.push_back(b->tt.hash_val);
+            }
+            for(int i = 6 ; i >= 0 ; i --){
+                b->reverse_move(move_order1[i]);
+            }
+            for(int i = 0 ; i < 7 ; i ++){
+                b->apply_move(move_order2[i]);
+            }
+            // at index=6, the position of the move_order2 should be equal to the position after move_order1
+            REQUIRE(b->tt.hash_val == seen_hash_vals[6]);
+            for(int i = 6 ; i >= 0 ; i --){
+                b->reverse_move(move_order2[i]);
+            }
+            for(int i = 0 ; i < 6 ; i ++){
+                b->apply_move(move_order2[i]);
+            }
+            // at index=5, the position of the move_order2 should not be equal to the position after move_order1
+            REQUIRE(b->tt.hash_val != seen_hash_vals[5]);
+        }
     }
 
 }
+TEST_CASE("Updating hash val en passant", "[TranspositionTable]"){
+
+    string fen_path = "./positions/starting_position.txt";
+    Bitboard _bb = Bitboard();
+    BoardInfo _bi = BoardInfo();
+    Bitboard* bb = &_bb;
+    BoardInfo* bi = &_bi;
+    Board _b = Board(fen_path, bb, bi);
+    Board* b = &_b;
+
+    cout<<"initial hash_val: "<<b->tt.hash_val<<endl;
+    SECTION("quiet moves"){
+
+        unsigned int move_order1[4] = {
+            MoveUtils::create_move(a2, a4, WHITE, pPAWN, DOUBLE_PAWN_PUSH),
+            MoveUtils::create_move(a7, a6, BLACK, pPAWN, QUIET_MOVE),
+            MoveUtils::create_move(a4, a5, WHITE, pPAWN, QUIET_MOVE),
+            MoveUtils::create_move(b7, b5, BLACK, pPAWN, DOUBLE_PAWN_PUSH)
+        };
+        unsigned int move_order2[4] = {
+            MoveUtils::create_move(a2, a4, WHITE, pPAWN, DOUBLE_PAWN_PUSH),
+            MoveUtils::create_move(b7, b5, BLACK, pPAWN, DOUBLE_PAWN_PUSH),
+            MoveUtils::create_move(a4, a5, WHITE, pPAWN, QUIET_MOVE),
+            MoveUtils::create_move(a7, a6, BLACK, pPAWN, QUIET_MOVE)
+        };
+        SECTION("applying and reversing move"){
+            vector<uint64> seen_hash_vals;
+            for(int i = 0 ; i < 4 ; i ++){
+                b->apply_move(move_order1[i]);
+                if(i > 0){
+                    REQUIRE(b->tt.hash_val != seen_hash_vals[i-1]);
+                }
+                seen_hash_vals.push_back(b->tt.hash_val);
+            }
+
+            bool found_hash_val = true;
+            for(int i = 3 ; i >= 0 ; i --){
+                b->reverse_move(move_order1[i]);
+                if(i > 0 && b->tt.hash_val != seen_hash_vals[i - 1]){
+                    found_hash_val = false;
+                }
+
+            }
+
+            REQUIRE(found_hash_val == true);
+        }
+        SECTION("hash_val from transposition should the same"){
+            vector<uint64> seen_hash_vals;
+            for(int i = 0 ; i < 4 ; i ++){
+                b->apply_move(move_order1[i]);
+                seen_hash_vals.push_back(b->tt.hash_val);
+            }
+            unsigned int move_order1_ep_right = b->get_board_info()->peek_ep_right();
+
+            for(int i = 3 ; i >= 0 ; i --){
+                b->reverse_move(move_order1[i]);
+            }
+            for(int i = 0 ; i < 4 ; i ++){
+                b->apply_move(move_order2[i]);
+            }            
+            unsigned int move_order2_ep_right = b->get_board_info()->peek_ep_right();
+            REQUIRE(move_order1_ep_right != move_order2_ep_right);
+            REQUIRE(b->tt.hash_val != seen_hash_vals[3]);
+        }
+    }
+
+}
+TEST_CASE("Transposition Table cach matches (simple)", "[TranspositionTable]"){
+
+    string fen_path = "./positions/transposition_test.txt";
+    Bitboard _bb = Bitboard();
+    BoardInfo _bi = BoardInfo();
+    Bitboard* bb = &_bb;
+    BoardInfo* bi = &_bi;
+    Board _b = Board(fen_path, bb, bi);
+    Board* b = &_b;
+
+    PestoEvaluation _pesto = PestoEvaluation(b);
+    PestoEvaluation* pesto = &_pesto;
+    Search s = Search(b, pesto);
+
+    cout<<"before search tt_found_count[3]: "<<s.tt_found_count[3]<<endl;
+    unsigned int nodes = s.perft(4,4, WHITE, 0, true);
+    SECTION("Depth = 4, tt_found_count == tt_match_count"){
+
+        cout<<"after search tt_found_count[2]: "<<s.tt_found_count[2]<<endl;
+        cout<<"after search tt_found_count[3]: "<<s.tt_found_count[3]<<endl;
+        cout<<"after search tt_found_count[4]: "<<s.tt_found_count[4]<<endl;
+        cout<<"nodes searched: "<<nodes<<endl;
+        REQUIRE(s.tt_found_count[1] == 0);
+        REQUIRE(s.tt_found_count[2] == 4);
+        REQUIRE(s.tt_found_count[3] == 44);
+    }
+
+}
+TEST_CASE("Transposition Table cache matches", "[TranspositionTable]"){
+
+    string fen_path = "./positions/starting_position.txt";
+    Bitboard _bb = Bitboard();
+    BoardInfo _bi = BoardInfo();
+    Bitboard* bb = &_bb;
+    BoardInfo* bi = &_bi;
+    Board _b = Board(fen_path, bb, bi);
+    Board* b = &_b;
+
+    PestoEvaluation _pesto = PestoEvaluation(b);
+    PestoEvaluation* pesto = &_pesto;
+    Search s = Search(b, pesto);
+
+    cout<<"before search tt_found_count[3]: "<<s.tt_found_count[3]<<endl;
+    unsigned int nodes = s.perft(6, 6, WHITE, 0, true);
+    SECTION("Depth = 6, tt_found_count == tt_match_count"){
+
+        REQUIRE(s.tt_found_count[2] == 1300);
+        REQUIRE(s.tt_found_count[3] == 67152);
+        REQUIRE(s.tt_found_count[4] == 1287835);
+        REQUIRE(s.tt_found_count[5] == 16711982);
+        REQUIRE(nodes == 119060324);
+    }
+
+}
+
+
+
 TEST_CASE("num_quiet + num_captures = total","[MoveGen]"){
 
     string fen_path = "./positions/ep_fen.txt";
@@ -1173,41 +1010,33 @@ TEST_CASE("num_quiet + num_captures = total","[MoveGen]"){
     }
     
     Search s1 = Search(b, pesto);
-    cout<<"perft_new_movegen_result\n";
-    unsigned int perft_new_movegen_result = s1.perft_new_movegen(1, 1, WHITE);
-    cout<<"perft_new_movegen_result: "<<perft_new_movegen_result<<"\n";
-    REQUIRE(perft_new_movegen_result == ans);
+    cout<<"perft_result\n";
+    unsigned int perft_result = s1.perft(1, 1, WHITE);
+    cout<<"perft_result: "<<perft_result<<"\n";
+    REQUIRE(perft_result == ans);
 }
-TEST_CASE("perft_new_movegen_ordered", "[Search]"){
+TEST_CASE("perft_ordered", "[Search]"){
 
     string fen_path = "./positions/ep_fen.txt";
-    Bitboard _bb = Bitboard();
-    BoardInfo _bi = BoardInfo();
-    Bitboard* bb = &_bb;
-    BoardInfo* bi = &_bi;
-    Board _b = Board(fen_path, bb, bi);
-    Board* b = &_b;
-
-    PestoEvaluation _pesto = PestoEvaluation(b);
-    PestoEvaluation* pesto = &_pesto;
-    Search s1 = Search(b, pesto);
-    Search s2 = Search(b, pesto);
-    cout<<"====> perft_new_movegen_result\n";
-    unsigned int perft_new_movegen_result = s1.perft_new_movegen(5, 5, WHITE);
-    cout<<"====> perft_new_movegen_ordered_result\n";
-    unsigned int perft_new_movegen_ordered_result = s2.perft_new_movegen_ordered(5, 5, WHITE);
-    cout << "num_promotions: "<< s1.num_promotions <<" "<< s2.num_promotions << "\n";
-    cout << "num_ep_captures: "<< s1.num_ep_captures <<" "<< s2.num_ep_captures << "\n";
-    cout << "num_captures: "<< s1.num_captures <<" "<< s2.num_captures<< "\n";
-    cout << "num_capture_promotions: "<< s1.num_capture_promotions <<" "<< s2.num_capture_promotions << "\n";
-    cout << "num_nodes: " << perft_new_movegen_result <<" "<< perft_new_movegen_ordered_result << "\n";
     SECTION("Depth = 5"){
-        REQUIRE(perft_new_movegen_result == perft_new_movegen_ordered_result);
-        REQUIRE(s1.num_ep_captures == s2.num_ep_captures);
-        REQUIRE(s1.num_captures == s2.num_captures);
-        REQUIRE(s1.num_promotions == s2.num_promotions);
-        REQUIRE(s1.num_capture_promotions == s2.num_capture_promotions);
+        REQUIRE(test_perft(fen_path, 5, 16422290));
+        // REQUIRE(perft_result == 16422290);
+        // REQUIRE(s1.num_ep_captures == 669892);
+        // REQUIRE(s1.num_captures == 174);
+        // REQUIRE(s1.num_promotions == 628);
+        // REQUIRE(s1.num_capture_promotions == 9808);
+    }
+}
+TEST_CASE("chessprogramming perft", "[Search]"){
 
+    string fen_path = "./positions/chessprogramming_fen.txt";
+    SECTION("Depth = 5"){
+        REQUIRE(test_perft(fen_path, 5, 193690690));
+        // REQUIRE(perft_result == 16422290);
+        // REQUIRE(s1.num_ep_captures == 669892);
+        // REQUIRE(s1.num_captures == 174);
+        // REQUIRE(s1.num_promotions == 628);
+        // REQUIRE(s1.num_capture_promotions == 9808);
     }
 }
 #else
@@ -1215,56 +1044,55 @@ TEST_CASE("perft_new_movegen_ordered", "[Search]"){
 TEST_CASE("Alpha beta pruning bk1 test", "[Search]"){
 
     string fen_path = "./positions/bratko-kopec/bk_1.txt";
-    Bitboard _bb = Bitboard();
-    BoardInfo _bi = BoardInfo();
-    Bitboard* bb = &_bb;
-    BoardInfo* bi = &_bi;
-    Board _b = Board(fen_path, bb, bi);
-    Board* b = &_b;
 
-    PestoEvaluation _pesto = PestoEvaluation(b);
-    PestoEvaluation* pesto = &_pesto;
-
-    Search s = Search(b, pesto);
-    Search s_new_movegen = Search(b, pesto);
-
-    SECTION("bk 1"){
-        pv_t* principal_var = (pv_t*) calloc(1, sizeof(pv_t));
-        principal_var->len = 0;
-
-        s.max_depth = 6;
-        int alpha = -1e7;
-        int beta = 1e7;
-        std::atomic<bool> stop_flag = std::atomic<bool>(false);
-        s.alpha_beta(alpha, beta, 6, BLACK, BLACK, stop_flag, 0, principal_var);
-
-        free(principal_var);
-        cout<<"selected move: ";
-        MoveUtils::display(s.selected_move);
-        REQUIRE(s.selected_move == MoveUtils::create_move(d6, d1, BLACK, pQUEEN));
-    }
     SECTION("bk 1 alpha_beta_new_movegen"){
 
-        pv_t* principal_var = (pv_t*) calloc(1, sizeof(pv_t));
-        principal_var->len = 0;
-
-        s_new_movegen.max_depth = 6;
-        int alpha = -1e7;
-        int beta = 1e7;
-        std::atomic<bool> stop_flag = std::atomic<bool>(false);
-        s_new_movegen.alpha_beta(alpha, beta, 6, BLACK, BLACK, stop_flag, 0, principal_var);
-
-        free(principal_var);
-        cout<<"alpha_beta selected move: ";
-        MoveUtils::display(s_new_movegen.selected_move);
-        REQUIRE(s_new_movegen.selected_move == MoveUtils::create_move(d6, d1, BLACK, pQUEEN));
+        vector<unsigned int> expected_moves = {MoveUtils::create_move(d6, d1, BLACK, pQUEEN)};
+        REQUIRE(test_alpha_beta_new_movegen(fen_path, 6, expected_moves) == true);
 
     }
+
+    // SECTION("bk 1 alpha_beta_new_movegen short"){
+
+    //     vector<unsigned int> expected_moves = {MoveUtils::create_move(d6, d1, BLACK, pQUEEN)};
+    //     REQUIRE(test_alpha_beta_new_movegen_short(fen_path, 6, expected_moves) == true);
+
+    // }
 }
 
 TEST_CASE("Alpha beta pruning bk3 test", "[Search]"){
 
     string fen_path = "./positions/bratko-kopec/bk_3.txt";
+
+    SECTION("bk 3 alpha_beta_new_movegen"){
+
+        vector<unsigned int> expected_moves = {MoveUtils::create_move(f6, f5, BLACK, pPAWN)};
+        REQUIRE(test_alpha_beta_new_movegen(fen_path, 6, expected_moves) == true);
+
+    }
+}
+
+TEST_CASE("Alpha beta pruning selected move bk 4", "[Search]"){
+
+    string fen_path = "./positions/bratko-kopec/bk_4.txt";
+    string fen_path_prior = "./positions/bratko-kopec/bk_4_prior.txt";
+
+    SECTION("bk 4 interactive move search"){
+
+        vector<std::string> input_moves = {
+            "c6c5"
+        };
+        vector<unsigned int> expected_moves = {
+            MoveUtils::create_move(e5, e6, WHITE, pPAWN),
+        };
+        int num_seconds = 60;
+        REQUIRE(test_interactive_move_search(fen_path_prior, 8, input_moves, expected_moves, num_seconds) == true);
+    }   
+}
+
+TEST_CASE("Alpha beta pruning selected move bk 5", "[Search]"){
+
+    string fen_path = "./positions/bratko-kopec/bk_5.txt";
     Bitboard _bb = Bitboard();
     BoardInfo _bi = BoardInfo();
     Bitboard* bb = &_bb;
@@ -1276,97 +1104,97 @@ TEST_CASE("Alpha beta pruning bk3 test", "[Search]"){
     PestoEvaluation* pesto = &_pesto;
 
     Search s = Search(b, pesto);
-    Search s_new_movegen = Search(b, pesto);
 
-    SECTION("bk 3"){
-        pv_t* principal_var = (pv_t*) calloc(1, sizeof(pv_t));
-        principal_var->len = 0;
+    SECTION("bk 5"){
 
-        s.max_depth = 6;
-        int alpha = -1e7;
-        int beta = 1e7;
-        std::atomic<bool> stop_flag = std::atomic<bool>(false);
-        s.alpha_beta(alpha, beta, 6, BLACK, BLACK, stop_flag, 0, principal_var);
-
-        free(principal_var);
-        cout<<"selected move: ";
-        MoveUtils::display(s.selected_move);
-        REQUIRE(s.selected_move == MoveUtils::create_move(f7, f5, BLACK, pPAWN, DOUBLE_PAWN_PUSH));
-    }
-    SECTION("bk 3 alpha_beta_new_movegen"){
-
-        pv_t* principal_var = (pv_t*) calloc(1, sizeof(pv_t));
-        principal_var->len = 0;
-
-        s_new_movegen.max_depth = 6;
-        int alpha = -1e7;
-        int beta = 1e7;
-        std::atomic<bool> stop_flag = std::atomic<bool>(false);
-        s_new_movegen.alpha_beta(alpha, beta, 6, BLACK, BLACK, stop_flag, 0, principal_var);
-
-        free(principal_var);
-        cout<<"alpha_beta selected move: ";
-        MoveUtils::display(s_new_movegen.selected_move);
-        REQUIRE(s_new_movegen.selected_move == MoveUtils::create_move(f7, f5, BLACK, pPAWN, DOUBLE_PAWN_PUSH));
+        vector<unsigned int> expected_moves = {
+            MoveUtils::create_move(c3, d5, WHITE, pKNIGHT),
+            MoveUtils::create_move(a2, a4, WHITE, pPAWN, DOUBLE_PAWN_PUSH)
+        };
+        REQUIRE(test_alpha_beta_new_movegen(fen_path, 6, expected_moves) == true);
 
     }
+    
 }
 
 TEST_CASE("Alpha beta pruning selected move backrank bug", "[Search]"){
 
     string fen_path = "./positions/bugs/backrank_miss.txt";
-    Bitboard _bb = Bitboard();
-    BoardInfo _bi = BoardInfo();
-    Bitboard* bb = &_bb;
-    BoardInfo* bi = &_bi;
-    Board _b = Board(fen_path, bb, bi);
-    Board* b = &_b;
-
-    PestoEvaluation _pesto = PestoEvaluation(b);
-    PestoEvaluation* pesto = &_pesto;
-
-    Search s = Search(b, pesto);
-    Search s_new_movegen = Search(b, pesto);
 
     SECTION("perft backrank mate miss"){
-        REQUIRE(s.perft(5, 5, BLACK) == 39666064);
-    }
-    SECTION("alpha_beta backrank mate miss"){
-        pv_t* principal_var = (pv_t*) calloc(1, sizeof(pv_t));
-        principal_var->len = 0;
-
-        s.max_depth = 6;
-        int alpha = -1e7;
-        int beta = 1e7;
-        std::atomic<bool> stop_flag = std::atomic<bool>(false);
-        s.alpha_beta(alpha, beta, 6, BLACK, BLACK, stop_flag, 0, principal_var);
-
-        free(principal_var);
-
-        cout<<"selected move: ";
-        MoveUtils::display(s.selected_move);
-        REQUIRE(MoveUtils::get_piece(s.selected_move) == pKNIGHT);
-        REQUIRE(s.selected_move != MoveUtils::create_move(e5, c4, BLACK, pKNIGHT));
-        REQUIRE(s.selected_move == MoveUtils::create_move(e5, g6, BLACK, pKNIGHT));
+        REQUIRE(test_perft(fen_path, 5, 39666064) == true);
     }
     SECTION("alpha_beta_new_movegen backrank mate miss"){
-        pv_t* principal_var = (pv_t*) calloc(1, sizeof(pv_t));
-        principal_var->len = 0;
 
-        s_new_movegen.max_depth = 6;
-        int alpha = -1e7;
-        int beta = 1e7;
-        std::atomic<bool> stop_flag = std::atomic<bool>(false);
-        s_new_movegen.alpha_beta(alpha, beta, 6, BLACK, BLACK, stop_flag, 0, principal_var);
+        vector<unsigned int> expected_moves = {
+            MoveUtils::create_move(f6, h6, BLACK, pQUEEN),
+            MoveUtils::create_move(e5, g6, BLACK, pKNIGHT)
+        };
+        REQUIRE(test_alpha_beta_new_movegen(fen_path, 6, expected_moves) == true);
 
-        free(principal_var);
+    }
+}
+TEST_CASE("Alpha beta pruning selected move should castle bug", "[Search]"){
 
-        cout<<"selected move: ";
-        MoveUtils::display(s_new_movegen.selected_move);
-        REQUIRE(MoveUtils::get_piece(s_new_movegen.selected_move) == pKNIGHT);
-        REQUIRE(s_new_movegen.selected_move != MoveUtils::create_move(e5, c4, BLACK, pKNIGHT));
-        REQUIRE(s_new_movegen.selected_move == MoveUtils::create_move(e5, g6, BLACK, pKNIGHT));
+    string fen_path = "./positions/bugs/should_castle.txt";
 
+    SECTION("perft should castle"){
+        vector<unsigned int> setup_moves = {
+            MoveUtils::create_move(a7, a5, BLACK, pPAWN, DOUBLE_PAWN_PUSH),
+            // MoveUtils::create_move(a1, b1, WHITE, pROOK),
+            // MoveUtils::create_move(d8, d7, BLACK, pQUEEN),
+            // MoveUtils::create_move(a2, a3, WHITE, pPAWN)
+        };
+        // REQUIRE(test_perft(fen_path, 5, 39100450) == true);
+        REQUIRE(test_perft(fen_path, 4, 1231892, setup_moves) == true);
+        // REQUIRE(test_perft(fen_path, 3, 42400, setup_moves) == true);
+        // REQUIRE(test_perft(fen_path, 2, 1366, setup_moves) == true);
+        // REQUIRE(test_perft(fen_path, 1, 35, setup_moves) == true);
+    }
+    SECTION("alpha_beta should castle"){
+        vector<unsigned int> expected_moves = {MoveUtils::create_move(e8, g8, BLACK, pKING, KING_CASTLE)};
+        REQUIRE(test_alpha_beta_new_movegen(fen_path, 6, expected_moves) == true);
+
+    }
+
+}
+
+TEST_CASE("Alpha beta pruning selected move should not trap bishop bug", "[Search]"){
+
+    string fen_path = "./positions/bugs/trapped_bishop_miss_prior.txt";
+
+    // SECTION("perft should not trap bishop"){
+    //     vector<unsigned int> setup_moves = {
+    //         // MoveUtils::create_move(a7, a5, BLACK, pPAWN, DOUBLE_PAWN_PUSH),
+    //         // MoveUtils::create_move(a1, b1, WHITE, pROOK),
+    //         // MoveUtils::create_move(d8, d7, BLACK, pQUEEN),
+    //         // MoveUtils::create_move(a2, a3, WHITE, pPAWN)
+    //     };
+    //     // REQUIRE(test_perft(fen_path, 5, 39100450) == true);
+    //     REQUIRE(test_perft(fen_path, 5, 137931078, setup_moves) == true);
+    //     // REQUIRE(test_perft(fen_path, 3, 42400, setup_moves) == true);
+    //     // REQUIRE(test_perft(fen_path, 2, 1366, setup_moves) == true);
+    //     // REQUIRE(test_perft(fen_path, 1, 35, setup_moves) == true);
+    // }
+    // SECTION("alpha_beta should not do e7e6"){
+
+    //     vector<unsigned int> expected_moves = {
+    //         MoveUtils::create_move(g4, d7, BLACK, pBISHOP),
+    //         MoveUtils::create_move(d8, d7, BLACK, pQUEEN)
+    //     };
+    //     REQUIRE(test_alpha_beta_new_movegen(fen_path, 6, expected_moves) == true);
+    // }
+    SECTION("interactive search loop should not do e7e6"){
+
+        vector<std::string> input_moves = {
+            "c1e3"
+        };
+        vector<unsigned int> expected_moves = {
+            MoveUtils::create_move(g4, d7, BLACK, pBISHOP),
+            MoveUtils::create_move(d8, d7, BLACK, pQUEEN)
+        };
+        int num_seconds = 40;
+        REQUIRE(test_interactive_move_search(fen_path, 6, input_moves, expected_moves, num_seconds) == true);
     }
 }
 

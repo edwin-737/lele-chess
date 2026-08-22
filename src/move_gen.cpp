@@ -84,21 +84,29 @@ unsigned int MoveGen::get_special_move(){
             move_type = mEP_CAPTURE;
         }
     } else if(move_type == mKING_CASTLE){
+
+        // cout<<"checking castle kingside\n";
         if(gen_type != ONLY_CAPTURES){
             if(can_castle_kingside(side)){
                 move = side == WHITE ? MoveUtils::create_move(e1, g1, side, pKING, KING_CASTLE) : MoveUtils::create_move(e8, g8, side, pKING, KING_CASTLE);
             } else {
                 move = INCREMENTING_MOVE_TYPE;
             }
+        } else {
+            move = INCREMENTING_MOVE_TYPE;
         }
         move_type ++;
     } else if(move_type == mQUEEN_CASTLE){
+        // cout<<"checking castle queenside\n";
         if(gen_type != ONLY_CAPTURES){
             if(can_castle_queenside(side)){
+                // cout<<"can_castle_queenside\n";
                 move = side == WHITE ? MoveUtils::create_move(e1, c1, side, pKING, QUEEN_CASTLE) : MoveUtils::create_move(e8, c8, side, pKING, QUEEN_CASTLE);
             } else {
                 move = INCREMENTING_MOVE_TYPE;
             }
+        } else {
+            move = INCREMENTING_MOVE_TYPE;
         }
         move_type ++;
     } else if(move_type == mEP_CAPTURE){
@@ -272,7 +280,7 @@ move_gen_state_t MoveGen::update(move_gen_state_t cur_state){
             return new_state;
         }
     } else if(cur_state.move_gen_stage == SPECIAL_STAGE){
-        move_type ++;
+        // move_type ++;
     }
     return new_state;
 }
@@ -506,11 +514,11 @@ bool MoveGen::can_castle_queenside(int side){
     if(side == WHITE){
         return (bi->peek_castle_right() & 0b0100) &&
         !(bb->all & WHITE_QUEEN_CASTLE_SQUARES) &&
-        !bb->attacked(side, e1) && !bb->attacked(side, b1) && !bb->attacked(side, c1);
+        !bb->attacked(side, e1) && !bb->attacked(side, d1) && !bb->attacked(side, c1);
     } else {
         return (bi->peek_castle_right() & 0b0001) &&
         !(bb->all & BLACK_QUEEN_CASTLE_SQUARES) &&
-        !bb->attacked(side, e8) && !bb->attacked(side, b8) && !bb->attacked(side, c8) && !bb->attacked(side, d8);
+        !bb->attacked(side, e8) && !bb->attacked(side, d8) && !bb->attacked(side, c8) && !bb->attacked(side, d8);
     }
 }
 

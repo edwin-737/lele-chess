@@ -55,53 +55,18 @@ void Board::apply_move(unsigned int move){
         } else {
             bi->add_board_info(castle_rights, NO_EP_RIGHTS);
         }
-    } else if(MoveUtils::is_castle(move)){
-        if(MoveUtils::is_king_castle(move) && side == WHITE){
-            uint64 king_from_to = get_from_to(e1, g1);
-            bb->piece_boards[side][pKING] ^= king_from_to;
-            bb->collective_piece_boards[side] ^= king_from_to;
+    } else if(MoveUtils::is_double_pawn_push(move)){
+        uint64 from_to = get_from_to(from, to);
+        bb->piece_boards[side][piece] ^= from_to;
+        bb->collective_piece_boards[side] ^= from_to;
 
-            uint64 rook_from_to = get_from_to(h1, f1);
-            bb->piece_boards[side][pROOK] ^= rook_from_to;
-            bb->collective_piece_boards[side] ^= rook_from_to;
-
-            castle_rights &= 0x3;
-            update_king_location(side, g1);
-        } else if(MoveUtils::is_queen_castle(move) && side == WHITE){
-            uint64 king_from_to = get_from_to(e1, c1);
-            bb->piece_boards[side][pKING] ^= king_from_to;
-            bb->collective_piece_boards[side] ^= king_from_to;
-
-            uint64 rook_from_to = get_from_to(a1, d1);
-            bb->piece_boards[side][pROOK] ^= rook_from_to;
-            bb->collective_piece_boards[side] ^= rook_from_to;
-
-            castle_rights &= 0x3;
-            update_king_location(side, c1);
-        } else if(MoveUtils::is_king_castle(move) && side == BLACK){
-            uint64 king_from_to = get_from_to(e8, g8);
-            bb->piece_boards[side][pKING] ^= king_from_to;
-            bb->collective_piece_boards[side] ^= king_from_to;
-
-            uint64 rook_from_to = get_from_to(h8, f8);
-            bb->piece_boards[side][pROOK] ^= rook_from_to;
-            bb->collective_piece_boards[side] ^= rook_from_to;
-
-            castle_rights &= 0xc;
-            update_king_location(side, g8);
-        } else if(MoveUtils::is_queen_castle(move) && side == BLACK){
-            uint64 king_from_to = get_from_to(e8, c8);
-            bb->piece_boards[side][pKING] ^= king_from_to;
-            bb->collective_piece_boards[side] ^= king_from_to;
-
-            uint64 rook_from_to = get_from_to(a8, d8);
-            bb->piece_boards[side][pROOK] ^= rook_from_to;
-            bb->collective_piece_boards[side] ^= rook_from_to;
-
-            castle_rights &= 0xc;
-            update_king_location(side, c8);
-        } 
-        bi->add_board_info(castle_rights, NO_EP_RIGHTS);
+        int ep_rights = bi->peek_ep_right();
+        if(side == WHITE){
+            ep_rights = to - a4;
+        } else {
+            ep_rights = to - a5;
+        }
+        bi->add_board_info(castle_rights, ep_rights);
     } else if(MoveUtils::is_capture(move)){    
         uint64 from_to = get_from_to(from, to);
         bb->piece_boards[side][piece] ^= from_to;
@@ -151,18 +116,53 @@ void Board::apply_move(unsigned int move){
         bb->collective_piece_boards[side ^ 1] ^= sq_bitboard;
 
         bi->add_board_info(castle_rights, NO_EP_RIGHTS);
-    } else if(MoveUtils::is_double_pawn_push(move)){
-        uint64 from_to = get_from_to(from, to);
-        bb->piece_boards[side][piece] ^= from_to;
-        bb->collective_piece_boards[side] ^= from_to;
+    } else if(MoveUtils::is_castle(move)){
+        if(MoveUtils::is_king_castle(move) && side == WHITE){
+            uint64 king_from_to = get_from_to(e1, g1);
+            bb->piece_boards[side][pKING] ^= king_from_to;
+            bb->collective_piece_boards[side] ^= king_from_to;
 
-        int ep_rights = bi->peek_ep_right();
-        if(side == WHITE){
-            ep_rights = to - a4;
-        } else {
-            ep_rights = to - a5;
-        }
-        bi->add_board_info(castle_rights, ep_rights);
+            uint64 rook_from_to = get_from_to(h1, f1);
+            bb->piece_boards[side][pROOK] ^= rook_from_to;
+            bb->collective_piece_boards[side] ^= rook_from_to;
+
+            castle_rights &= 0x3;
+            update_king_location(side, g1);
+        } else if(MoveUtils::is_queen_castle(move) && side == WHITE){
+            uint64 king_from_to = get_from_to(e1, c1);
+            bb->piece_boards[side][pKING] ^= king_from_to;
+            bb->collective_piece_boards[side] ^= king_from_to;
+
+            uint64 rook_from_to = get_from_to(a1, d1);
+            bb->piece_boards[side][pROOK] ^= rook_from_to;
+            bb->collective_piece_boards[side] ^= rook_from_to;
+
+            castle_rights &= 0x3;
+            update_king_location(side, c1);
+        } else if(MoveUtils::is_king_castle(move) && side == BLACK){
+            uint64 king_from_to = get_from_to(e8, g8);
+            bb->piece_boards[side][pKING] ^= king_from_to;
+            bb->collective_piece_boards[side] ^= king_from_to;
+
+            uint64 rook_from_to = get_from_to(h8, f8);
+            bb->piece_boards[side][pROOK] ^= rook_from_to;
+            bb->collective_piece_boards[side] ^= rook_from_to;
+
+            castle_rights &= 0xc;
+            update_king_location(side, g8);
+        } else if(MoveUtils::is_queen_castle(move) && side == BLACK){
+            uint64 king_from_to = get_from_to(e8, c8);
+            bb->piece_boards[side][pKING] ^= king_from_to;
+            bb->collective_piece_boards[side] ^= king_from_to;
+
+            uint64 rook_from_to = get_from_to(a8, d8);
+            bb->piece_boards[side][pROOK] ^= rook_from_to;
+            bb->collective_piece_boards[side] ^= rook_from_to;
+
+            castle_rights &= 0xc;
+            update_king_location(side, c8);
+        } 
+        bi->add_board_info(castle_rights, NO_EP_RIGHTS);
     } else if(MoveUtils::is_promotion(move)){
         uint64 from_to = get_from_to(from, to);
         uint64 from_bitboard = get_square_bitboard(from);
@@ -179,17 +179,6 @@ void Board::apply_move(unsigned int move){
         } else if(MoveUtils::is_queen_promotion(move)){
             bb->piece_boards[side][pQUEEN] ^= to_bitboard;
         }
-
-        // if(!shown_promotion){
-        //     cout<<"=====promotion move=======\n";
-        //     bb->display_bitboard(from_bitboard);
-        //     cout<<"======\n";
-        //     bb->display_bitboard(to_bitboard);
-        //     cout<<"======\n";
-        //     bb->display();
-        //     cout<<"==========================\n";
-        //     shown_promotion = true;
-        // }
         bi->add_board_info(castle_rights, NO_EP_RIGHTS);
     } else if(MoveUtils::is_capture_promotion(move)){
 
@@ -216,16 +205,6 @@ void Board::apply_move(unsigned int move){
             bb->piece_boards[side ^ 1][captured_piece] ^= to_bitboard;
             bb->collective_piece_boards[side ^ 1] ^= to_bitboard;
         }
-        // if(!shown_capture_promotion){
-        //     cout<<"=====capture promotion move=======\n";
-        //     bb->display_bitboard(from_bitboard);
-        //     cout<<"======\n";
-        //     bb->display_bitboard(to_bitboard);
-        //     cout<<"======\n";
-        //     bb->display();
-        //     shown_capture_promotion = true;
-        //     cout<<"==================================\n";
-        // }
         bi->add_board_info(castle_rights, NO_EP_RIGHTS);
     }
     bb->all = bb->collective_piece_boards[WHITE] | bb->collective_piece_boards[BLACK];
@@ -266,13 +245,14 @@ void Board::reverse_move(unsigned int move){
         bb->collective_piece_boards[side ^ 1] ^= sq_bitboard;
         if(piece == pKING)
             update_king_location(side, from);
+    } else if(MoveUtils::is_double_pawn_push(move)){
+        uint64 from_to = get_from_to(from, to);
+        bb->piece_boards[side][piece] ^= from_to;
+        bb->collective_piece_boards[side] ^= from_to; 
     } else if(MoveUtils::is_ep_capture(move)){
-        // bi->num_ep_captures -= update_num_moves;
-        // bi->num_captures -= update_num_moves;
         uint64 from_to = get_from_to(from, to);
         bb->piece_boards[side][piece] ^= from_to;
         bb->collective_piece_boards[side] ^= from_to;
-        // int captured_piece = MoveUtils::get_captured_piece(move);
         int captured_file = MoveUtils::get_ep_capture_file(move);
         int captured_sq = side == WHITE ? a5 + captured_file: a4 + captured_file;
 
@@ -280,7 +260,6 @@ void Board::reverse_move(unsigned int move){
         bb->piece_boards[side ^ 1][pPAWN] ^= sq_bitboard;
         bb->collective_piece_boards[side ^ 1] ^= sq_bitboard;
     } else if(MoveUtils::is_castle(move)){ // castle, reverse location for both king and rook
-        // bi->num_castles -= update_num_moves;
         if(MoveUtils::is_king_castle(move) && side == WHITE){
             bb->piece_boards[side][pKING] ^= get_from_to(e1, g1);
             bb->collective_piece_boards[side] ^= get_from_to(e1, g1); 
@@ -310,10 +289,6 @@ void Board::reverse_move(unsigned int move){
 
             update_king_location(side, e8);
         }
-    } else if(MoveUtils::is_double_pawn_push(move)){
-        uint64 from_to = get_from_to(from, to);
-        bb->piece_boards[side][piece] ^= from_to;
-        bb->collective_piece_boards[side] ^= from_to; 
     } else if(MoveUtils::is_promotion(move)){
         uint64 from_to = get_from_to(from, to);
         uint64 from_bitboard = get_square_bitboard(from);
