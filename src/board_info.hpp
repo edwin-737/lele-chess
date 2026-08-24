@@ -37,13 +37,14 @@ public:
         cout<<"set peek ep rights: "<<peek_ep_right()<<endl;
     }
     void add_board_info(int castle_right, int ep_right){
-        depth ++;
-        bi_arr[depth] = (castle_right << 4) | ep_right;
+        // depth ++;
+        bi_arr[++depth] = (castle_right << 4) | ep_right;
     }
-    void remove_board_info(){
+    unsigned int remove_board_info(){
         // if(!bi_stack.empty())
         //     bi_stack.pop();
-        depth --;
+        // depth --;
+        return bi_arr[--depth];
     }
     unsigned int peek_board_info(){
         // if(!bi_stack.empty())

@@ -123,6 +123,7 @@ void MoveSet::set_rook_attack_set(int sq)
     for(int i = 0 ; i < 1 << n ; i ++){
         block = index_to_uint64(i, n, mask);
         int index = transform(block, mg.rook_magics[sq], RBits[sq]);
+        // uint64 index = transform_pext(block, mask);
         rook_attack_set[sq][index] = ratt(sq, block);
     }
 }
@@ -133,6 +134,7 @@ void MoveSet::set_bishop_attack_set(int sq){
     for(int i = 0 ; i < 1 << n ; i ++){
         block = index_to_uint64(i, n, mask);
         int index = transform(block, mg.bishop_magics[sq], BBits[sq]);
+        // uint64 index = transform_pext(block, mask);
         bishop_attack_set[sq][index] = batt(sq, block);
     }
 }
@@ -187,6 +189,7 @@ uint64 MoveSet::get_bishop_attack_set(Bitboard* bb, int sq)
 {
     uint64 cur_occ = bb->all & bishop_attack_mask[sq];
     int index = transform(cur_occ, mg.bishop_magics[sq], BBits[sq]);
+    // uint64 index = transform_pext(cur_occ, bishop_attack_mask[sq]);
     uint64 attack_set = bishop_attack_set[sq][index];
     return attack_set;
 }
@@ -194,6 +197,7 @@ uint64 MoveSet::get_rook_attack_set(Bitboard* bb, int sq)
 {
     uint64 cur_occ = bb->all & rook_attack_mask[sq];
     int index = transform(cur_occ, mg.rook_magics[sq], RBits[sq]);
+    // uint64 index = transform_pext(cur_occ, rook_attack_mask[sq]);
     uint64 attack_set = rook_attack_set[sq][index];
     return attack_set;
 }

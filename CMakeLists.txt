@@ -85,9 +85,12 @@ if(ENABLE_GPERFTOOLS)
 
     target_include_directories(engine PRIVATE ${PROFILER_INCLUDE_DIR})
     target_link_libraries(engine PRIVATE ${PROFILER_LIB})
+    target_compile_options(engine PRIVATE -march=native -fomit-frame-pointer )
     target_compile_definitions(engine PRIVATE ENABLE_PROFILER)
 
     target_include_directories(test_engine PRIVATE ${PROFILER_INCLUDE_DIR})
     target_link_libraries(test_engine PRIVATE ${PROFILER_LIB})
+    target_compile_options(test_engine PRIVATE -march=native -fomit-frame-pointer )
     target_compile_definitions(test_engine PRIVATE ENABLE_PROFILER)
+
 endif()

@@ -11,6 +11,7 @@ uint64 bmask(int sq);
 uint64 ratt(int sq, uint64 block);
 uint64 batt(int sq, uint64 block);
 int transform(uint64 b, uint64 magic, int bits);
+uint64 transform_pext(uint64 b, uint64 mask);
 void print_board(uint64 cur_val);
 uint64 find_magic(int sq, int cnt_bits, int bishop);
 inline int RBits[64] = {

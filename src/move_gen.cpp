@@ -7,9 +7,26 @@
 #include "utils.hpp"
 #include "move.hpp"
 #include "move_set.hpp"
+#include <immintrin.h>
 using namespace std;
 using namespace BoardSquares;
 using namespace DirectionMap;
+
+inline int lsb(uint64_t bb) {
+    #if defined(__GNUC__) || defined(__clang__)
+        return __builtin_ctzll(bb);
+    #elif defined(_MSC_VER)
+        unsigned long index;
+        _BitScanForward64(&index, bb);
+        return index;
+    #endif
+}
+
+inline uint64_t pop_lsb(uint64_t& bb) {
+    int s = lsb(bb);
+    bb &= bb - 1; // Clears the lowest set bit in 1 CPU instruction
+    return s;
+}
 
 unsigned int MoveGen::get_move(){
     if(!initialised){
@@ -220,7 +237,7 @@ move_gen_state_t MoveGen::initialise(unsigned int starting_piece){
             uint64 cur_move_set = get_move_set(cur_piece, cur_from);
             while(cur_move_set){
                 cur_to = get_next_to(cur_move_set);
-                if(cur_to != INVALID_LOCATION && INVALID_LOCATION != -1){
+                if(cur_to != INVALID_LOCATION){
                     move_gen_state = {
                         .piece = cur_piece,
                         .piece_board = cur_piece_board,
@@ -279,111 +296,163 @@ move_gen_state_t MoveGen::update(move_gen_state_t cur_state){
             new_state = update_piece_board(new_state);
             return new_state;
         }
-    } else if(cur_state.move_gen_stage == SPECIAL_STAGE){
-        // move_type ++;
-    }
+    } 
     return new_state;
 }
 
-move_gen_state_t MoveGen::update_piece_board(move_gen_state_t cur_state){
-    move_gen_state_t new_state = {};
-    unsigned int cur_piece = cur_state.piece;
-    uint64 cur_piece_board = cur_state.piece_board;
-    uint64 cur_move_set = cur_state.move_set;
+// move_gen_state_t MoveGen::update_piece_board(move_gen_state_t cur_state){
+//     unsigned int cur_piece = cur_state.piece;
+//     uint64 cur_piece_board = cur_state.piece_board;
+//     uint64 cur_move_set = cur_state.move_set;
    
-    // try update from
-    unsigned int next_from = get_next_from(cur_piece_board);
-    unsigned int next_to = INVALID_LOCATION;
-    uint64 next_piece_board = cur_piece_board;
-    uint64 next_move_set = 0;
-    // keep updating next_from for cur_piece
-    while(next_to == INVALID_LOCATION && next_from != INVALID_LOCATION){
-        next_from = get_next_from(next_piece_board);
-        next_move_set = get_move_set(cur_piece, next_from);
+//     // try update from
+//     unsigned int next_from;
+//     unsigned int next_to = INVALID_LOCATION;
+//     uint64 next_piece_board = cur_piece_board;
+//     uint64 next_move_set = 0;
+//     // keep updating next_from for cur_piece
+//     while(next_to == INVALID_LOCATION && next_from != INVALID_LOCATION){
+//         next_from = get_next_from(next_piece_board);
+//         next_move_set = get_move_set(cur_piece, next_from);
 
-        next_to = get_next_to(next_move_set);
-        if(next_from != INVALID_LOCATION && next_to != INVALID_LOCATION){
-            new_state = {
-                .piece=cur_piece,
-                .piece_board=next_piece_board,
-                .move_set=next_move_set,
-                .move_gen_stage=NORMAL_STAGE
-            };
-            return new_state;
-        } else {
-            next_piece_board ^= get_square_bitboard(next_from);
-        }
-    }
-    // try update piece
-    unsigned int next_piece = cur_piece;
-    while(next_from == INVALID_LOCATION && next_piece < NUM_PIECE_TYPES){
-        next_piece ++;
-        next_piece_board = bb->piece_boards[side][next_piece];
-        next_from = get_next_from(next_piece_board);
-        next_move_set = get_move_set(next_piece, next_from);
-        next_to = get_next_to(next_move_set);
-        if(next_from != INVALID_LOCATION && next_to != INVALID_LOCATION){
-            new_state = {
-                .piece = next_piece,
-                .piece_board = next_piece_board,
-                .move_set = next_move_set,
+//         next_to = get_next_to(next_move_set);
+//         if(next_from != INVALID_LOCATION && next_to != INVALID_LOCATION){
+//             return {
+//                 .piece=cur_piece,
+//                 .piece_board=next_piece_board,
+//                 .move_set=next_move_set,
+//                 .move_gen_stage=NORMAL_STAGE
+//             };
+//         } else {
+//             next_piece_board ^= get_square_bitboard(next_from);
+//         }
+//     }
+//     // try update piece
+//     unsigned int next_piece = cur_piece;
+//     while(next_from == INVALID_LOCATION && next_piece < NUM_PIECE_TYPES){
+//         next_piece ++;
+//         next_piece_board = bb->piece_boards[side][next_piece];
+//         next_from = get_next_from(next_piece_board);
+//         next_move_set = get_move_set(next_piece, next_from);
+//         next_to = get_next_to(next_move_set);
+//         if(next_from != INVALID_LOCATION && next_to != INVALID_LOCATION){
+//             return {
+//                 .piece = next_piece,
+//                 .piece_board = next_piece_board,
+//                 .move_set = next_move_set,
+//                 .promoted_piece = pKNIGHT,
+//                 .move_gen_stage = NORMAL_STAGE
+//             };
+//         } 
+//         // keep updating next_from for next_piece
+//         while(next_to == INVALID_LOCATION && next_from != INVALID_LOCATION){
+//             next_from = get_next_from(next_piece_board);
+//             next_move_set = get_move_set(next_piece, next_from);
+//             next_to = get_next_to(next_move_set);
+//             if(next_from != INVALID_LOCATION && next_to  != INVALID_LOCATION){
+//                 return {
+//                     .piece = next_piece,
+//                     .piece_board = next_piece_board,
+//                     .move_set = next_move_set,
+//                     .promoted_piece = pKNIGHT,
+//                     .move_gen_stage = NORMAL_STAGE
+//                 };
+//             } else {
+//                 next_piece_board ^= get_square_bitboard(next_from);
+//             }
+//         }
+//     }
+//     return {
+//         .piece = pKING,
+//         .piece_board = bb->piece_boards[side][pKING],
+//         .move_set = 0,
+//         .promoted_piece = pKNIGHT,
+//         .move_gen_stage = SPECIAL_STAGE
+//     };
+// }
+move_gen_state_t MoveGen::update_piece_board(move_gen_state_t cur_state) {
+    unsigned int cur_piece = cur_state.piece;
+    uint64_t cur_piece_board = cur_state.piece_board;
+
+    // 1. Process remaining pieces of the current piece type
+    while (cur_piece_board) {
+        // Pop the lowest bit (square index) and update bitboard in-place
+        unsigned int from = get_next_from(cur_piece_board);
+        // cur_piece_board &= cur_piece_board - 1; 
+
+        uint64_t move_set = get_move_set(cur_piece, from);
+        unsigned int to = get_next_to(move_set);
+        if (from != INVALID_LOCATION && to != INVALID_LOCATION) {
+            return {
+                .piece = cur_piece,
+                .piece_board = cur_piece_board,
+                .move_set = move_set,
                 .promoted_piece = pKNIGHT,
                 .move_gen_stage = NORMAL_STAGE
             };
+        } else {
+            cur_piece_board &= cur_piece_board - 1; 
+        }
+    }
 
-            return new_state;
-        } 
-        // keep updating next_from for next_piece
-        while(next_to == INVALID_LOCATION && next_from != INVALID_LOCATION){
-            next_from = get_next_from(next_piece_board);
-            next_move_set = get_move_set(next_piece, next_from);
-            next_to = get_next_to(next_move_set);
-            if(next_from != INVALID_LOCATION && next_to  != INVALID_LOCATION){
-                new_state = {
+    // 2. Advance to subsequent piece types
+    for (unsigned int next_piece = cur_piece + 1; next_piece < NUM_PIECE_TYPES; ++next_piece) {
+        uint64_t piece_board = bb->piece_boards[side][next_piece];
+
+        while (piece_board) {
+            unsigned int from = get_next_from(piece_board);
+            // piece_board &= piece_board - 1;
+
+            uint64_t move_set = get_move_set(next_piece, from);
+            unsigned int to = get_next_to(move_set);
+            if (from != INVALID_LOCATION && to != INVALID_LOCATION) {
+                return {
                     .piece = next_piece,
-                    .piece_board = next_piece_board,
-                    .move_set = next_move_set,
+                    .piece_board = piece_board,
+                    .move_set = move_set,
                     .promoted_piece = pKNIGHT,
                     .move_gen_stage = NORMAL_STAGE
                 };
-
-                return new_state;
             } else {
-                next_piece_board ^= get_square_bitboard(next_from);
+                piece_board &= piece_board - 1; 
             }
         }
     }
-    new_state = {
+
+    // 3. Fallback to Special Stage (e.g., Castling/King special moves)
+    return {
         .piece = pKING,
         .piece_board = bb->piece_boards[side][pKING],
         .move_set = 0,
         .promoted_piece = pKNIGHT,
         .move_gen_stage = SPECIAL_STAGE
     };
-
-    return new_state;
 }
-
 unsigned int MoveGen::get_next_from(uint64 cur_piece_board){
-    int from = bit_scan_forward(cur_piece_board);
-    if(from == -1)
-        return INVALID_LOCATION;
+    // if(!cur_piece_board)
+    //     return INVALID_LOCATION;
+    int from = lsb(cur_piece_board);
+    // if(from == -1)
+    //     return INVALID_LOCATION;
     return from;
 }
 unsigned int MoveGen::get_next_to(uint64 cur_move_set){
-    int to = bit_scan_forward(cur_move_set);
-    if(to == -1)
-        return INVALID_LOCATION;
+    // if(!cur_move_set)
+    //     return INVALID_LOCATION;
+    int to = lsb(cur_move_set);
+    // if(to == -1)
+    //     return INVALID_LOCATION;
     return to;
 }
 
 uint64 MoveGen::get_move_set(unsigned int _piece, unsigned int _from){
-    if(gen_type == ONLY_QUIET)
+    if(gen_type == ALL_MOVES)
+        return MoveSet::get_all_move_set(bb, _piece, _from, side);
+    else if(gen_type == ONLY_QUIET)
         return MoveSet::get_quiet_move_set(bb, _piece, _from, side);
     else if(gen_type == ONLY_CAPTURES)
         return MoveSet::get_capture_move_set(bb, _piece, _from, side);
-    else
-        return MoveSet::get_all_move_set(bb, _piece, _from, side);
+    return 0;
 }
 bool MoveGen::initialise_piece(){
 
@@ -499,26 +568,74 @@ bool MoveGen::update_to(){
 
 bool MoveGen::can_castle_kingside(int side){
     if(side == WHITE){
-        return (bi->peek_castle_right() & 0b1000) && 
-        !(bb->all & WHITE_KING_CASTLE_SQUARES) &&
-        !bb->attacked(side, e1) && !bb->attacked(side, f1) && !bb->attacked(side, g1);
+        if(!(bi->peek_castle_right() & 0b1000))
+            return false;
+        else if((bb->all & WHITE_KING_CASTLE_SQUARES))
+            return false;
+        else if(bb->attacked(side, e1))
+            return false;
+        else if(bb->attacked(side, f1))
+            return false;
+        else if(bb->attacked(side, g1))
+            return false;
+        // else if(!(!bb->attacked(side, e1) && !bb->attacked(side, f1) && !bb->attacked(side, g1)))
+        //     return false;
+        return true;
+        // return (bi->peek_castle_right() & 0b1000) && 
+        // !(bb->all & WHITE_KING_CASTLE_SQUARES) &&
+        // !bb->attacked(side, e1) && !bb->attacked(side, f1) && !bb->attacked(side, g1);
 
     } else {
-        return (bi->peek_castle_right() & 0b0010) && 
-        !(bb->all & BLACK_KING_CASTLE_SQUARES) &&
-        !bb->attacked(side, e8) && !bb->attacked(side, f8) && !bb->attacked(side, g8);
+        if(!(bi->peek_castle_right() & 0b0010))
+            return false;
+        else if((bb->all & BLACK_KING_CASTLE_SQUARES))
+            return false;
+        else if(bb->attacked(side, e8))
+            return false;
+        else if(bb->attacked(side, f8))
+            return false;
+        else if(bb->attacked(side, g8))
+            return false;
+        // else if(!(!bb->attacked(side, e8) && !bb->attacked(side, f8) && !bb->attacked(side, g8)))
+        //     return false;
+        return true;
+        // return (bi->peek_castle_right() & 0b0010) && 
+        // !(bb->all & BLACK_KING_CASTLE_SQUARES) &&
+        // !bb->attacked(side, e8) && !bb->attacked(side, f8) && !bb->attacked(side, g8);
     }
 }
 
 bool MoveGen::can_castle_queenside(int side){
     if(side == WHITE){
-        return (bi->peek_castle_right() & 0b0100) &&
-        !(bb->all & WHITE_QUEEN_CASTLE_SQUARES) &&
-        !bb->attacked(side, e1) && !bb->attacked(side, d1) && !bb->attacked(side, c1);
+        if(!(bi->peek_castle_right() & 0b0100))
+            return false;
+        else if((bb->all & WHITE_QUEEN_CASTLE_SQUARES))
+            return false;
+        else if(bb->attacked(side, e1))
+            return false;
+        else if(bb->attacked(side, d1))
+            return false;
+        else if(bb->attacked(side, c1))
+            return false;
+        return true;
+        // return (bi->peek_castle_right() & 0b0100) &&
+        // !(bb->all & WHITE_QUEEN_CASTLE_SQUARES) &&
+        // !bb->attacked(side, e1) && !bb->attacked(side, d1) && !bb->attacked(side, c1);
     } else {
-        return (bi->peek_castle_right() & 0b0001) &&
-        !(bb->all & BLACK_QUEEN_CASTLE_SQUARES) &&
-        !bb->attacked(side, e8) && !bb->attacked(side, d8) && !bb->attacked(side, c8) && !bb->attacked(side, d8);
+        if(!(bi->peek_castle_right() & 0b0001))
+            return false;
+        else if((bb->all & BLACK_QUEEN_CASTLE_SQUARES))
+            return false;
+        else if(bb->attacked(side, e8))
+            return false;
+        else if(bb->attacked(side, d8))
+            return false;
+        else if(bb->attacked(side, c8))
+            return false;
+        return true;
+        // return (bi->peek_castle_right() & 0b0001) &&
+        // !(bb->all & BLACK_QUEEN_CASTLE_SQUARES) &&
+        // !bb->attacked(side, e8) && !bb->attacked(side, d8) && !bb->attacked(side, c8) && !bb->attacked(side, d8);
     }
 }
 

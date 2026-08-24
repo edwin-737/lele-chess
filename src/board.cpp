@@ -33,6 +33,7 @@ void Board::apply_move(unsigned int move){
             } else{
                 castle_rights &= 0xc;
             }
+
             update_king_location(side, to);
             // cout<<"move is quiet king move\n";
             bi->add_board_info(castle_rights, NO_EP_RIGHTS);

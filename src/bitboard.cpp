@@ -76,58 +76,23 @@ bool Bitboard::any_piece_on_square(int side, int square){
 
 //     uint64 bishop_attack_set = MoveSet::get_bishop_attack_set(this, sq, defending_side);
 //     uint64 queens = piece_boards[attacking_side][pQUEEN];
-//     if(bishop_attack_set & queens) return true;   
-
 //     uint64 bishops = piece_boards[attacking_side][pBISHOP];
-//     if(bishop_attack_set & bishops) return true;
+//     if(bishop_attack_set & (queens | bishops)) return true;   
 
 //     uint64 rook_attack_set = MoveSet::get_rook_attack_set(this, sq, defending_side);
-//     if(rook_attack_set & queens) return true;
-
 //     uint64 rooks = piece_boards[attacking_side][pROOK];
-//     if(rook_attack_set & rooks) return true;
+
+//     if(rook_attack_set & (queens | rooks)) return true;
 
 //     uint64 kings = piece_boards[attacking_side][pKING];
-//     if(MoveSet::get_king_attack_set(this, sq, defending_side) & kings ||
-
-//     ) return true;
+//     if(MoveSet::get_king_attack_set(this, sq, defending_side) & kings) return true;
 
 //     return false;
 // }
 bool Bitboard::attacked(unsigned int defending_side, unsigned int sq)
 {
-    // this->update();
     int attacking_side = defending_side ^ 1;
 
-    // // uint64 pawns = piece_boards[attacking_side][pPAWN];
-    // if(MoveSet::get_pawn_attack_set(this, sq, defending_side) & piece_boards[attacking_side][pPAWN]) return true;
-
-    // // uint64 knights = piece_boards[attacking_side][pKNIGHT];
-    // if(MoveSet::get_knight_attack_set(this, sq, defending_side) & piece_boards[attacking_side][pKNIGHT]) return true;
-
-    // uint64 bishop_attack_set = MoveSet::get_bishop_attack_set(this, sq, defending_side);
-    // // uint64 queens = piece_boards[attacking_side][pQUEEN];
-    // if(bishop_attack_set & piece_boards[attacking_side][pQUEEN]) return true;   
-
-    // // uint64 bishops = piece_boards[attacking_side][pBISHOP];
-    // if(bishop_attack_set & piece_boards[attacking_side][pBISHOP]) return true;
-
-    // uint64 rook_attack_set = MoveSet::get_rook_attack_set(this, sq, defending_side);
-    // if(rook_attack_set & piece_boards[attacking_side][pQUEEN]) return true;
-
-    // // uint64 rooks = piece_boards[attacking_side][pROOK];
-    // if(rook_attack_set & piece_boards[attacking_side][pROOK]) return true;
-
-    // uint64 kings = piece_boards[attacking_side][pKING];
-    // if(
-    //     MoveSet::get_king_attack_set(this, sq, defending_side) & piece_boards[attacking_side][pKING] ||
-    //     MoveSet::get_pawn_attack_set(this, sq, defending_side) & piece_boards[attacking_side][pPAWN] || 
-    //     MoveSet::get_knight_attack_set(this, sq, defending_side) & piece_boards[attacking_side][pKNIGHT] || 
-    //     MoveSet::get_bishop_attack_set(this, sq, defending_side) & piece_boards[attacking_side][pQUEEN] ||
-    //     MoveSet::get_bishop_attack_set(this, sq, defending_side) & piece_boards[attacking_side][pBISHOP] ||
-    //     MoveSet::get_rook_attack_set(this, sq, defending_side) & piece_boards[attacking_side][pQUEEN] || 
-    //     MoveSet::get_rook_attack_set(this, sq, defending_side) & piece_boards[attacking_side][pROOK]
-    // ) return true;
     if(
         MoveSet::get_king_attack_set(this, sq, defending_side) & piece_boards[attacking_side][pKING] ||
         MoveSet::get_pawn_attack_set(this, sq, defending_side) & piece_boards[attacking_side][pPAWN] || 
@@ -137,6 +102,33 @@ bool Bitboard::attacked(unsigned int defending_side, unsigned int sq)
     ) return true;
     return false;
 }
+// bool Bitboard::attacked(unsigned int defending_side, unsigned int sq) {
+//     const unsigned int attacking_side = defending_side ^ 1;
+
+
+//     const uint64 diagonal_attackers = piece_boards[attacking_side][pBISHOP] | piece_boards[attacking_side][pQUEEN];
+//     if ( (MoveSet::get_bishop_attack_set(this, sq, defending_side) & diagonal_attackers)) {
+//         return true;
+//     }
+
+//     const uint64 orthogonal_attackers = piece_boards[attacking_side][pROOK] | piece_boards[attacking_side][pQUEEN];
+//     if ( (MoveSet::get_rook_attack_set(this, sq, defending_side) & orthogonal_attackers)) {
+//         return true;
+//     }
+
+//     if (MoveSet::get_pawn_attack_set(this, sq, defending_side) & piece_boards[attacking_side][pPAWN]) {
+//         return true;
+//     }
+
+//     if (MoveSet::get_knight_attack_set(this, sq, defending_side) & piece_boards[attacking_side][pKNIGHT]) {
+//         return true;
+//     }
+
+//     if (MoveSet::get_king_attack_set(this, sq, defending_side) & piece_boards[attacking_side][pKING]) {
+//         return true;
+//     }
+//     return false;
+// }
 unsigned int Bitboard::get_lowest_value_attacker_to(unsigned int defending_side, unsigned int sq)
 {
     for(int piece = 0 ; piece < NUM_PIECE_TYPES ; piece ++)

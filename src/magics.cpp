@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <immintrin.h>
 #include <iostream>
 #include "magics.hpp"
 #include "utils.hpp"
@@ -137,6 +138,14 @@ int transform(uint64 b, uint64 magic, int bits)
 {
     return (unsigned)((int)b * (int)magic ^ (int)(b >> 32) * (int)(magic >> 32)) >> (32 - bits);
 }
+// int transform(unsigned long long b, unsigned long long magic, int bits)
+// {
+//     return (int)((b * magic) >> (64 - bits));
+// }
+// uint64 transform_pext(unsigned long long b, unsigned long long mask)
+// {
+//     return _pext_u64(b, mask);
+// }
 void print_board(uint64 cur_val)
 {
     int sq[8][8];
@@ -173,6 +182,7 @@ uint64 find_magic(int sq, int cnt_bits, int bishop)
         for (i = 0, fail = 0; !fail && i < (1 << n); i++)
         {
             j = transform(b[i], magic, cnt_bits);
+            // j = transform_pext(b[i], mask);
             if (used[j] == 0ULL)
                 used[j] = a[i];
             else if (used[j] != a[i])
