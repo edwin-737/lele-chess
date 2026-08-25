@@ -568,6 +568,8 @@ bool MoveGen::update_to(){
 
 bool MoveGen::can_castle_kingside(int side){
     if(side == WHITE){
+        if(!(bb->piece_boards[WHITE][pROOK] & get_square_bitboard(h1)))
+            return false;
         if(!(bi->peek_castle_right() & 0b1000))
             return false;
         else if((bb->all & WHITE_KING_CASTLE_SQUARES))
@@ -578,15 +580,12 @@ bool MoveGen::can_castle_kingside(int side){
             return false;
         else if(bb->attacked(side, g1))
             return false;
-        // else if(!(!bb->attacked(side, e1) && !bb->attacked(side, f1) && !bb->attacked(side, g1)))
-        //     return false;
         return true;
-        // return (bi->peek_castle_right() & 0b1000) && 
-        // !(bb->all & WHITE_KING_CASTLE_SQUARES) &&
-        // !bb->attacked(side, e1) && !bb->attacked(side, f1) && !bb->attacked(side, g1);
 
     } else {
-        if(!(bi->peek_castle_right() & 0b0010))
+        if(!(bb->piece_boards[BLACK][pROOK] & get_square_bitboard(h8)))
+            return false;
+        else if(!(bi->peek_castle_right() & 0b0010))
             return false;
         else if((bb->all & BLACK_KING_CASTLE_SQUARES))
             return false;
@@ -596,18 +595,15 @@ bool MoveGen::can_castle_kingside(int side){
             return false;
         else if(bb->attacked(side, g8))
             return false;
-        // else if(!(!bb->attacked(side, e8) && !bb->attacked(side, f8) && !bb->attacked(side, g8)))
-        //     return false;
         return true;
-        // return (bi->peek_castle_right() & 0b0010) && 
-        // !(bb->all & BLACK_KING_CASTLE_SQUARES) &&
-        // !bb->attacked(side, e8) && !bb->attacked(side, f8) && !bb->attacked(side, g8);
     }
 }
 
 bool MoveGen::can_castle_queenside(int side){
     if(side == WHITE){
-        if(!(bi->peek_castle_right() & 0b0100))
+        if(!(bb->piece_boards[WHITE][pROOK] & get_square_bitboard(a1)))
+            return false;
+        else if(!(bi->peek_castle_right() & 0b0100))
             return false;
         else if((bb->all & WHITE_QUEEN_CASTLE_SQUARES))
             return false;
@@ -618,11 +614,10 @@ bool MoveGen::can_castle_queenside(int side){
         else if(bb->attacked(side, c1))
             return false;
         return true;
-        // return (bi->peek_castle_right() & 0b0100) &&
-        // !(bb->all & WHITE_QUEEN_CASTLE_SQUARES) &&
-        // !bb->attacked(side, e1) && !bb->attacked(side, d1) && !bb->attacked(side, c1);
     } else {
-        if(!(bi->peek_castle_right() & 0b0001))
+        if(!(bb->piece_boards[BLACK][pROOK] & get_square_bitboard(a8)))
+            return false;
+        else if(!(bi->peek_castle_right() & 0b0001))
             return false;
         else if((bb->all & BLACK_QUEEN_CASTLE_SQUARES))
             return false;
@@ -633,9 +628,6 @@ bool MoveGen::can_castle_queenside(int side){
         else if(bb->attacked(side, c8))
             return false;
         return true;
-        // return (bi->peek_castle_right() & 0b0001) &&
-        // !(bb->all & BLACK_QUEEN_CASTLE_SQUARES) &&
-        // !bb->attacked(side, e8) && !bb->attacked(side, d8) && !bb->attacked(side, c8) && !bb->attacked(side, d8);
     }
 }
 

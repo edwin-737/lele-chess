@@ -1027,16 +1027,11 @@ TEST_CASE("perft_ordered", "[Search]"){
         // REQUIRE(s1.num_capture_promotions == 9808);
     }
 }
-TEST_CASE("chessprogramming perft", "[Search]"){
+TEST_CASE("kiwipete perft", "[Search]"){
 
     string fen_path = "./positions/chessprogramming_fen.txt";
     SECTION("Depth = 5"){
         REQUIRE(test_perft(fen_path, 5, 193690690));
-        // REQUIRE(perft_result == 16422290);
-        // REQUIRE(s1.num_ep_captures == 669892);
-        // REQUIRE(s1.num_captures == 174);
-        // REQUIRE(s1.num_promotions == 628);
-        // REQUIRE(s1.num_capture_promotions == 9808);
     }
 }
 #else
