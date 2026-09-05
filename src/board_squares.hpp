@@ -8,7 +8,17 @@
 typedef unsigned long long uint64;
 using namespace std;
 namespace BoardSquares{
-
+    typedef enum RayDirection {
+        DIAGONAL_LEFT_UP,
+        DIAGONAL_RIGHT_DOWN,
+        DIAGONAL_LEFT_DOWN,
+        DIAGONAL_RIGHT_UP,
+        HORIZONTAL_LEFT,
+        HORIZONTAL_RIGHT,
+        VERTICAL_DOWN,
+        VERTICAL_UP,
+        NO_RAY_DIRECTION
+    } ray_direction_e;
     enum File
     {
         a, b, c, d, e, f, g, h
@@ -27,6 +37,11 @@ namespace BoardSquares{
     void init_squares();
     void init_files();
     void init_ranks();
+    void init_blocks();
+    void init_ray_mask();
+
+    direction_e get_direction(unsigned int from, unsigned int to);
+    uint64 get_block(unsigned int from, unsigned int to, direction_e direction);
 
     uint64 get_square_bitboard(int idx);
 
@@ -35,6 +50,6 @@ namespace BoardSquares{
     uint64& get_clear_file_bitboard(int idx);
     uint64 get_from_to(int from, int to);
     string get_square(int sq);
-    inline uint64 files[8], ranks[8], squares[64], clear_files[8];
+    inline uint64 files[8], ranks[8], squares[64], clear_files[8], file_blocks[8][8], rank_blocks[8][8], ray_mask[8][NUM_SQUARES];
 };
 #endif

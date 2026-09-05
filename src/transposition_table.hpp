@@ -27,9 +27,9 @@ public:
         generate_zobrist_values();
     };
     void initialise_hash_val(unsigned int side_to_move, Bitboard* bb, BoardInfo* bi);
-    void update_table(uint64 val);
     void update_hash_val_side_to_move(unsigned int move);
-    void update_hash_val_piece_square(unsigned int move);
+    uint64 get_hash_val_change_piece_square(unsigned int move);
+    void update_hash_val_piece_square(unsigned int move, uint64 hash_val_change=0);
     void update_hash_val_castle_rights(unsigned int prev_castle_right, unsigned int next_castle_right);
     void update_hash_val_ep_rights(unsigned int prev_ep_right, unsigned int next_ep_right);
     unsigned int get_value_perft(int depth);

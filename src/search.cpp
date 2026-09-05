@@ -18,6 +18,8 @@ unsigned int Search::perft_loop(MoveGen mg, int original_depth, int depth_left, 
         }
         mg_state = mg.update(mg_state);
         if(b->apply_move_if_legal(move)){
+            // if(MoveUtils::get_from(root_move) == d6 && MoveUtils::get_to(root_move) == e5 && MoveUtils::get_piece(root_move) == pQUEEN)
+            //     cout<<"\n"<<MoveUtils::move_as_string(move)<<": LEGAL, root move is queen d6 e5\n";
             if(original_depth == 1){
                 cout<<MoveUtils::move_as_string(move)<<": 1\n";
             }
@@ -39,6 +41,9 @@ unsigned int Search::perft_loop(MoveGen mg, int original_depth, int depth_left, 
                 }
             }
             b->reverse_move(move);
+        } else {
+            // if(MoveUtils::get_from(root_move) == d6 && MoveUtils::get_to(root_move) == e5 && MoveUtils::get_piece(root_move) == pQUEEN)
+            //     cout<<"\n"<<MoveUtils::move_as_string(move)<<": ILLEGAL, root move is queen d6 e5\n";
         }
 
     }

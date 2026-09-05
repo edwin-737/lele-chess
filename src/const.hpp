@@ -54,7 +54,7 @@ enum Piece
     pQUEEN,
     pKING,
 };
-enum Directions {
+typedef enum Directions {
     SOUTH,
     SOUTHWEST,
     WEST,
@@ -62,8 +62,9 @@ enum Directions {
     NORTH,
     NORTHEAST,
     EAST,
-    SOUTHEAST
-};
+    SOUTHEAST,
+    INVALID_DIRECTION
+} direction_e;
 inline const int piece_values[] = {
     1, 3, 3, 5, 9, 10000
 };
@@ -74,6 +75,8 @@ inline const int piece_values[] = {
 #define NUM_PIECE_KEYS 100
 #define NUM_SQUARES 64
 #define NUM_DIRECTIONS 8
+#define NUM_RANKS 8
+#define NUM_FILES 8
 inline int PAWN_WHITE[]={
     0,  0,  0,  0,  0,  0,  0, 0,
     5, 10, 10,-20,-20, 10, 10,  5,

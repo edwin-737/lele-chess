@@ -22,7 +22,6 @@ bool test_perft(std::string fen_path, unsigned int depth, unsigned int expected_
     PestoEvaluation* pesto = &_pesto;
 
     Search s = Search(b, pesto);
-    cout<<"side to move: "<<MoveUtils::side_as_string(b->get_side_to_move())<<"\n";
 
     #ifdef ENABLE_PROFILER
         if (!ProfilerStart("test-perft-profile.prof")) {
@@ -30,6 +29,7 @@ bool test_perft(std::string fen_path, unsigned int depth, unsigned int expected_
         }
     #endif
 
+    cout<<"test peek ep rights: "<<b->get_board_info()->peek_ep_right()<<endl;
     unsigned int actual_result = s.perft(depth, depth, b->get_side_to_move());
 
     #ifdef ENABLE_PROFILER

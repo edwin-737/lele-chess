@@ -34,4 +34,7 @@
 # ./build/engine > output.txt -f ./positions/bugs/backrank_miss_c6c5.txt -j p -d  4 -s w
 # ./build/engine > output.txt -f ./positions/bugs/backrank_miss_c6c5_d1c1.txt -j p -d  2 -s b
 # ./build/engine > output.txt -f ./positions/bugs/backrank_miss_c6c5_d1c1_d2c1q.txt -j p -d  1 -s w
+export PATH="$PATH:$(go env GOPATH)/bin"
 ./build/engine > output.txt -f ./positions/starting_position.txt -j p -d 6 -s w
+pprof --text ./build/engine main-perf-profile.prof | head -n 30
+# ./build/engine > output.txt -f ./positions/chessprogramming_fen.txt -j p -d 5 -s w

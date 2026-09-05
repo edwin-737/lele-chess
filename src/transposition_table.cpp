@@ -50,7 +50,8 @@ void TranspositionTable::update_hash_val_side_to_move(unsigned int move){
     hash_val ^= get_zobrist_value(ZOBRIST_OFFSET_SIDE_TO_MOVE, calculate_zobrist_idx_side_to_move(WHITE));
     hash_val ^= get_zobrist_value(ZOBRIST_OFFSET_SIDE_TO_MOVE, calculate_zobrist_idx_side_to_move(BLACK));
 }
-void TranspositionTable::update_hash_val_piece_square(unsigned int move){
+
+uint64 TranspositionTable::get_hash_val_change_piece_square(unsigned int move){
 
     unsigned int side = MoveUtils::get_side(move);
     unsigned int from = MoveUtils::get_from(move);
@@ -60,50 +61,50 @@ void TranspositionTable::update_hash_val_piece_square(unsigned int move){
 
     uint64 from_zobrist_val = get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side, piece, from));
     uint64 to_zobrist_val = get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side, piece, to));
-
+    uint64 ans = 0;
     if(MoveUtils::is_quiet(move)){
-        hash_val ^= from_zobrist_val;
-        hash_val ^= to_zobrist_val;
+        ans ^= from_zobrist_val ^ to_zobrist_val;
     } else if(MoveUtils::is_castle(move)){
+
         if(MoveUtils::is_king_castle(move) && side == WHITE){
-            hash_val ^= get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side, pROOK, h1));
-            hash_val ^= get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side, pROOK, f1));
-            hash_val ^= get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side, pKING, e1));
-            hash_val ^= get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side, pKING, g1));
+            ans ^= get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side, pROOK, h1));
+            ans ^= get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side, pROOK, f1));
+            ans ^= get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side, pKING, e1));
+            ans ^= get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side, pKING, g1));
         } else if(MoveUtils::is_queen_castle(move) && side == WHITE){
-            hash_val ^= get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side, pROOK, a1));
-            hash_val ^= get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side, pROOK, d1));
-            hash_val ^= get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side, pKING, e1));
-            hash_val ^= get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side, pKING, c1));
+            ans ^= get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side, pROOK, a1));
+            ans ^= get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side, pROOK, d1));
+            ans ^= get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side, pKING, e1));
+            ans ^= get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side, pKING, c1));
         } else if(MoveUtils::is_king_castle(move) && side == BLACK){
-            hash_val ^= get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side, pROOK, h8));
-            hash_val ^= get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side, pROOK, f8));
-            hash_val ^= get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side, pKING, e8));
-            hash_val ^= get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side, pKING, g8));
+            ans ^= get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side, pROOK, h8));
+            ans ^= get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side, pROOK, f8));
+            ans ^= get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side, pKING, e8));
+            ans ^= get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side, pKING, g8));
         } else if(MoveUtils::is_queen_castle(move) && side == BLACK){
-            hash_val ^= get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side, pROOK, a8));
-            hash_val ^= get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side, pROOK, d8));
-            hash_val ^= get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side, pKING, e8));
-            hash_val ^= get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side, pKING, c8));
+            ans ^= get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side, pROOK, a8));
+            ans ^= get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side, pROOK, d8));
+            ans ^= get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side, pKING, e8));
+            ans ^= get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side, pKING, c8));
         }
     } else if(MoveUtils::is_capture(move)){
         uint64 captured_piece_zobrist_val = get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side ^ 1, captured_piece, to));
 
-        hash_val ^= from_zobrist_val;
-        hash_val ^= to_zobrist_val;
-        hash_val ^= captured_piece_zobrist_val;
+        ans ^= from_zobrist_val;
+        ans ^= to_zobrist_val;
+        ans ^= captured_piece_zobrist_val;
     } else if(MoveUtils::is_ep_capture(move)){
         unsigned int captured_file = MoveUtils::get_ep_capture_file(move);
         unsigned int captured_sq =  side == WHITE ? a5 + captured_file : a4 + captured_file;
 
-        hash_val ^= from_zobrist_val;
-        hash_val ^= to_zobrist_val;
-        hash_val ^= get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side ^ 1, pPAWN, captured_sq));
+        ans ^= from_zobrist_val;
+        ans ^= to_zobrist_val;
+        ans ^= get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side ^ 1, pPAWN, captured_sq));
     } else if(MoveUtils::is_double_pawn_push(move)){
-        hash_val ^= from_zobrist_val;
-        hash_val ^= to_zobrist_val;
+        ans ^= from_zobrist_val;
+        ans ^= to_zobrist_val;
     } else if(MoveUtils::is_promotion(move)){
-        hash_val ^= from_zobrist_val;
+        ans ^= from_zobrist_val;
         if(MoveUtils::is_queen_promotion(move))
             to_zobrist_val = get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side, pQUEEN, to));
         else if(MoveUtils::is_rook_promotion(move))
@@ -112,11 +113,11 @@ void TranspositionTable::update_hash_val_piece_square(unsigned int move){
             to_zobrist_val = get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side, pBISHOP, to));
         else
             to_zobrist_val = get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side, pKNIGHT, to));
-        hash_val ^= to_zobrist_val;
+        ans ^= to_zobrist_val;
     } else if(MoveUtils::is_capture_promotion(move)){
-        hash_val ^= from_zobrist_val;
+        ans ^= from_zobrist_val;
         uint64 captured_piece_zobrist_val = get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side ^ 1, captured_piece, to));
-        hash_val ^= captured_piece_zobrist_val;
+        ans ^= captured_piece_zobrist_val;
 
         if(MoveUtils::is_queen_promotion(move))
             to_zobrist_val = get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side, pQUEEN, to));
@@ -126,8 +127,92 @@ void TranspositionTable::update_hash_val_piece_square(unsigned int move){
             to_zobrist_val = get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side, pBISHOP, to));
         else
             to_zobrist_val = get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side, pKNIGHT, to));
-        hash_val ^= to_zobrist_val;
+        ans ^= to_zobrist_val;
     }
+    return ans;
+}
+
+void TranspositionTable::update_hash_val_piece_square(unsigned int move, uint64 hash_val_change){
+    if(hash_val_change)
+        hash_val ^= hash_val_change;
+    else 
+        hash_val ^= get_hash_val_change_piece_square(move);
+    // unsigned int side = MoveUtils::get_side(move);
+    // unsigned int from = MoveUtils::get_from(move);
+    // unsigned int to = MoveUtils::get_to(move);
+    // unsigned int piece = MoveUtils::get_piece(move);
+    // unsigned int captured_piece = MoveUtils::get_captured_piece(move);
+
+    // uint64 from_zobrist_val = get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side, piece, from));
+    // uint64 to_zobrist_val = get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side, piece, to));
+
+    // if(MoveUtils::is_quiet(move)){
+    //     hash_val ^= from_zobrist_val;
+    //     hash_val ^= to_zobrist_val;
+    // } else if(MoveUtils::is_castle(move)){
+    //     if(MoveUtils::is_king_castle(move) && side == WHITE){
+    //         hash_val ^= get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side, pROOK, h1));
+    //         hash_val ^= get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side, pROOK, f1));
+    //         hash_val ^= get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side, pKING, e1));
+    //         hash_val ^= get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side, pKING, g1));
+    //     } else if(MoveUtils::is_queen_castle(move) && side == WHITE){
+    //         hash_val ^= get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side, pROOK, a1));
+    //         hash_val ^= get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side, pROOK, d1));
+    //         hash_val ^= get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side, pKING, e1));
+    //         hash_val ^= get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side, pKING, c1));
+    //     } else if(MoveUtils::is_king_castle(move) && side == BLACK){
+    //         hash_val ^= get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side, pROOK, h8));
+    //         hash_val ^= get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side, pROOK, f8));
+    //         hash_val ^= get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side, pKING, e8));
+    //         hash_val ^= get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side, pKING, g8));
+    //     } else if(MoveUtils::is_queen_castle(move) && side == BLACK){
+    //         hash_val ^= get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side, pROOK, a8));
+    //         hash_val ^= get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side, pROOK, d8));
+    //         hash_val ^= get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side, pKING, e8));
+    //         hash_val ^= get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side, pKING, c8));
+    //     }
+    // } else if(MoveUtils::is_capture(move)){
+    //     uint64 captured_piece_zobrist_val = get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side ^ 1, captured_piece, to));
+
+    //     hash_val ^= from_zobrist_val;
+    //     hash_val ^= to_zobrist_val;
+    //     hash_val ^= captured_piece_zobrist_val;
+    // } else if(MoveUtils::is_ep_capture(move)){
+    //     unsigned int captured_file = MoveUtils::get_ep_capture_file(move);
+    //     unsigned int captured_sq =  side == WHITE ? a5 + captured_file : a4 + captured_file;
+
+    //     hash_val ^= from_zobrist_val;
+    //     hash_val ^= to_zobrist_val;
+    //     hash_val ^= get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side ^ 1, pPAWN, captured_sq));
+    // } else if(MoveUtils::is_double_pawn_push(move)){
+    //     hash_val ^= from_zobrist_val;
+    //     hash_val ^= to_zobrist_val;
+    // } else if(MoveUtils::is_promotion(move)){
+    //     hash_val ^= from_zobrist_val;
+    //     if(MoveUtils::is_queen_promotion(move))
+    //         to_zobrist_val = get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side, pQUEEN, to));
+    //     else if(MoveUtils::is_rook_promotion(move))
+    //         to_zobrist_val = get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side, pROOK, to));
+    //     else if(MoveUtils::is_bishop_promotion(move))
+    //         to_zobrist_val = get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side, pBISHOP, to));
+    //     else
+    //         to_zobrist_val = get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side, pKNIGHT, to));
+    //     hash_val ^= to_zobrist_val;
+    // } else if(MoveUtils::is_capture_promotion(move)){
+    //     hash_val ^= from_zobrist_val;
+    //     uint64 captured_piece_zobrist_val = get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side ^ 1, captured_piece, to));
+    //     hash_val ^= captured_piece_zobrist_val;
+
+    //     if(MoveUtils::is_queen_promotion(move))
+    //         to_zobrist_val = get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side, pQUEEN, to));
+    //     else if(MoveUtils::is_rook_promotion(move))
+    //         to_zobrist_val = get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side, pROOK, to));
+    //     else if(MoveUtils::is_bishop_promotion(move))
+    //         to_zobrist_val = get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side, pBISHOP, to));
+    //     else
+    //         to_zobrist_val = get_zobrist_value(ZOBRIST_OFFSET_PIECE_ON_SQUARE, calculate_zobrist_idx_piece_square(side, pKNIGHT, to));
+    //     hash_val ^= to_zobrist_val;
+    // }
 }
 void TranspositionTable::update_hash_val_castle_rights(unsigned int prev_castle_right, unsigned int next_castle_right){
     // hash_val ^= get_zobrist_value(ZOBRIST_OFFSET_CASTLE_RIGHTS, calculate_zobrist_idx_castle_rights(prev_castle_right));

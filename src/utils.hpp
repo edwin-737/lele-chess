@@ -17,10 +17,10 @@ const int index64[64] = {
    46, 26, 40, 15, 34, 20, 31, 10,
    25, 14, 19,  9, 13,  8,  7,  6
 };
-inline unsigned int get_file(unsigned int sq){
+inline int get_file(unsigned int sq){
     return sq % 8;
 }
-inline unsigned int get_rank(unsigned int sq){
+inline int get_rank(unsigned int sq){
     return sq / 8;
 }
 inline void get_set_bit_indices(uint64 n, int* set_bits){

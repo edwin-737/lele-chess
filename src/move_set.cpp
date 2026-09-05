@@ -71,7 +71,14 @@ void MoveSet::init_attack_masks()
         rook_attack_mask[sq] = rmask(sq);
     }
 }
-
+void MoveSet::init_ray_masks()
+{
+    for(unsigned int from = 0 ; from < NUM_SQUARES ; from ++){
+        for(unsigned int to = 0 ; to < NUM_SQUARES ; to ++){
+            
+        }
+    }
+}
 uint64 MoveSet::get_king_attack_mask(int sq)
 {
     return king_attack_mask[sq];
@@ -150,12 +157,14 @@ void MoveSet::set_attack_sets()
 uint64 MoveSet::get_white_pawn_attack_set(Bitboard* bb, int sq)
 {
     // return get_white_pawn_attack_mask(sq) & bb->black;
-    return get_white_pawn_attack_mask(sq) & bb->collective_piece_boards[BLACK];
+    // return get_white_pawn_attack_mask(sq) & bb->collective_piece_boards[BLACK];
+    return get_white_pawn_attack_mask(sq);
 }
 uint64 MoveSet::get_black_pawn_attack_set(Bitboard* bb,int sq)
 {
     // return get_black_pawn_attack_mask(sq) & bb->white;
-    return get_black_pawn_attack_mask(sq) & bb->collective_piece_boards[WHITE];
+    // return get_black_pawn_attack_mask(sq) & bb->collective_piece_boards[WHITE];
+    return get_black_pawn_attack_mask(sq);
 }
 uint64 MoveSet::get_pawn_attack_set(Bitboard* bb, int sq, int side)
 {

@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include <cassert>
 #include "board.hpp"
 #include "board_info.hpp"
 #include "board_squares.hpp"
@@ -7,7 +8,86 @@
 #include "move.hpp"
 #include "pesto.hpp"
 using namespace BoardSquares;
-void Board::apply_move(unsigned int move){
+
+bool Board::apply_promotion_move(
+    unsigned int move,
+    unsigned int from, 
+    unsigned int to,
+    unsigned int side,
+    unsigned int promoted_piece, 
+    unsigned int king_location, 
+    uint64 piece_square_hash_val
+){
+
+    unsigned int castle_rights = bi->peek_castle_right();
+
+    uint64 from_to = get_from_to(from, to);
+    uint64 from_bitboard = get_square_bitboard(from);
+    uint64 to_bitboard = get_square_bitboard(to);
+    bb->piece_boards[side][pPAWN] ^= from_bitboard;
+    bb->collective_piece_boards[side] ^= from_to;
+    bb->piece_boards[side][promoted_piece] ^= to_bitboard;
+    bb->all = bb->collective_piece_boards[WHITE] | bb->collective_piece_boards[BLACK];
+
+    if(bb->attacked(side, get_king_location(side))){
+        bb->piece_boards[side][pPAWN] ^= from_bitboard;
+        bb->collective_piece_boards[side] ^= from_to;        
+        bb->all = bb->collective_piece_boards[WHITE] | bb->collective_piece_boards[BLACK];
+        bb->piece_boards[side][promoted_piece] ^= to_bitboard;
+
+        tt.update_hash_val_piece_square(move, piece_square_hash_val);
+        tt.update_hash_val_side_to_move(move);
+        return false;
+    }
+    bi->add_board_info(castle_rights, NO_EP_RIGHTS);
+
+    bb->piece_on_square[from] = NO_PIECE;
+    bb->piece_on_square[to] = promoted_piece;
+    return true;
+}
+
+bool Board::apply_capture_promotion_move(
+    unsigned int move, 
+    unsigned int from,
+    unsigned int to,
+    unsigned int side,
+    unsigned int promoted_piece, 
+    unsigned int captured_piece,
+    unsigned int king_location, 
+    uint64 piece_square_hash_val
+) {
+
+    unsigned int castle_rights = bi->peek_castle_right();
+
+    uint64 from_to = get_from_to(from, to);
+    uint64 from_bitboard = get_square_bitboard(from);
+    uint64 to_bitboard = get_square_bitboard(to);
+    bb->piece_boards[side][pPAWN] ^= from_bitboard;
+    bb->collective_piece_boards[side] ^= from_to;
+    bb->all = bb->collective_piece_boards[WHITE] | bb->collective_piece_boards[BLACK];
+
+    bb->piece_boards[side][promoted_piece] ^= to_bitboard;
+    bb->piece_boards[side ^ 1][captured_piece] ^= to_bitboard;
+    bb->collective_piece_boards[side ^ 1] ^= to_bitboard;
+    if(bb->attacked(side, king_location)){
+        bb->piece_boards[side][pPAWN] ^= from_bitboard;
+        bb->collective_piece_boards[side] ^= from_to;
+        bb->piece_boards[side][promoted_piece] ^= to_bitboard;
+        bb->piece_boards[side ^ 1][captured_piece] ^= to_bitboard;
+        bb->collective_piece_boards[side ^ 1] ^= to_bitboard;
+        bb->all = bb->collective_piece_boards[WHITE] | bb->collective_piece_boards[BLACK];
+
+        tt.update_hash_val_piece_square(move, piece_square_hash_val);
+        tt.update_hash_val_side_to_move(move);
+        return false;
+    }
+    bi->add_board_info(castle_rights, NO_EP_RIGHTS);
+    bb->piece_on_square[from] = NO_PIECE;
+    bb->piece_on_square[to] = promoted_piece;
+    return true;
+}
+
+bool Board::apply_move(unsigned int move){
     unsigned int side = MoveUtils::get_side(move);
     unsigned int piece = MoveUtils::get_piece(move);
     unsigned int from = MoveUtils::get_from(move);
@@ -15,205 +95,218 @@ void Board::apply_move(unsigned int move){
 
     unsigned int castle_rights = bi->peek_castle_right();
     unsigned int ep_rights = bi->peek_ep_right();
+    unsigned int captured_piece = MoveUtils::get_captured_piece(move);
 
+    unsigned int king_location = get_king_location(side);
     // for zobrist hash val update
     unsigned int prev_castle_rights = bi->peek_castle_right();
     unsigned int prev_ep_rights = bi->peek_ep_right();
-    tt.update_hash_val_piece_square(move);
+    uint64 piece_square_hash_val = tt.get_hash_val_change_piece_square(move);
+    tt.update_hash_val_piece_square(move, piece_square_hash_val);
     tt.update_hash_val_side_to_move(move);
-    if(MoveUtils::is_quiet(move)){
-        uint64 from_to = get_from_to(from, to);
-        bb->piece_boards[side][piece] ^= from_to;
-        bb->collective_piece_boards[side] ^= from_to;
+    switch(MoveUtils::get_additional_info(move)){
+        case QUIET_MOVE: {
+            uint64 from_to = get_from_to(from, to);
+            uint64 old_pb = bb->piece_boards[side][piece];
+            uint64 old_cb = bb->collective_piece_boards[side];
+            bb->piece_boards[side][piece] ^= from_to;
+            bb->collective_piece_boards[side] ^= from_to;
+            bb->all = bb->collective_piece_boards[WHITE] | bb->collective_piece_boards[BLACK];
 
-        unsigned int additional_info = MoveUtils::get_additional_info(move);
-        if(piece == pKING){
-            if(side == WHITE){
-                castle_rights &= 0x3;
-            } else{
-                castle_rights &= 0xc;
-            }
+            if(piece == pKING){
+                if(bb->attacked(side, to)){
+                    bb->piece_boards[side][piece] ^= from_to;
+                    bb->collective_piece_boards[side] ^= from_to;
+                    bb->all = bb->collective_piece_boards[WHITE] | bb->collective_piece_boards[BLACK];
 
-            update_king_location(side, to);
-            // cout<<"move is quiet king move\n";
-            bi->add_board_info(castle_rights, NO_EP_RIGHTS);
-        } else if(piece == pROOK){
-            if(side == WHITE){
-                if(from == a1){
-                    castle_rights &= (0b1011);
-                } else if(from == h1){
-                    castle_rights &= (0b0111);
-                } 
-            } else{
-                if(from == a8){
-                    castle_rights &= (0b1110);
-                } else if(from == h8 ){
-                    castle_rights &= (0b1101);
+                    tt.update_hash_val_piece_square(move, piece_square_hash_val);
+                    tt.update_hash_val_side_to_move(move);
+                    return false;
                 }
-            } 
-            // cout<<"move is quiet rook move\n";
-            bi->add_board_info(castle_rights, NO_EP_RIGHTS);
-        } else {
-            bi->add_board_info(castle_rights, NO_EP_RIGHTS);
-        }
-    } else if(MoveUtils::is_double_pawn_push(move)){
-        uint64 from_to = get_from_to(from, to);
-        bb->piece_boards[side][piece] ^= from_to;
-        bb->collective_piece_boards[side] ^= from_to;
+            } else {
+                if(bb->attacked(side, king_location)){
+                    bb->piece_boards[side][piece] ^= from_to;
+                    bb->collective_piece_boards[side] ^= from_to;
+                    bb->all = bb->collective_piece_boards[WHITE] | bb->collective_piece_boards[BLACK];
 
-        int ep_rights = bi->peek_ep_right();
-        if(side == WHITE){
-            ep_rights = to - a4;
-        } else {
-            ep_rights = to - a5;
-        }
-        bi->add_board_info(castle_rights, ep_rights);
-    } else if(MoveUtils::is_capture(move)){    
-        uint64 from_to = get_from_to(from, to);
-        bb->piece_boards[side][piece] ^= from_to;
-        bb->collective_piece_boards[side] ^= from_to;
-        unsigned int captured_piece = MoveUtils::get_captured_piece(move);
-        uint64 sq_bitboard = get_square_bitboard(to);
-        bb->piece_boards[side ^ 1][captured_piece] ^= sq_bitboard;
-        bb->collective_piece_boards[side ^ 1] ^= sq_bitboard;
-
-        if(piece == pKING){
-            if(side == WHITE){
-                castle_rights &= 0x3;
-            } else{
-                castle_rights &= 0xc;
-            }
-            update_king_location(side, to);
-            // cout<<"move is capture king move\n";
-            bi->add_board_info(castle_rights, NO_EP_RIGHTS);
-        } else if(piece == pROOK){
-            if(side == WHITE){
-                if(from == a1){
-                    castle_rights &= (0b1011);
-                } else if(from == h1){
-                    castle_rights &= (0b0111);
-                } 
-            } else{
-                if(from == a8){
-                    castle_rights &= (0b1110);
-                } else if(from == h8 ){
-                    castle_rights &= (0b1101);
+                    tt.update_hash_val_piece_square(move, piece_square_hash_val);
+                    tt.update_hash_val_side_to_move(move);
+                    return false;
                 }
-            } 
-            // cout<<"move is quiet rook move\n";
+            }
+            if(piece == pKING){
+                castle_rights &= castle_rights_king_mask[side];
+                update_king_location(side, to);
+                bi->add_board_info(castle_rights, NO_EP_RIGHTS);
+            } else if(piece == pROOK){
+                castle_rights &= castle_rights_rook_mask[side][from];
+                bi->add_board_info(castle_rights, NO_EP_RIGHTS);
+            } else {
+                bi->add_board_info(castle_rights, NO_EP_RIGHTS);
+            }
+            bb->piece_on_square[from] = NO_PIECE;
+            bb->piece_on_square[to] = piece;
+            break;
+        } case CAPTURE: {
+            uint64 from_to = get_from_to(from, to);
+            bb->piece_boards[side][piece] ^= from_to;
+            bb->collective_piece_boards[side] ^= from_to;
+            uint64 sq_bitboard = get_square_bitboard(to);
+            bb->piece_boards[side ^ 1][captured_piece] ^= sq_bitboard;
+            bb->collective_piece_boards[side ^ 1] ^= sq_bitboard;
+            
+            bb->all = bb->collective_piece_boards[WHITE] | bb->collective_piece_boards[BLACK];
+            if(piece == pKING){
+
+                if(bb->attacked(side, to)){
+                    bb->piece_boards[side][piece] ^= from_to;
+                    bb->collective_piece_boards[side] ^= from_to;
+                    bb->piece_boards[side ^ 1][captured_piece] ^= sq_bitboard;
+                    bb->collective_piece_boards[side ^ 1] ^= sq_bitboard;
+                    bb->all = bb->collective_piece_boards[WHITE] | bb->collective_piece_boards[BLACK];
+
+                    tt.update_hash_val_piece_square(move, piece_square_hash_val);
+                    tt.update_hash_val_side_to_move(move);
+                    return false;
+                }
+            } else {
+
+                if(bb->attacked(side, king_location)){
+                    bb->piece_boards[side][piece] ^= from_to;
+                    bb->collective_piece_boards[side] ^= from_to;
+                    bb->piece_boards[side ^ 1][captured_piece] ^= sq_bitboard;
+                    bb->collective_piece_boards[side ^ 1] ^= sq_bitboard;
+                    bb->all = bb->collective_piece_boards[WHITE] | bb->collective_piece_boards[BLACK];
+
+                    tt.update_hash_val_piece_square(move);
+                    tt.update_hash_val_side_to_move(move);
+                    return false;
+                }
+            }
+            if(piece == pKING){
+                castle_rights &= castle_rights_king_mask[side];
+                update_king_location(side, to);
+                // cout<<"move is capture king move\n";
+                bi->add_board_info(castle_rights, NO_EP_RIGHTS);
+            } else if(piece == pROOK){
+                castle_rights &= castle_rights_rook_mask[side][from];
+                bi->add_board_info(castle_rights, NO_EP_RIGHTS);
+            } else {
+                bi->add_board_info(castle_rights, NO_EP_RIGHTS);
+            }
+            bb->piece_on_square[from] = NO_PIECE;
+            bb->piece_on_square[to] = piece;
+            break;
+        } case DOUBLE_PAWN_PUSH: {
+            uint64 from_to = get_from_to(from, to);
+            bb->piece_boards[side][piece] ^= from_to;
+            bb->collective_piece_boards[side] ^= from_to;
+            bb->all = bb->collective_piece_boards[WHITE] | bb->collective_piece_boards[BLACK];
+            if(bb->attacked(side, king_location)){
+                bb->piece_boards[side][piece] ^= from_to;
+                bb->collective_piece_boards[side] ^= from_to;
+                bb->all = bb->collective_piece_boards[WHITE] | bb->collective_piece_boards[BLACK];
+
+                tt.update_hash_val_piece_square(move, piece_square_hash_val);
+                tt.update_hash_val_side_to_move(move);
+                return false;
+            }
+            int ep_rights = bi->peek_ep_right();
+            if(side == WHITE){
+                ep_rights = to - a4;
+            } else {
+                ep_rights = to - a5;
+            }
+            bi->add_board_info(castle_rights, ep_rights);
+            bb->piece_on_square[from] = NO_PIECE;
+            bb->piece_on_square[to] = pPAWN;
+            break;
+        } case EP_CAPTURE: {
+            uint64 from_to = get_from_to(from, to);
+            bb->piece_boards[side][piece] ^= from_to;
+            bb->collective_piece_boards[side] ^= from_to;
+            int captured_file = MoveUtils::get_ep_capture_file(move);
+            int captured_sq =  side == WHITE ? a5 + captured_file : a4 + captured_file;
+
+            uint64 sq_bitboard = get_square_bitboard(captured_sq);
+            bb->piece_boards[side ^ 1][pPAWN] ^= sq_bitboard;
+            bb->collective_piece_boards[side ^ 1] ^= sq_bitboard;
+            bb->all = bb->collective_piece_boards[WHITE] | bb->collective_piece_boards[BLACK];
+            if(bb->attacked(side, king_location)){
+                bb->piece_boards[side][piece] ^= from_to;
+                bb->collective_piece_boards[side] ^= from_to;
+                bb->piece_boards[side ^ 1][pPAWN] ^= sq_bitboard;
+                bb->collective_piece_boards[side ^ 1] ^= sq_bitboard;
+                bb->all = bb->collective_piece_boards[WHITE] | bb->collective_piece_boards[BLACK];
+                tt.update_hash_val_piece_square(move, piece_square_hash_val);
+                tt.update_hash_val_side_to_move(move);
+                return false;
+            }
             bi->add_board_info(castle_rights, NO_EP_RIGHTS);
-        } else {
+            bb->piece_on_square[from] = NO_PIECE;
+            bb->piece_on_square[to] = pPAWN;
+            bb->piece_on_square[captured_sq] = NO_PIECE;
+            break;
+        } case KING_CASTLE: {
+            bb->piece_boards[side][pKING] ^= king_from_to_bb[side][KING_CASTLE];
+            bb->collective_piece_boards[side] ^= king_from_to_bb[side][KING_CASTLE];
+
+            bb->piece_boards[side][pROOK] ^= rook_from_to_bb[side][KING_CASTLE];
+            bb->collective_piece_boards[side] ^= rook_from_to_bb[side][KING_CASTLE];
+            castle_rights &= castle_rights_king_mask[side];
+            update_king_location(side, castle_king_to[side][KING_CASTLE]);
+
+            bb->piece_on_square[castle_king_from[side][KING_CASTLE]] = NO_PIECE;
+            bb->piece_on_square[castle_rook_from[side][KING_CASTLE]] = NO_PIECE;
+            bb->piece_on_square[castle_king_to[side][KING_CASTLE]] = pKING;
+            bb->piece_on_square[castle_rook_to[side][KING_CASTLE]] = pROOK;
+
             bi->add_board_info(castle_rights, NO_EP_RIGHTS);
-        }
-    } else if(MoveUtils::is_ep_capture(move)){
-        uint64 from_to = get_from_to(from, to);
-        bb->piece_boards[side][piece] ^= from_to;
-        bb->collective_piece_boards[side] ^= from_to;
-        int captured_file = MoveUtils::get_ep_capture_file(move);
-        int captured_sq =  side == WHITE ? a5 + captured_file : a4 + captured_file;
+            break;
+        } case QUEEN_CASTLE: {
 
-        uint64 sq_bitboard = get_square_bitboard(captured_sq);
-        bb->piece_boards[side ^ 1][pPAWN] ^= sq_bitboard;
-        bb->collective_piece_boards[side ^ 1] ^= sq_bitboard;
+            bb->piece_boards[side][pKING] ^= king_from_to_bb[side][QUEEN_CASTLE];
+            bb->collective_piece_boards[side] ^= king_from_to_bb[side][QUEEN_CASTLE];
+            bb->piece_boards[side][pROOK] ^= rook_from_to_bb[side][QUEEN_CASTLE];
+            bb->collective_piece_boards[side] ^= rook_from_to_bb[side][QUEEN_CASTLE];
 
-        bi->add_board_info(castle_rights, NO_EP_RIGHTS);
-    } else if(MoveUtils::is_castle(move)){
-        if(MoveUtils::is_king_castle(move) && side == WHITE){
-            uint64 king_from_to = get_from_to(e1, g1);
-            bb->piece_boards[side][pKING] ^= king_from_to;
-            bb->collective_piece_boards[side] ^= king_from_to;
+            castle_rights &= castle_rights_king_mask[side];
+            update_king_location(side, castle_king_to[side][QUEEN_CASTLE]);
 
-            uint64 rook_from_to = get_from_to(h1, f1);
-            bb->piece_boards[side][pROOK] ^= rook_from_to;
-            bb->collective_piece_boards[side] ^= rook_from_to;
+            bb->piece_on_square[castle_king_from[side][QUEEN_CASTLE]] = NO_PIECE;
+            bb->piece_on_square[castle_rook_from[side][QUEEN_CASTLE]] = NO_PIECE;
+            bb->piece_on_square[castle_king_to[side][QUEEN_CASTLE]] = pKING;
+            bb->piece_on_square[castle_rook_to[side][QUEEN_CASTLE]] = pROOK;
 
-            castle_rights &= 0x3;
-            update_king_location(side, g1);
-        } else if(MoveUtils::is_queen_castle(move) && side == WHITE){
-            uint64 king_from_to = get_from_to(e1, c1);
-            bb->piece_boards[side][pKING] ^= king_from_to;
-            bb->collective_piece_boards[side] ^= king_from_to;
-
-            uint64 rook_from_to = get_from_to(a1, d1);
-            bb->piece_boards[side][pROOK] ^= rook_from_to;
-            bb->collective_piece_boards[side] ^= rook_from_to;
-
-            castle_rights &= 0x3;
-            update_king_location(side, c1);
-        } else if(MoveUtils::is_king_castle(move) && side == BLACK){
-            uint64 king_from_to = get_from_to(e8, g8);
-            bb->piece_boards[side][pKING] ^= king_from_to;
-            bb->collective_piece_boards[side] ^= king_from_to;
-
-            uint64 rook_from_to = get_from_to(h8, f8);
-            bb->piece_boards[side][pROOK] ^= rook_from_to;
-            bb->collective_piece_boards[side] ^= rook_from_to;
-
-            castle_rights &= 0xc;
-            update_king_location(side, g8);
-        } else if(MoveUtils::is_queen_castle(move) && side == BLACK){
-            uint64 king_from_to = get_from_to(e8, c8);
-            bb->piece_boards[side][pKING] ^= king_from_to;
-            bb->collective_piece_boards[side] ^= king_from_to;
-
-            uint64 rook_from_to = get_from_to(a8, d8);
-            bb->piece_boards[side][pROOK] ^= rook_from_to;
-            bb->collective_piece_boards[side] ^= rook_from_to;
-
-            castle_rights &= 0xc;
-            update_king_location(side, c8);
+            bi->add_board_info(castle_rights, NO_EP_RIGHTS);
+            break;
         } 
-        bi->add_board_info(castle_rights, NO_EP_RIGHTS);
-    } else if(MoveUtils::is_promotion(move)){
-        uint64 from_to = get_from_to(from, to);
-        uint64 from_bitboard = get_square_bitboard(from);
-        uint64 to_bitboard = get_square_bitboard(to);
-        bb->piece_boards[side][pPAWN] ^= from_bitboard;
-        bb->collective_piece_boards[side] ^= from_to;
-
-        if(MoveUtils::is_knight_promotion(move)){
-            bb->piece_boards[side][pKNIGHT] ^= to_bitboard;
-        } else if(MoveUtils::is_bishop_promotion(move)){
-            bb->piece_boards[side][pBISHOP] ^= to_bitboard;
-        } else if(MoveUtils::is_rook_promotion(move)){
-            bb->piece_boards[side][pROOK] ^= to_bitboard;
-        } else if(MoveUtils::is_queen_promotion(move)){
-            bb->piece_boards[side][pQUEEN] ^= to_bitboard;
+        case KNIGHT_PROMOTION: {
+            return apply_promotion_move(move, from, to, side, pKNIGHT, king_location, piece_square_hash_val);
+        } case BISHOP_PROMOTION: {
+            return apply_promotion_move(move, from, to, side, pBISHOP, king_location, piece_square_hash_val);
+        } case ROOK_PROMOTION: {
+            return apply_promotion_move(move, from, to, side, pROOK, king_location, piece_square_hash_val);
+        } case QUEEN_PROMOTION: {
+            return apply_promotion_move(move, from, to, side, pQUEEN, king_location, piece_square_hash_val);
+        } 
+        case KNIGHT_CAPTURE_PROMOTION: {
+            return apply_capture_promotion_move(move, from, to, side, pKNIGHT, captured_piece, king_location, piece_square_hash_val);
+        } case BISHOP_CAPTURE_PROMOTION: {
+            return apply_capture_promotion_move(move, from, to, side, pBISHOP, captured_piece, king_location, piece_square_hash_val);
+        } case ROOK_CAPTURE_PROMOTION: {
+            return apply_capture_promotion_move(move, from, to, side, pROOK, captured_piece, king_location, piece_square_hash_val);
+        } case QUEEN_CAPTURE_PROMOTION: {
+            return apply_capture_promotion_move(move, from, to, side, pQUEEN, captured_piece, king_location, piece_square_hash_val);
         }
-        bi->add_board_info(castle_rights, NO_EP_RIGHTS);
-    } else if(MoveUtils::is_capture_promotion(move)){
-
-        uint64 from_to = get_from_to(from, to);
-        uint64 from_bitboard = get_square_bitboard(from);
-        uint64 to_bitboard = get_square_bitboard(to);
-        bb->piece_boards[side][pPAWN] ^= from_bitboard;
-        bb->collective_piece_boards[side] ^= from_to;
-        unsigned int captured_piece = MoveUtils::get_captured_piece(move);
-        if(MoveUtils::is_knight_capture_promotion(move)){
-            bb->piece_boards[side][pKNIGHT] ^= to_bitboard;
-            bb->piece_boards[side ^ 1][captured_piece] ^= to_bitboard;
-            bb->collective_piece_boards[side ^ 1] ^= to_bitboard;
-        } else if(MoveUtils::is_bishop_capture_promotion(move)){
-            bb->piece_boards[side][pBISHOP] ^= to_bitboard;
-            bb->piece_boards[side ^ 1][captured_piece] ^= to_bitboard;
-            bb->collective_piece_boards[side ^ 1] ^= to_bitboard;
-        } else if(MoveUtils::is_rook_capture_promotion(move)){
-            bb->piece_boards[side][pROOK] ^= to_bitboard;
-            bb->piece_boards[side ^ 1][captured_piece] ^= to_bitboard;
-            bb->collective_piece_boards[side ^ 1] ^= to_bitboard;
-        } else if(MoveUtils::is_queen_capture_promotion(move)){
-            bb->piece_boards[side][pQUEEN] ^= to_bitboard;
-            bb->piece_boards[side ^ 1][captured_piece] ^= to_bitboard;
-            bb->collective_piece_boards[side ^ 1] ^= to_bitboard;
-        }
-        bi->add_board_info(castle_rights, NO_EP_RIGHTS);
     }
-    bb->all = bb->collective_piece_boards[WHITE] | bb->collective_piece_boards[BLACK];
+
 
     unsigned int next_castle_rights = bi->peek_castle_right();
     unsigned int next_ep_rights = bi->peek_ep_right();
     tt.update_hash_val_castle_rights(prev_castle_rights, next_castle_rights);
     tt.update_hash_val_ep_rights(prev_ep_rights, next_ep_rights);
+    return true;
 }
 
 void Board::reverse_move(unsigned int move){
@@ -235,6 +328,8 @@ void Board::reverse_move(unsigned int move){
         int additional_info = MoveUtils::get_additional_info(move);
         if(piece == pKING)
             update_king_location(side, from);
+        bb->piece_on_square[from] = piece;
+        bb->piece_on_square[to] = NO_PIECE;
     } else if (MoveUtils::is_capture(move)){ // capture
         // bi->num_captures -= update_num_moves;
         uint64 from_to = get_from_to(from, to);
@@ -246,10 +341,15 @@ void Board::reverse_move(unsigned int move){
         bb->collective_piece_boards[side ^ 1] ^= sq_bitboard;
         if(piece == pKING)
             update_king_location(side, from);
+        bb->piece_on_square[from] = piece;
+        bb->piece_on_square[to] = captured_piece;
     } else if(MoveUtils::is_double_pawn_push(move)){
         uint64 from_to = get_from_to(from, to);
         bb->piece_boards[side][piece] ^= from_to;
         bb->collective_piece_boards[side] ^= from_to; 
+
+        bb->piece_on_square[from] = piece;
+        bb->piece_on_square[to] = NO_PIECE;
     } else if(MoveUtils::is_ep_capture(move)){
         uint64 from_to = get_from_to(from, to);
         bb->piece_boards[side][piece] ^= from_to;
@@ -260,36 +360,39 @@ void Board::reverse_move(unsigned int move){
         uint64 sq_bitboard = get_square_bitboard(captured_sq);
         bb->piece_boards[side ^ 1][pPAWN] ^= sq_bitboard;
         bb->collective_piece_boards[side ^ 1] ^= sq_bitboard;
-    } else if(MoveUtils::is_castle(move)){ // castle, reverse location for both king and rook
-        if(MoveUtils::is_king_castle(move) && side == WHITE){
-            bb->piece_boards[side][pKING] ^= get_from_to(e1, g1);
-            bb->collective_piece_boards[side] ^= get_from_to(e1, g1); 
-            bb->piece_boards[side][pROOK] ^= get_from_to(h1, f1);
-            bb->collective_piece_boards[side] ^= get_from_to(h1, f1); 
 
-            update_king_location(side, e1);
-        } else if(MoveUtils::is_queen_castle(move) && side == WHITE){
-            bb->piece_boards[side][pKING] ^= get_from_to(e1, c1);
-            bb->collective_piece_boards[side] ^= get_from_to(e1, c1); 
-            bb->piece_boards[side][pROOK] ^= get_from_to(a1, d1);
-            bb->collective_piece_boards[side] ^= get_from_to(a1, d1); 
+        bb->piece_on_square[from] = pPAWN;
+        bb->piece_on_square[to] = NO_PIECE;
+        bb->piece_on_square[captured_sq] = pPAWN;
+        
+    } else if(MoveUtils::get_additional_info(move) == KING_CASTLE) {
+        bb->piece_boards[side][pKING] ^= king_from_to_bb[side][KING_CASTLE];
+        bb->collective_piece_boards[side] ^= king_from_to_bb[side][KING_CASTLE];
 
-            update_king_location(side, e1);
-        } else if(MoveUtils::is_king_castle(move) && side == BLACK){
-            bb->piece_boards[side][pKING] ^= get_from_to(e8, g8);
-            bb->collective_piece_boards[side] ^= get_from_to(e8, g8); 
-            bb->piece_boards[side][pROOK] ^= get_from_to(h8, f8);
-            bb->collective_piece_boards[side] ^= get_from_to(h8, f8); 
+        bb->piece_boards[side][pROOK] ^= rook_from_to_bb[side][KING_CASTLE];
+        bb->collective_piece_boards[side] ^= rook_from_to_bb[side][KING_CASTLE];
 
-            update_king_location(side, e8);
-        } else if(MoveUtils::is_queen_castle(move) && side == BLACK){
-            bb->piece_boards[side][pKING] ^= get_from_to(e8, c8);
-            bb->collective_piece_boards[side] ^= get_from_to(e8, c8); 
-            bb->piece_boards[side][pROOK] ^= get_from_to(a8, d8);
-            bb->collective_piece_boards[side] ^= get_from_to(a8, d8); 
+        update_king_location(side, castle_king_from[side][KING_CASTLE]);
 
-            update_king_location(side, e8);
-        }
+        bb->piece_on_square[castle_king_to[side][KING_CASTLE]] = NO_PIECE;
+        bb->piece_on_square[castle_rook_to[side][KING_CASTLE]] = NO_PIECE;
+        bb->piece_on_square[castle_king_from[side][KING_CASTLE]] = pKING;
+        bb->piece_on_square[castle_rook_from[side][KING_CASTLE]] = pROOK;
+
+    } else if(MoveUtils::get_additional_info(move) == QUEEN_CASTLE) {
+
+        bb->piece_boards[side][pKING] ^= king_from_to_bb[side][QUEEN_CASTLE];
+        bb->collective_piece_boards[side] ^= king_from_to_bb[side][QUEEN_CASTLE];
+        bb->piece_boards[side][pROOK] ^= rook_from_to_bb[side][QUEEN_CASTLE];
+        bb->collective_piece_boards[side] ^= rook_from_to_bb[side][QUEEN_CASTLE];
+
+        update_king_location(side, castle_king_from[side][QUEEN_CASTLE]);
+
+        bb->piece_on_square[castle_king_to[side][QUEEN_CASTLE]] = NO_PIECE;
+        bb->piece_on_square[castle_rook_to[side][QUEEN_CASTLE]] = NO_PIECE;
+        bb->piece_on_square[castle_king_from[side][QUEEN_CASTLE]] = pKING;
+        bb->piece_on_square[castle_rook_from[side][QUEEN_CASTLE]] = pROOK;
+
     } else if(MoveUtils::is_promotion(move)){
         uint64 from_to = get_from_to(from, to);
         uint64 from_bitboard = get_square_bitboard(from);
@@ -306,6 +409,8 @@ void Board::reverse_move(unsigned int move){
         } else if(MoveUtils::is_queen_promotion(move)){
             bb->piece_boards[side][pQUEEN] ^= to_bitboard;
         }
+        bb->piece_on_square[from] = pPAWN;
+            bb->piece_on_square[to] = NO_PIECE;
     } else if(MoveUtils::is_capture_promotion(move)){
 
         uint64 from_to = get_from_to(from, to);
@@ -332,6 +437,9 @@ void Board::reverse_move(unsigned int move){
             bb->piece_boards[side ^ 1][captured_piece] ^= to_bitboard;
             bb->collective_piece_boards[side ^ 1] ^= to_bitboard;
         }
+        bb->piece_on_square[from] = pPAWN;
+        bb->piece_on_square[to] = captured_piece;
+
     }
 
     bb->all = bb->collective_piece_boards[WHITE] | bb->collective_piece_boards[BLACK];
@@ -344,18 +452,8 @@ void Board::reverse_move(unsigned int move){
 }
 bool Board::apply_move_if_legal(unsigned int move)
 {
-    // cout<<"apply_move_if_legal\n";
     unsigned int defending_side = MoveUtils::get_side(move);
-    // cout<<"side: "<<side<<endl;
-    apply_move(move);
-    // int king_location = get_piece_location(side, pKING);
-    int king_location = get_king_location(defending_side);
-    if(bb->attacked(defending_side, king_location)){
-        // cout<<"king attacked, reversing move\n";
-        reverse_move(move);
-        return false;
-    }
-    return true;
+    return apply_move(move);
 }
 bool Board::can_castle_kingside(unsigned int side){
     if(MoveUtils::get_side(side) == WHITE){
@@ -377,7 +475,7 @@ void Board::update_piece_locations(int side, int piece, int from, int to){
     piece_locations[side][piece].erase(from);
     piece_locations[side][piece].insert(to);
 }
-void Board::update_king_location(int side, int square){
+void Board::update_king_location(unsigned int side, unsigned int square){
     king_location[side] = square;
 }
 int Board::get_piece_location(unsigned int side, unsigned int piece){
@@ -387,7 +485,7 @@ int Board::get_piece_location(unsigned int side, unsigned int piece){
     return -1;
 
 }
-int Board::get_king_location(unsigned int side){
+unsigned int Board::get_king_location(unsigned int side){
     return king_location[side];
 }
 
@@ -401,8 +499,10 @@ void Board::change_side_to_move(){
 
 unsigned int Board::create_move_using_pgn(unsigned int from, unsigned int to, unsigned int promoted_piece){
     unsigned int side = side_to_move;
-    unsigned int piece = bb->get_piece_on_square(side, from);
-    unsigned int captured_piece =  bb->get_piece_on_square(side ^ 1, to);
+    // unsigned int piece = bb->get_piece_on_square(side, from);
+    unsigned int piece = bb->piece_on_square[from];
+    // unsigned int captured_piece =  bb->get_piece_on_square(side ^ 1, to);
+    unsigned int captured_piece = bb->piece_on_square[to];
     unsigned int additional_info = QUIET_MOVE;
     unsigned int ep_target_file = 0;
 
@@ -512,6 +612,9 @@ void Board::parse_fen(fs::path path){
             bb->piece_boards[side][piece] = 0;
         }
     }
+    for(unsigned int sq = 0 ; sq < NUM_SQUARES ;sq ++)
+        bb->piece_on_square[sq] = NO_PIECE;
+
     std::ifstream file(path);
     unsigned int initial_side_to_move = WHITE;
     if(file.is_open()){
@@ -528,7 +631,7 @@ void Board::parse_fen(fs::path path){
                     char ch = word[i];
                     if(isalpha(ch)){
                         pos += 1;
-                        uint64 square_bitboard = BoardSquares::get_square_bitboard(pos);
+                        uint64 square_bitboard = get_square_bitboard(pos);
                         int side;
                         if(ch > 'Z'){
                             side = BLACK;
@@ -538,17 +641,23 @@ void Board::parse_fen(fs::path path){
                         char piece_type = tolower(ch);
                         if(piece_type == 'p'){
                             bb->piece_boards[side][pPAWN] |= square_bitboard;
+                            bb->piece_on_square[pos] = pPAWN;
                         } else if(piece_type == 'n'){
                             bb->piece_boards[side][pKNIGHT] |= square_bitboard;
+                            bb->piece_on_square[pos] = pKNIGHT;
                         } else if(piece_type == 'b'){
                             bb->piece_boards[side][pBISHOP] |= square_bitboard;
+                            bb->piece_on_square[pos] = pBISHOP;
                         } else if(piece_type == 'q'){
                             bb->piece_boards[side][pQUEEN] |= square_bitboard;
+                            bb->piece_on_square[pos] = pQUEEN;
                         } else if(piece_type == 'k'){
                             bb->piece_boards[side][pKING] |= square_bitboard;
+                            bb->piece_on_square[pos] = pKING;
                             update_king_location(side, pos);
                         } else if(piece_type =='r'){
                             bb->piece_boards[side][pROOK] |= square_bitboard;
+                            bb->piece_on_square[pos] = pROOK;
                         } 
                     } else if(isdigit(ch)){
 

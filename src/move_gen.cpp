@@ -48,7 +48,8 @@ unsigned int MoveGen::get_move(){
             }
         }
     }
-    unsigned int captured_piece = bb->get_piece_on_square(side ^ 1, to);
+    // unsigned int captured_piece = bb->get_piece_on_square(side ^ 1, to);
+    unsigned int captured_piece = bb->piece_on_square[to];
     unsigned int additional_info = QUIET_MOVE;
 
     if(captured_piece != NO_PIECE && captured_piece != pKING){
@@ -164,7 +165,8 @@ unsigned int MoveGen::get_move(move_gen_state_t cur_state){
         // cout<<"MoveGen::get_move cur_piece: "<<MoveUtils::piece_as_string(cur_piece)<<"\n";
         // cout<<"MoveGen::get_move cur_side: "<<MoveUtils::side_as_string(side)<<"\n";
         
-        unsigned int captured_piece = bb->get_piece_on_square(side ^ 1, cur_to);
+        // unsigned int captured_piece = bb->get_piece_on_square(side ^ 1, cur_to);
+        unsigned int captured_piece = bb->piece_on_square[cur_to];
         unsigned int additional_info = QUIET_MOVE;
 
         if(captured_piece != NO_PIECE && captured_piece != pKING){
@@ -210,7 +212,8 @@ bool MoveGen::should_update_move_set(move_gen_state_t cur_state){
 
     unsigned int cur_from = get_next_from(_piece_board);
     unsigned int cur_to = get_next_to(_move_set);
-    unsigned int captured_piece = bb->get_piece_on_square(side ^ 1, cur_to);
+    // unsigned int captured_piece = bb->get_piece_on_square(side ^ 1, cur_to);
+    unsigned int captured_piece = bb->piece_on_square[cur_to];
     if(_cur_piece == pPAWN && MoveUtils::is_final_rank(cur_to)){            
         if(cur_state.promoted_piece < pQUEEN){
             return false;
@@ -570,7 +573,7 @@ bool MoveGen::can_castle_kingside(int side){
     if(side == WHITE){
         if(!(bb->piece_boards[WHITE][pROOK] & get_square_bitboard(h1)))
             return false;
-        if(!(bi->peek_castle_right() & 0b1000))
+        else if(!(bi->peek_castle_right() & 0b1000))
             return false;
         else if((bb->all & WHITE_KING_CASTLE_SQUARES))
             return false;
